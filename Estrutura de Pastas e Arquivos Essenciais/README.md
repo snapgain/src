@@ -2,42 +2,35 @@
 
 ## 📋 **Como usar este projeto no VS Code Online:**
 
-### **Opção 1: GitHub Codespaces (Recomendado)**
+### **✅ REPOSITÓRIO CORRETO: https://github.com/snapgain/src**
 
-1. **Fork este repositório** para sua conta GitHub
-2. **Abra o Codespace:**
-   - Vá para seu fork do repositório
+### **Método 1: GitHub Codespaces (Recomendado)**
+
+1. **Vá para o repositório:** https://github.com/snapgain/src
+2. **Criar Codespace:**
    - Clique no botão verde `< > Code`
-   - Selecione `Codespaces`
-   - Clique em `Create codespace on main/master`
+   - Selecione aba `Codespaces`
+   - Clique em `Create codespace on codespaces-dev`
 
-3. **Configure o ambiente:**
-   ```bash
-   # Instalar dependências
-   npm install
-   
-   # Configurar variáveis de ambiente
-   cp src/.env.local .env.local
-   
-   # Iniciar o projeto
-   npm run dev
-   ```
+3. **Configuração automática** via `.devcontainer/devcontainer.json`
 
-### **Opção 2: VS Code Online (vscode.dev)**
+### **Método 2: VS Code Online**
 
-1. **Abra diretamente:**
-   - Vá para: `https://vscode.dev/github/{seu-usuario}/snapgain`
-   - Substitua `{seu-usuario}` pelo seu username do GitHub
+```
+https://vscode.dev/github/snapgain/src/tree/codespaces-dev
+```
 
-2. **Configurar terminal:**
-   - Use o terminal integrado do VS Code
-   - Execute os mesmos comandos acima
+### **Método 3: GitHub.dev**
 
-### **Opção 3: GitPod**
+```
+https://github.dev/snapgain/src/tree/codespaces-dev
+```
 
-1. **Abra no GitPod:**
-   - Vá para: `https://gitpod.io/#https://github.com/{seu-usuario}/snapgain`
-   - Substitua `{seu-usuario}` pelo seu username do GitHub
+### **Método 4: GitPod**
+
+```
+https://gitpod.io/#https://github.com/snapgain/src/tree/codespaces-dev
+```
 
 ## 🔧 **Arquivos de Configuração Incluídos:**
 
