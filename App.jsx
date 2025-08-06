@@ -61,8 +61,14 @@ function App() {
   return (
     <AuthProvider>
       <Helmet>
-        <title>SnapGain - Smart Comparison App</title>
-        <meta name="description" content="Compare cashback, points, and gift cards in real-time. Find the best way to pay and maximize your rewards on every purchase." />
+        <title>SnapGain UK - Smart Cashback Comparison</title>
+        <meta name="description" content="Compare TopCashback, JamDoughnut, and Amazon UK offers. Find the best cashback rates in GBP and maximize your rewards across UK retailers." />
+        <meta name="keywords" content="UK cashback, TopCashback, JamDoughnut, Amazon UK, GBP rewards, British cashback comparison" />
+        <meta property="og:title" content="SnapGain UK - Smart Cashback Comparison" />
+        <meta property="og:description" content="UK's smart cashback comparison tool for TopCashback, JamDoughnut, and Amazon UK" />
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="en_GB" />
+        <link rel="canonical" href="https://snapgainuk.vercel.app" />
       </Helmet>
       <Toaster />
       <AppContent />
