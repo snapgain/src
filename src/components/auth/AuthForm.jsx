@@ -30,15 +30,18 @@ function AuthForm({ mode }) {
   const [password, setPassword] = useState('');
   const isLogin = mode === 'login';
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (isLogin) {
-      if(login(email, password)) {
+      const success = await login(email, password);
+      if (success) {
         navigate('/dashboard');
       }
     } else {
-      signup(name, email, password);
-      navigate('/auth/register');
+      const success = await signup(name, email, password);
+      if (success) {
+        navigate('/auth/register');
+      }
     }
   };
 
