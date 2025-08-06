@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,13 +11,13 @@ import { registrationOptions } from '@/data/appData.jsx';
 
 function SettingsPage() {
   const { user } = useAuth();
-  const [name, setName] = useState(user?.name || '');
+  const [name, setName] = useState(user?.user_metadata?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   
-  const [selectedBanks, setSelectedBanks] = useState(user?.banks || []);
-  const [selectedCards, setSelectedCards] = useState(user?.cards || []);
-  const [selectedProgrammes, setSelectedProgrammes] = useState(user?.programmes || []);
-  const [selectedFavourites, setSelectedFavourites] = useState(user?.favourites || []);
+  const [selectedBanks, setSelectedBanks] = useState(user?.user_metadata?.banks || []);
+  const [selectedCards, setSelectedCards] = useState(user?.user_metadata?.cards || []);
+  const [selectedProgrammes, setSelectedProgrammes] = useState(user?.user_metadata?.programmes || []);
+  const [selectedFavourites, setSelectedFavourites] = useState(user?.user_metadata?.favourites || []);
 
   const handleUpdate = (e) => {
     e.preventDefault();

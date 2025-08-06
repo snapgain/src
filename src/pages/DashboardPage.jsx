@@ -2,7 +2,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import { ComparisonTool } from '@/components/comparison/ComparisonTool';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 function DashboardPage() {
   const { user } = useAuth();
@@ -14,7 +14,7 @@ function DashboardPage() {
       </Helmet>
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-3xl md:text-4xl font-bold mb-4">
-          Welcome back, <span className="gradient-text">{user?.name || 'User'}!</span>
+          Welcome back, <span className="gradient-text">{user?.user_metadata?.name || 'User'}!</span>
         </h1>
         <p className="text-lg text-muted-foreground mb-12">
           Ready to maximize your rewards? Let's find the best deals.

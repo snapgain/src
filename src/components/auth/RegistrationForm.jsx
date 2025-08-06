@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { registrationOptions } from '@/data/appData.jsx';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { useUserRegistration } from '@/hooks/useEdgeFunctions';
@@ -20,7 +20,7 @@ const itemVariants = {
 
 function RegistrationForm() {
   const navigate = useNavigate();
-  const { user, completeRegistration } = useAuth();
+  const { user } = useAuth();
   const { registerUser, loading: registrationLoading } = useUserRegistration();
   const [selectedBanks, setSelectedBanks] = useState([]);
   const [selectedCards, setSelectedCards] = useState([]);
@@ -35,6 +35,7 @@ function RegistrationForm() {
       cards: selectedCards,
       programmes: selectedProgrammes,
       favourites: selectedFavourites,
+      isRegistered: true,
       registrationDate: new Date().toISOString(),
       preferences: {
         notifications: true,
@@ -46,8 +47,6 @@ function RegistrationForm() {
       // Usar Edge Function para registro
       await registerUser(user.email, userData);
       
-      // Completar registro local
-      completeRegistration(userData);
       navigate('/dashboard');
     } catch (error) {
       console.error('Erro no registro:', error);
@@ -64,7 +63,7 @@ function RegistrationForm() {
       className="w-full max-w-4xl"
     >
       <motion.div variants={itemVariants}>
-        <h1 className="text-3xl font-bold mb-2 text-center">Almost there, {user.name}!</h1>
+        <h1 className="text-3xl font-bold mb-2 text-center">Almost there, {user.user_metadata?.name}!</h1>
         <p className="text-muted-foreground text-center mb-8">
           Help us personalize your experience by selecting your preferences.
         </p>

@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -24,7 +24,7 @@ const itemVariants = {
 
 function AuthForm({ mode }) {
   const navigate = useNavigate();
-  const { login, signup } = useAuth();
+  const { signIn, signUp } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,12 +33,22 @@ function AuthForm({ mode }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isLogin) {
-      if(login(email, password)) {
+      signIn(email, password).then(() => {
         navigate('/dashboard');
-      }
+      }).catch(error => {
+        console.error('Login error:', error);
+      });
     } else {
-      signup(name, email, password);
-      navigate('/auth/register');
+      signUp(email, password, {
+        data: {
+          name: name,
+          isRegistered: false
+        }
+      }).then(() => {
+        navigate('/auth/register');
+      }).catch(error => {
+        console.error('Signup error:', error);
+      });
     }
   };
 

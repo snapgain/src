@@ -23,7 +23,10 @@ serve(async (req) => {
     // Process user registration logic
     const { data, error } = await supabaseClient.auth.admin.createUser({
       email: email,
-      user_metadata: userData
+      user_metadata: {
+        ...userData,
+        isRegistered: userData.isRegistered || true
+      }
     })
 
     if (error) {

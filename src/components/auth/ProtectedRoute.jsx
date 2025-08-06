@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -19,7 +19,7 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
   
-  if (!user.isRegistered && location.pathname !== '/auth/register') {
+  if (!user.user_metadata?.isRegistered && location.pathname !== '/auth/register') {
       return <Navigate to="/auth/register" state={{ from: location }} replace />;
   }
 
