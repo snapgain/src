@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { Toaster } from '@/components/ui/toaster';
 import { toast } from '@/components/ui/use-toast';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/SupabaseAuthContext';
 import LandingPage from '@/pages/LandingPage';
 import AuthPage from '@/pages/AuthPage';
 import DashboardPage from '@/pages/DashboardPage';
@@ -24,7 +24,7 @@ function AppContent() {
 
   useEffect(() => {
     if (!loading && user) {
-      if (!user.isRegistered) {
+      if (!user.user_metadata?.isRegistered) {
         toast({
           title: "Welcome! 👋",
           description: "Please complete your registration to continue.",

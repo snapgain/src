@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus, LayoutDashboard, Settings, LogOut } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,7 +71,7 @@ export function Header() {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.name || 'User'}</p>
+                      <p className="text-sm font-medium leading-none">{user.user_metadata?.name || 'User'}</p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user.email}
                       </p>

@@ -3,7 +3,7 @@ import React from 'react';
 import { Hero } from '@/components/sections/Hero';
 import { Features } from '@/components/sections/Features';
 import { SubscriptionCTA } from '@/components/sections/SubscriptionCTA';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
 
 function LandingPage() {
