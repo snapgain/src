@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, TrendingUp, Search } from 'lucide-react';
+import { Calculator, TrendingUp, Search, ShoppingCart, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { stores, filterOptions, rewardOptions } from '@/data/appData';
@@ -12,14 +12,19 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { usePlatformComparison } from '@/hooks/useEdgeFunctions';
+import { usePriceComparison } from '@/hooks/usePriceComparison';
 
 export function ComparisonTool() {
   const { user, isTrialExpired } = useAuth();
   const { comparePlatforms, loading: edgeLoading, results: edgeResults } = usePlatformComparison();
+  const { loading: priceLoading, error: priceError, resultados: priceResults, compararPrecos } = usePriceComparison();
+  
   const [selectedStore, setSelectedStore] = useState([]);
   const [purchaseAmount, setPurchaseAmount] = useState('100');
+  const [productSearch, setProductSearch] = useState('');
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [showComparison, setShowComparison] = useState(false);
+  const [showPriceComparison, setShowPriceComparison] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const resultsRef = useRef(null);
 
