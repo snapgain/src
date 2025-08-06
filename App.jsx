@@ -15,8 +15,6 @@ import PricingPage from '@/pages/PricingPage';
 import AboutPage from '@/pages/AboutPage';
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import TermsOfServicePage from '@/pages/TermsOfServicePage';
-import RealTimePolicyPage from '@/pages/RealTimePolicyPage';
-import AviosCalculatorPage from '@/pages/AviosCalculatorPage';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -44,8 +42,6 @@ function AppContent() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="/terms-of-service" element={<TermsOfServicePage />} />
-        <Route path="/real-time-policy" element={<RealTimePolicyPage />} />
-        <Route path="/avios-calculator" element={<AviosCalculatorPage />} />
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <DashboardPage />

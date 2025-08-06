@@ -13,7 +13,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { usePlatformComparison } from '@/hooks/useEdgeFunctions';
 import { usePriceComparison } from '@/hooks/usePriceComparison';
-import AviosCalculator from './AviosCalculator';
 
 export function ComparisonTool() {
   const { user, isTrialExpired } = useAuth();
@@ -26,7 +25,6 @@ export function ComparisonTool() {
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [showComparison, setShowComparison] = useState(false);
   const [showPriceComparison, setShowPriceComparison] = useState(false);
-  const [showAviosCalculator, setShowAviosCalculator] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const resultsRef = useRef(null);
 
@@ -270,13 +268,6 @@ export function ComparisonTool() {
         >
           {isCardConnected ? 'Cartão Conectado' : 'Conectar Cartão'}
         </Button>
-        <Button
-          onClick={() => setShowAviosCalculator(!showAviosCalculator)}
-          variant="outline"
-          className="border-2 border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white font-bold transition-all duration-300"
-        >
-          ✈️ Avios Strategy
-        </Button>
       </div>
 
       <div ref={resultsRef} className="mt-8">
@@ -287,17 +278,6 @@ export function ComparisonTool() {
           </motion.div>
         )}
         <AnimatePresence>
-          {showAviosCalculator && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mt-6"
-            >
-              <AviosCalculator />
-            </motion.div>
-          )}
-          
           {showComparison && !isLoading && (
             <ComparisonResults 
               rewards={[
