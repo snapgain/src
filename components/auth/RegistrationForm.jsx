@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { registrationOptions } from '@/data/appData.jsx';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
+import { useUserRegistration } from '@/hooks/useEdgeFunctions';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -20,21 +21,37 @@ const itemVariants = {
 function RegistrationForm() {
   const navigate = useNavigate();
   const { user, completeRegistration } = useAuth();
+  const { registerUser, loading: registrationLoading } = useUserRegistration();
   const [selectedBanks, setSelectedBanks] = useState([]);
   const [selectedCards, setSelectedCards] = useState([]);
   const [selectedProgrammes, setSelectedProgrammes] = useState([]);
   const [selectedFavourites, setSelectedFavourites] = useState([]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = {
+    
+    const userData = {
       banks: selectedBanks,
       cards: selectedCards,
       programmes: selectedProgrammes,
       favourites: selectedFavourites,
+      registrationDate: new Date().toISOString(),
+      preferences: {
+        notifications: true,
+        emailUpdates: true
+      }
     };
-    completeRegistration(formData);
-    navigate('/dashboard');
+
+    try {
+      // Usar Edge Function para registro
+      await registerUser(user.email, userData);
+      
+      // Completar registro local
+      completeRegistration(userData);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Erro no registro:', error);
+    }
   };
 
   if (!user) return null;
@@ -97,8 +114,13 @@ function RegistrationForm() {
           </motion.div>
         </div>
         <motion.div variants={itemVariants} className="mt-8">
-          <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-            Complete Registration
+          <Button 
+            type="submit" 
+            size="lg" 
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            disabled={registrationLoading}
+          >
+            {registrationLoading ? 'Registrando...' : 'Complete Registration'}
           </Button>
         </motion.div>
       </form>

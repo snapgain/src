@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "lib": ["deno.window"],
+    "strict": true,
+    "skipLibCheck": true,
+    "types": [
+      "https://deno.land/x/xhr@0.3.0/mod.d.ts",
+      "https://edge-runtime.vercel.app/types.d.ts"
+    ]
+  },
+  "fmt": {
+    "files": {
+      "include": ["**/*.ts", "**/*.js"]
+    },
+    "options": {
+      "useTabs": false,
+      "lineWidth": 80,
+      "indentWidth": 2,
+      "singleQuote": true,
+      "proseWrap": "preserve"
+    }
+  },
+  "lint": {
+    "files": {
+      "include": ["**/*.ts", "**/*.js"]
+    },
+    "rules": {
+      "tags": ["recommended"]
+    }
+  }
+}

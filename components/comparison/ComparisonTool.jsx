@@ -11,9 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
+import { usePlatformComparison } from '@/hooks/useEdgeFunctions';
 
 export function ComparisonTool() {
   const { user, isTrialExpired } = useAuth();
+  const { comparePlatforms, loading: edgeLoading, results: edgeResults } = usePlatformComparison();
   const [selectedStore, setSelectedStore] = useState([]);
   const [purchaseAmount, setPurchaseAmount] = useState('100');
   const [selectedFilters, setSelectedFilters] = useState([]);
@@ -29,16 +31,41 @@ export function ComparisonTool() {
   const userFavouriteStores = stores.filter(s => s.isFavourite);
   const allStoreOptions = stores.map(s => ({ value: s.id, label: s.name }));
 
+  // Função para comparar plataformas usando Edge Function
+  const performComparison = async () => {
+    if (selectedStore.length === 0 || !purchaseAmount) return;
+
+    setIsLoading(true);
+    setShowComparison(true);
+
+    try {
+      const platforms = selectedStore.map(storeId => {
+        const store = stores.find(s => s.id === storeId);
+        return store?.name;
+      }).filter(Boolean);
+
+      const criteria = {
+        purchaseAmount: parseFloat(purchaseAmount),
+        filters: selectedFilters,
+        userPreferences: user?.preferences || {}
+      };
+
+      await comparePlatforms(platforms, criteria);
+      
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } catch (error) {
+      console.error('Erro na comparação:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Atualiza resultados em tempo real
   useEffect(() => {
-    // Só mostra comparação se loja foi selecionada
     if (selectedStore.length > 0 && purchaseAmount) {
-      setIsLoading(true);
-      setShowComparison(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 400); // Simula tempo de cálculo
+      performComparison();
     } else {
       setShowComparison(false);
     }
