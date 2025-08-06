@@ -6,32 +6,20 @@
       "extensions": [
         "bradlc.vscode-tailwindcss",
         "esbenp.prettier-vscode",
-        "ms-vscode.vscode-typescript-next",
-        "ms-vscode.vscode-json",
-        "formulahendry.auto-rename-tag"
+        "ms-vscode.vscode-typescript-next"
       ],
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash",
-        "editor.formatOnSave": true
+        "terminal.integrated.defaultProfile.linux": "bash"
       }
     }
   },
-  "forwardPorts": [5173, 54321, 54323],
+  "forwardPorts": [5173],
   "portsAttributes": {
     "5173": {
       "label": "SnapGain App",
       "onAutoForward": "notify"
-    },
-    "54321": {
-      "label": "Supabase API",
-      "onAutoForward": "silent"
-    },
-    "54323": {
-      "label": "Supabase Studio",
-      "onAutoForward": "silent"
     }
   },
-  "postCreateCommand": "chmod +x codespaces-setup.sh && ./codespaces-setup.sh",
-  "postStartCommand": "echo '🚀 SnapGain pronto! Execute: npm run dev'",
+  "postCreateCommand": "echo 'Configuração manual necessária'",
   "remoteUser": "node"
 }
