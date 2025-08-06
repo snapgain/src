@@ -29,32 +29,65 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const login = (email, password) => {
+  const login = async (email, password) => {
     setLoading(true);
-    // Mock login
-    if (email === "user@snapgain.com" && password === "password123") {
-      const trialStart = new Date().toISOString();
-      const userData = { email, name: 'Demo User', isRegistered: true, trialStart };
-      localStorage.setItem('snapgain_user', JSON.stringify(userData));
-      setUser(userData);
-      toast({ title: "Login Successful!", description: "Welcome back to SnapGain." });
-      setLoading(false);
-      return true;
-    } else {
-      toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
+    try {
+      // Mock login - aceita qualquer email/senha válida para demo
+      if (email && password && email.includes('@') && password.length >= 6) {
+        const trialStart = new Date().toISOString();
+        const userData = { 
+          email, 
+          name: email.split('@')[0], 
+          isRegistered: true, 
+          trialStart,
+          subscription: 'trial' // trial, premium, canceled
+        };
+        localStorage.setItem('snapgain_user', JSON.stringify(userData));
+        setUser(userData);
+        toast({ title: "Login Successful!", description: "Welcome back to SnapGain." });
+        setLoading(false);
+        return true;
+      } else {
+        toast({ title: "Login Failed", description: "Please enter a valid email and password (6+ characters).", variant: "destructive" });
+        setLoading(false);
+        return false;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({ title: "Login Error", description: "Something went wrong. Please try again.", variant: "destructive" });
       setLoading(false);
       return false;
     }
   };
 
-  const signup = (name, email, password) => {
+  const signup = async (name, email, password) => {
     setLoading(true);
-    const trialStart = new Date().toISOString();
-    const userData = { name, email, isRegistered: false, trialStart };
-    localStorage.setItem('snapgain_user', JSON.stringify(userData));
-    setUser(userData);
-    toast({ title: "Account Created!", description: "Let's get you set up." });
-    setLoading(false);
+    try {
+      if (name && email && password && email.includes('@') && password.length >= 6) {
+        const trialStart = new Date().toISOString();
+        const userData = { 
+          name, 
+          email, 
+          isRegistered: false, 
+          trialStart,
+          subscription: 'trial'
+        };
+        localStorage.setItem('snapgain_user', JSON.stringify(userData));
+        setUser(userData);
+        toast({ title: "Account Created!", description: "Let's get you set up." });
+        setLoading(false);
+        return true;
+      } else {
+        toast({ title: "Signup Failed", description: "Please fill all fields correctly.", variant: "destructive" });
+        setLoading(false);
+        return false;
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      toast({ title: "Signup Error", description: "Something went wrong. Please try again.", variant: "destructive" });
+      setLoading(false);
+      return false;
+    }
   };
   
   const completeRegistration = (formData) => {
@@ -72,6 +105,14 @@ export function AuthProvider({ children }) {
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
   };
 
+  const updateSubscription = (subscriptionType) => {
+    if (user) {
+      const updatedUser = { ...user, subscription: subscriptionType };
+      localStorage.setItem('snapgain_user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    }
+  };
+
   // Verifica se trial expirou
   const isTrialExpired = user && user.trialStart && ((new Date() - new Date(user.trialStart)) > 3 * 24 * 60 * 60 * 1000);
 
@@ -82,16 +123,21 @@ export function AuthProvider({ children }) {
     signup,
     completeRegistration,
     logout,
+    updateSubscription,
     isTrialExpired
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
 
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

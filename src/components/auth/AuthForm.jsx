@@ -24,31 +24,24 @@ const itemVariants = {
 
 function AuthForm({ mode }) {
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { login, signup } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const isLogin = mode === 'login';
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (isLogin) {
-      signIn(email, password).then(() => {
+      const success = await login(email, password);
+      if (success) {
         navigate('/dashboard');
-      }).catch(error => {
-        console.error('Login error:', error);
-      });
+      }
     } else {
-      signUp(email, password, {
-        data: {
-          name: name,
-          isRegistered: false
-        }
-      }).then(() => {
+      const success = await signup(name, email, password);
+      if (success) {
         navigate('/auth/register');
-      }).catch(error => {
-        console.error('Signup error:', error);
-      });
+      }
     }
   };
 

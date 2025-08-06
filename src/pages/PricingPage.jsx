@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
+import StripePayment from '@/components/payment/StripePayment';
+import { useAuth } from '@/contexts/AuthContext';
 
-const PlanCard = ({ title, price, description, features, bestValue, onSelect }) => (
+const PlanCard = ({ title, price, priceValue, description, features, bestValue, onSelect, billingCycle }) => (
     <div className={`rounded-xl p-8 border-2 ${bestValue ? 'border-primary shadow-2xl' : 'border-border'} relative card-hover bg-white`}>
         {bestValue && (
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">
@@ -25,7 +27,7 @@ const PlanCard = ({ title, price, description, features, bestValue, onSelect }) 
         </ul>
         
         <Button
-            onClick={onSelect}
+            onClick={() => onSelect({ title, priceValue, billingCycle, type: 'premium' })}
             className={`w-full text-lg h-12 ${bestValue ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}
         >
             Get Started
@@ -35,24 +37,79 @@ const PlanCard = ({ title, price, description, features, bestValue, onSelect }) 
 
 function PricingPage() {
   const navigate = useNavigate();
-  const handleSubscribe = () => navigate('/auth/signup');
+  const { user } = useAuth();
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
+
+  const handleSubscribe = (plan) => {
+    if (!user) {
+      navigate('/auth/signup');
+      return;
+    }
+    setSelectedPlan(plan);
+    setShowPayment(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowPayment(false);
+    navigate('/dashboard');
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPayment(false);
+    setSelectedPlan(null);
+  };
 
   const plans = {
       monthly: {
-          title: 'Monthly',
-          price: '£7.99',
+          title: 'Monthly Plan',
+          price: '£7.99/month',
+          priceValue: 7.99,
+          billingCycle: 'monthly',
           description: 'Per month, billed monthly.',
-          features: ['Unlimited comparisons', 'Real-time data', 'Personalized alerts', 'Cancel anytime'],
+          features: [
+            'Unlimited comparisons', 
+            'Real-time cashback rates', 
+            'Personalized alerts', 
+            'Priority customer support',
+            'Cancel anytime'
+          ],
           bestValue: false
       },
       annual: {
-          title: 'Annual',
-          price: '£60',
+          title: 'Annual Plan',
+          price: '£59.99/year',
+          priceValue: 59.99,
+          billingCycle: 'annual',
           description: 'Per year, billed annually.',
-          features: ['All monthly features', 'Save over 40% (£35+)', 'Priority support'],
+          features: [
+            'All monthly features', 
+            'Save over 37% (£36+ savings)', 
+            'Priority support',
+            'Advanced analytics',
+            'API access',
+            'Custom notifications'
+          ],
           bestValue: true
       }
   };
+
+  if (showPayment) {
+    return (
+      <>
+        <Helmet>
+          <title>Payment - SnapGain</title>
+        </Helmet>
+        <div className="container mx-auto px-4 py-16 flex justify-center">
+          <StripePayment 
+            plan={{ ...selectedPlan, price: selectedPlan.priceValue }}
+            onSuccess={handlePaymentSuccess}
+            onCancel={handlePaymentCancel}
+          />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -65,13 +122,22 @@ function PricingPage() {
             Choose Your <span className="gradient-text">Perfect Plan</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Start with a 7-day free trial. No commitments, cancel anytime. Unlock the full power of SnapGain today.
+            Start with a 3-day free trial. No commitments, cancel anytime. Unlock the full power of SnapGain today.
           </p>
         </div>
         
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           <PlanCard {...plans.monthly} onSelect={handleSubscribe} />
           <PlanCard {...plans.annual} onSelect={handleSubscribe} />
+        </div>
+        
+        <div className="text-center mt-12">
+          <p className="text-sm text-muted-foreground mb-4">
+            💳 Secure payments powered by Stripe
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Questions? Contact us at support@snapgain.co.uk
+          </p>
         </div>
       </div>
     </>
