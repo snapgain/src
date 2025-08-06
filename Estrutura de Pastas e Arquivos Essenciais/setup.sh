@@ -3,6 +3,20 @@
 
 echo "🚀 Configurando SnapGain para VS Code Online..."
 
+# Verificar estrutura atual
+echo "📁 Verificando estrutura..."
+pwd
+ls -la
+
+# Verificar se os arquivos estão na raiz ou em subpasta
+if [ -f "package.json" ]; then
+    echo "✅ package.json encontrado na raiz"
+elif [ -f "Estrutura de Pastas e Arquivos Essenciais/package.json" ]; then
+    echo "📂 Movendo arquivos da subpasta para raiz..."
+    cp -r "Estrutura de Pastas e Arquivos Essenciais/"* .
+    rm -rf "Estrutura de Pastas e Arquivos Essenciais"
+fi
+
 # Instalar dependências
 echo "📦 Instalando dependências..."
 npm install
@@ -10,7 +24,11 @@ npm install
 # Configurar variáveis de ambiente
 if [ ! -f ".env.local" ]; then
     echo "🔧 Configurando variáveis de ambiente..."
-    cp src/.env.local .env.local
+    if [ -f "src/.env.local" ]; then
+        cp src/.env.local .env.local
+    else
+        echo "⚠️ Arquivo .env.local não encontrado em src/"
+    fi
 fi
 
 # Criar arquivo de configuração do VS Code para Codespaces
