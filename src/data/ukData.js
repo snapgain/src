@@ -734,11 +734,11 @@ export const ukAppData = {
       {
         name: 'Free',
         price: 0,
-        period: '3 days',
+        period: 'month',
         features: [
           'Basic cashback comparison',
           'Up to 5 searches per day',
-          'All UK cashback platforms',
+          'TopCashback integration',
           'Email support'
         ]
       },
@@ -756,7 +756,7 @@ export const ukAppData = {
       },
       {
         name: 'Pro',
-        price: 60.00,
+        price: 59.99,
         period: 'year',
         features: [
           'Everything in Premium',
