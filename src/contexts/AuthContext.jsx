@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/customSupabaseClient';
 
 const AuthContext = createContext(null);
 
@@ -109,6 +110,41 @@ export function AuthProvider({ children }) {
     setLoading(false);
   };
 
+  const signInWithProvider = async (provider) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+
+      if (error) {
+        console.error('OAuth error:', error);
+        toast({ 
+          title: "Authentication Error", 
+          description: error.message || "Failed to authenticate with Google", 
+          variant: "destructive" 
+        });
+        setLoading(false);
+        return false;
+      }
+
+      // O usuário será redirecionado para Google, então não precisamos fazer mais nada aqui
+      return true;
+    } catch (error) {
+      console.error('OAuth error:', error);
+      toast({ 
+        title: "Authentication Error", 
+        description: "Something went wrong with Google authentication", 
+        variant: "destructive" 
+      });
+      setLoading(false);
+      return false;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('snapgain_user');
     setUser(null);
@@ -131,6 +167,7 @@ export function AuthProvider({ children }) {
     loading,
     login,
     signup,
+    signInWithProvider,
     completeRegistration,
     logout,
     updateSubscription,
