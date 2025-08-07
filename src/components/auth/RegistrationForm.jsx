@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { registrationOptions } from '@/data/appData.jsx';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { useUserRegistration } from '@/hooks/useEdgeFunctions';

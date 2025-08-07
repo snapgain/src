@@ -2,8 +2,9 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { LogIn, UserPlus, LayoutDashboard, Settings, LogOut } from 'lucide-react';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { Badge } from '@/components/ui/badge';
+import { LogIn, UserPlus, LayoutDashboard, Settings, LogOut, Crown, Clock } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
