@@ -2,14 +2,85 @@ import { TrendingUp, Filter, Clock } from 'lucide-react';
 import React from 'react';
 
 export const stores = [
-  { id: 'amazon', name: 'Amazon', logo: '🛒', isFavourite: true },
-  { id: 'tesco', name: 'Tesco', logo: '🛍️', isFavourite: true },
-  { id: 'john-lewis', name: 'John Lewis', logo: '🏪', isFavourite: false },
-  { id: 'argos', name: 'Argos', logo: '📦', isFavourite: false },
+  // Major Retailers
+  { id: 'amazon-uk', name: 'Amazon UK', logo: '🛒', isFavourite: true },
+  { id: 'john-lewis', name: 'John Lewis', logo: '🏪', isFavourite: true },
   { id: 'currys', name: 'Currys', logo: '💻', isFavourite: true },
-  { id: 'boots', name: 'Boots', logo: '💊', isFavourite: false },
+  { id: 'argos', name: 'Argos', logo: '📦', isFavourite: true },
+  { id: 'very', name: 'Very', logo: '🛍️', isFavourite: false },
+  
+  // Supermarkets
+  { id: 'tesco', name: 'Tesco', logo: '🛍️', isFavourite: true },
+  { id: 'sainsburys', name: 'Sainsbury\'s', logo: '🍊', isFavourite: true },
   { id: 'waitrose', name: 'Waitrose', logo: '🍏', isFavourite: false },
-  { id: 'sainsburys', name: 'Sainsbury\'s', logo: '🍊', isFavourite: false },
+  { id: 'morrisons', name: 'Morrisons', logo: '🛒', isFavourite: false },
+  { id: 'asda', name: 'ASDA', logo: '🛒', isFavourite: false },
+  { id: 'iceland', name: 'Iceland', logo: '🧊', isFavourite: false },
+  
+  // Fashion & Clothing
+  { id: 'asos', name: 'ASOS', logo: '👗', isFavourite: true },
+  { id: 'next', name: 'Next', logo: '👔', isFavourite: true },
+  { id: 'marks-spencer', name: 'Marks & Spencer', logo: '👗', isFavourite: true },
+  { id: 'h-and-m', name: 'H&M', logo: '👕', isFavourite: false },
+  { id: 'zara', name: 'Zara', logo: '👗', isFavourite: false },
+  { id: 'primark', name: 'Primark', logo: '👕', isFavourite: false },
+  { id: 'boohoo', name: 'Boohoo', logo: '👗', isFavourite: false },
+  { id: 'new-look', name: 'New Look', logo: '👗', isFavourite: false },
+  
+  // Beauty & Health
+  { id: 'boots', name: 'Boots', logo: '💊', isFavourite: true },
+  { id: 'superdrug', name: 'Superdrug', logo: '💄', isFavourite: false },
+  { id: 'lush', name: 'Lush', logo: '🛁', isFavourite: false },
+  
+  // Sports & Outdoor
+  { id: 'jd-sports', name: 'JD Sports', logo: '👟', isFavourite: false },
+  { id: 'nike', name: 'Nike', logo: '👟', isFavourite: true },
+  { id: 'adidas', name: 'Adidas', logo: '👟', isFavourite: false },
+  { id: 'decathlon', name: 'Decathlon', logo: '⚽', isFavourite: false },
+  
+  // Travel & Booking
+  { id: 'booking-com', name: 'Booking.com', logo: '🏨', isFavourite: true },
+  { id: 'expedia', name: 'Expedia', logo: '✈️', isFavourite: false },
+  { id: 'hotels-com', name: 'Hotels.com', logo: '�', isFavourite: false },
+  { id: 'trainline', name: 'Trainline', logo: '🚂', isFavourite: false },
+  
+  // Electronics & Tech
+  { id: 'apple', name: 'Apple', logo: '📱', isFavourite: true },
+  { id: 'samsung', name: 'Samsung', logo: '�', isFavourite: false },
+  { id: 'carphone-warehouse', name: 'Carphone Warehouse', logo: '📱', isFavourite: false },
+  
+  // Food & Delivery
+  { id: 'uber-eats', name: 'Uber Eats', logo: '🍔', isFavourite: false },
+  { id: 'deliveroo', name: 'Deliveroo', logo: '🍕', isFavourite: false },
+  { id: 'just-eat', name: 'Just Eat', logo: '🍜', isFavourite: false },
+  { id: 'greggs', name: 'Greggs', logo: '🥖', isFavourite: false },
+  { id: 'pizza-express', name: 'Pizza Express', logo: '🍕', isFavourite: false },
+  { id: 'caffe-nero', name: 'Caffè Nero', logo: '☕', isFavourite: false },
+  
+  // Entertainment & Streaming
+  { id: 'spotify', name: 'Spotify', logo: '🎵', isFavourite: false },
+  { id: 'netflix', name: 'Netflix', logo: '�', isFavourite: false },
+  { id: 'amazon-prime', name: 'Amazon Prime Video', logo: '📺', isFavourite: false },
+  
+  // Marketplace & Online
+  { id: 'ebay', name: 'eBay', logo: '🛒', isFavourite: true },
+  { id: 'aliexpress', name: 'AliExpress', logo: '🛒', isFavourite: false },
+  { id: 'wilko', name: 'Wilko', logo: '�', isFavourite: false },
+  
+  // Home & Garden
+  { id: 'ikea', name: 'IKEA', logo: '🪑', isFavourite: false },
+  { id: 'b-and-q', name: 'B&Q', logo: '🔨', isFavourite: false },
+  { id: 'homebase', name: 'Homebase', logo: '🏠', isFavourite: false },
+  
+  // Energy & Utilities
+  { id: 'british-gas', name: 'British Gas', logo: '⚡', isFavourite: false },
+  { id: 'eon', name: 'E.ON', logo: '⚡', isFavourite: false },
+  { id: 'ovo-energy', name: 'OVO Energy', logo: '⚡', isFavourite: false },
+  
+  // Virgin Services
+  { id: 'virgin-atlantic', name: 'Virgin Atlantic', logo: '✈️', isFavourite: false },
+  { id: 'virgin-media', name: 'Virgin Media', logo: '📺', isFavourite: false },
+  { id: 'virgin-active', name: 'Virgin Active', logo: '💪', isFavourite: false }
 ];
 
 export const rewardOptions = [
@@ -72,8 +143,7 @@ export const rewardOptions = [
 
 export const filterOptions = [
   { id: 'cashback', label: 'Cashback', icon: '💰' },
-  { id: 'points', label: 'Points & Miles', icon: '✈️' },
-  { id: 'gift-cards', label: 'Gift Cards', icon: '🎁' }
+  { id: 'points', label: 'Points & Miles', icon: '✈️' }
 ];
 
 export const features = [
