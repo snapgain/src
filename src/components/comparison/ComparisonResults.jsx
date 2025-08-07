@@ -198,5 +198,3 @@ export function ComparisonResults({ rewards, purchaseAmount, onClose, userBanks 
     </Card>
   );
 }
-
-export default ComparisonResults;
