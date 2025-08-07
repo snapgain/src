@@ -22,7 +22,7 @@ function AppContent() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Remove o redirecionamento automático - usuário pode escolher quando se registrar
+  // Removido redirecionamento automático para evitar problemas de navegação
   
   return (
     <Routes>

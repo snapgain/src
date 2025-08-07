@@ -14,7 +14,7 @@ const StrategyStep = ({ number, title, description }) => (
     </div>
 );
 
-const RewardCard = ({ reward, purchaseAmount, isBestValue }) => {
+const RewardCard = ({ reward, purchaseAmount, isBestValue, userBanks = [], userCards = [] }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     const gainValue = reward.type === 'cashback' || reward.type === 'gift-card'
@@ -24,6 +24,46 @@ const RewardCard = ({ reward, purchaseAmount, isBestValue }) => {
     const handleGoToPlatform = () => {
         window.open(reward.affiliateLink, '_blank', 'noopener,noreferrer');
     };
+
+    // Gerar estratégia personalizada baseada na recompensa específica
+    const generateStrategy = (reward) => {
+        const cashbackAmount = reward.type === 'cashback' ? (reward.amount * (purchaseAmount / 100)) : 0;
+        const aviosFromBooster = cashbackAmount > 0 ? Math.floor(cashbackAmount * 2000 / 37) : 0;
+        
+        const strategies = {
+            'topcashback': [
+                { number: "1", title: "Visit TopCashback", description: "Log into your TopCashback account and search for the retailer." },
+                { number: "2", title: "Click Through", description: "Click the 'Get Cashback' button to be redirected to the retailer's website." },
+                { number: "3", title: "Complete Purchase", description: `Make your £${purchaseAmount} purchase as normal to earn ${gainValue} cashback.` },
+                ...(cashbackAmount > 0 ? [{ number: "4", title: "Avios Booster Option", description: `Use your £${cashbackAmount.toFixed(2)} cashback to buy ~${aviosFromBooster} Avios via Avios Booster for maximum value.` }] : [])
+            ],
+            'quidco': [
+                { number: "1", title: "Access Quidco", description: "Log into your Quidco account and find the retailer." },
+                { number: "2", title: "Activate Cashback", description: "Click through to the retailer to activate cashback tracking." },
+                { number: "3", title: "Shop & Earn", description: `Complete your purchase to earn ${gainValue} cashback.` },
+                ...(cashbackAmount > 0 ? [{ number: "4", title: "Avios Booster Option", description: `Convert your £${cashbackAmount.toFixed(2)} cashback to ~${aviosFromBooster} Avios via Avios Booster.` }] : [])
+            ],
+            'avios': [
+                { number: "1", title: "BA eStore Login", description: "Visit the British Airways eStore and log in with your Executive Club details." },
+                { number: "2", title: "Find Retailer", description: "Search for your chosen retailer and click through to their website." },
+                { number: "3", title: "Earn Avios", description: `Complete your £${purchaseAmount} purchase to earn ${gainValue}.` },
+                { number: "4", title: "Best for Miles", description: "This strategy maximizes your Avios earning directly without conversions." }
+            ],
+            'amex-gold': [
+                { number: "1", title: "Use Amex Gold", description: "Pay with your American Express Gold Card to earn points." },
+                { number: "2", title: "Combine with Platform", description: "Use through a cashback portal for double rewards." },
+                { number: "3", title: "Maximize Points", description: `Earn both credit card points and platform rewards on your £${purchaseAmount} purchase.` }
+            ]
+        };
+
+        return strategies[reward.id] || [
+            { number: "1", title: "Visit Platform", description: `Log into ${reward.name} and find your chosen retailer.` },
+            { number: "2", title: "Activate Rewards", description: "Click through to activate reward tracking." },
+            { number: "3", title: "Complete Purchase", description: `Make your £${purchaseAmount} purchase to earn ${gainValue}.` }
+        ];
+    };
+
+    const currentStrategy = generateStrategy(reward);
 
     return (
         <motion.div
@@ -68,9 +108,14 @@ const RewardCard = ({ reward, purchaseAmount, isBestValue }) => {
                     >
                         <h5 className="font-bold mb-3">Step-by-step Strategy:</h5>
                         <div className="space-y-3">
-                            <StrategyStep number="1" title="Buy Gift Card" description="Purchase a £100 gift card from JamDoughnut using your Amex Gold card." />
-                            <StrategyStep number="2" title="Shop via Avios" description="Go to the Avios eStore and click through to the retailer's website." />
-                            <StrategyStep number="3" title="Pay with Gift Card" description="At checkout, use the gift card you purchased to complete the transaction." />
+                            {currentStrategy.map((step, index) => (
+                                <StrategyStep 
+                                    key={index}
+                                    number={step.number} 
+                                    title={step.title} 
+                                    description={step.description} 
+                                />
+                            ))}
                         </div>
                     </motion.div>
                 )}
@@ -79,7 +124,7 @@ const RewardCard = ({ reward, purchaseAmount, isBestValue }) => {
     );
 };
 
-export function ComparisonResults({ rewards, purchaseAmount, onClose }) {
+export function ComparisonResults({ rewards, purchaseAmount, onClose, userBanks = [], userCards = [] }) {
   if (!rewards || rewards.length === 0) {
     return (
       <motion.div
@@ -94,11 +139,29 @@ export function ComparisonResults({ rewards, purchaseAmount, onClose }) {
     )
   }
 
+  // Ordenar por valor considerando Avios Booster
   const sortedRewards = [...rewards].sort((a, b) => {
-      const valueA = a.type === 'points' ? (a.amount * 0.008) : a.amount;
-      const valueB = b.type === 'points' ? (b.amount * 0.008) : b.amount;
+      let valueA = a.type === 'points' ? (a.amount * 0.008) : a.amount;
+      let valueB = b.type === 'points' ? (b.amount * 0.008) : b.amount;
+      
+      // Se for cashback, considerar potencial compra de Avios Booster
+      if (a.type === 'cashback') {
+        const cashbackAmount = a.amount * (purchaseAmount / 100);
+        const aviosFromBooster = cashbackAmount * 2000 / 37; // Aproximadamente 54 Avios por £1
+        valueA = Math.max(valueA, aviosFromBooster * 0.008);
+      }
+      
+      if (b.type === 'cashback') {
+        const cashbackAmount = b.amount * (purchaseAmount / 100);
+        const aviosFromBooster = cashbackAmount * 2000 / 37;
+        valueB = Math.max(valueB, aviosFromBooster * 0.008);
+      }
+      
       return valueB - valueA;
   });
+
+  // Mostrar apenas as 5 melhores opções
+  const topRewards = sortedRewards.slice(0, 5);
 
   return (
     <Card
@@ -120,8 +183,15 @@ export function ComparisonResults({ rewards, purchaseAmount, onClose }) {
       </CardHeader>
       <CardContent className="p-6">
         <div className="grid gap-4">
-          {sortedRewards.map((reward, index) => (
-            <RewardCard key={reward.id} reward={reward} purchaseAmount={purchaseAmount} isBestValue={index === 0} />
+          {topRewards.map((reward, index) => (
+            <RewardCard 
+              key={reward.id} 
+              reward={reward} 
+              purchaseAmount={purchaseAmount} 
+              isBestValue={index === 0}
+              userBanks={userBanks}
+              userCards={userCards}
+            />
           ))}
         </div>
       </CardContent>
