@@ -29,6 +29,16 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const validatePassword = (password) => {
+    const hasMinLength = password.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    return hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
+  };
+
   const login = async (email, password) => {
     setLoading(true);
     try {
@@ -63,7 +73,7 @@ export function AuthProvider({ children }) {
   const signup = async (name, email, password) => {
     setLoading(true);
     try {
-      if (name && email && password && email.includes('@') && password.length >= 6) {
+      if (name && email && password && email.includes('@') && validatePassword(password)) {
         const trialStart = new Date().toISOString();
         const userData = { 
           name, 
@@ -78,7 +88,7 @@ export function AuthProvider({ children }) {
         setLoading(false);
         return true;
       } else {
-        toast({ title: "Signup Failed", description: "Please fill all fields correctly.", variant: "destructive" });
+        toast({ title: "Signup Failed", description: "Please fill all fields correctly and ensure password meets requirements.", variant: "destructive" });
         setLoading(false);
         return false;
       }

@@ -3,7 +3,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, requireRegistration = false }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -19,7 +19,8 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
   
-  if (!user.user_metadata?.isRegistered && location.pathname !== '/auth/register') {
+  // Só redireciona para registro se explicitamente requerido (como na página dashboard)
+  if (requireRegistration && !user.isRegistered && location.pathname !== '/auth/register') {
       return <Navigate to="/auth/register" state={{ from: location }} replace />;
   }
 

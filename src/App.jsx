@@ -22,17 +22,7 @@ function AppContent() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading && user) {
-      if (!user.isRegistered) {
-        toast({
-          title: "Welcome! 👋",
-          description: "Please complete your registration to continue.",
-        });
-        navigate('/auth/register');
-      }
-    }
-  }, [user, loading, navigate]);
+  // Remove o redirecionamento automático - usuário pode escolher quando se registrar
   
   return (
     <Routes>
@@ -47,12 +37,12 @@ function AppContent() {
         <Route path="/real-time-policy" element={<RealTimePolicyPage />} />
         <Route path="/avios-calculator" element={<AviosCalculatorPage />} />
         <Route path="/dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute requireRegistration={true}>
             <DashboardPage />
           </ProtectedRoute>
         } />
         <Route path="/settings" element={
-          <ProtectedRoute>
+          <ProtectedRoute requireRegistration={true}>
             <SettingsPage />
           </ProtectedRoute>
         } />

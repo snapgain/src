@@ -16,7 +16,7 @@ export function Footer() {
                     <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center text-2xl text-white font-bold">S</div>
                     <span className="text-xl font-bold">SnapGain UK</span>
                 </div>
-                <p className="text-muted-foreground text-sm">UK's smartest cashback comparison. Real-time rates from TopCashback, JamDoughnut & Amazon UK.</p>
+                <p className="text-muted-foreground text-sm">UK's smartest cashback comparison. Real-time rates from UK stores and programs.</p>
             </div>
             <div className="grid grid-cols-2 md:col-span-2 gap-8">
                  <div>

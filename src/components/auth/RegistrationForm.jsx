@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { registrationOptions } from '@/data/appData.jsx';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
-import { useUserRegistration } from '@/hooks/useEdgeFunctions';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -20,15 +19,21 @@ const itemVariants = {
 
 function RegistrationForm() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { registerUser, loading: registrationLoading } = useUserRegistration();
+  const { user, completeRegistration } = useAuth();
   const [selectedBanks, setSelectedBanks] = useState([]);
   const [selectedCards, setSelectedCards] = useState([]);
   const [selectedProgrammes, setSelectedProgrammes] = useState([]);
   const [selectedFavourites, setSelectedFavourites] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleSkip = () => {
+    // Permite que o usuário pule o registro e vá para o dashboard
+    navigate('/');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     
     const userData = {
       banks: selectedBanks,
@@ -44,12 +49,13 @@ function RegistrationForm() {
     };
 
     try {
-      // Usar Edge Function para registro
-      await registerUser(user.email, userData);
-      
+      // Usar o método do AuthContext
+      completeRegistration(userData);
       navigate('/dashboard');
     } catch (error) {
       console.error('Erro no registro:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,14 +118,24 @@ function RegistrationForm() {
             />
           </motion.div>
         </div>
-        <motion.div variants={itemVariants} className="mt-8">
+        <motion.div variants={itemVariants} className="mt-8 space-y-3">
           <Button 
             type="submit" 
             size="lg" 
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-            disabled={registrationLoading}
+            disabled={loading}
           >
-            {registrationLoading ? 'Registrando...' : 'Complete Registration'}
+            {loading ? 'Registrando...' : 'Complete Registration'}
+          </Button>
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="lg" 
+            className="w-full"
+            onClick={handleSkip}
+            disabled={loading}
+          >
+            Skip for now
           </Button>
         </motion.div>
       </form>

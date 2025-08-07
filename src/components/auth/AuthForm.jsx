@@ -28,10 +28,48 @@ function AuthForm({ mode }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const isLogin = mode === 'login';
+
+  const validatePassword = (password) => {
+    const hasMinLength = password.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    if (!hasMinLength) return 'Password must be at least 8 characters long';
+    if (!hasUpperCase) return 'Password must contain at least one uppercase letter';
+    if (!hasLowerCase) return 'Password must contain at least one lowercase letter';
+    if (!hasNumber) return 'Password must contain at least one number';
+    if (!hasSpecialChar) return 'Password must contain at least one special character';
+    
+    return '';
+  };
+
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    
+    if (!isLogin && newPassword) {
+      const error = validatePassword(newPassword);
+      setPasswordError(error);
+    } else {
+      setPasswordError('');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!isLogin) {
+      const passwordValidationError = validatePassword(password);
+      if (passwordValidationError) {
+        setPasswordError(passwordValidationError);
+        return;
+      }
+    }
+    
     if (isLogin) {
       const success = await login(email, password);
       if (success) {
@@ -72,10 +110,37 @@ function AuthForm({ mode }) {
         </motion.div>
         <motion.div variants={itemVariants} className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <Input 
+            id="password" 
+            type="password" 
+            placeholder="••••••••" 
+            value={password} 
+            onChange={handlePasswordChange} 
+            required 
+            className={passwordError ? 'border-red-500' : ''}
+          />
+          {passwordError && (
+            <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+          )}
+          {!isLogin && (
+            <div className="text-xs text-muted-foreground mt-2">
+              Password must contain:
+              <ul className="list-disc list-inside mt-1 space-y-1">
+                <li>At least 8 characters</li>
+                <li>One uppercase letter</li>
+                <li>One lowercase letter</li>
+                <li>One number</li>
+                <li>One special character (!@#$%^&*)</li>
+              </ul>
+            </div>
+          )}
         </motion.div>
         <motion.div variants={itemVariants}>
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white">
+          <Button 
+            type="submit" 
+            className="w-full bg-primary hover:bg-primary/90 text-white"
+            disabled={!isLogin && passwordError}
+          >
             {isLogin ? "Sign In" : "Sign Up"}
           </Button>
         </motion.div>
