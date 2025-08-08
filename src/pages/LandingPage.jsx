@@ -57,6 +57,19 @@ const buttonHoverVariants = {
   tap: { scale: 0.95 }
 };
 
+const iconHoverVariants = {
+  rest: { scale: 1, rotate: 0 },
+  hover: { 
+    scale: 1.1, 
+    rotate: 5,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 10
+    }
+  }
+};
+
 const features = [
   {
     icon: TrendingUp,
@@ -163,25 +176,29 @@ function LandingPage() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {features.map((feature, index) => (
               <motion.div 
                 key={index} 
                 variants={itemVariants}
                 initial="rest"
                 whileHover="hover"
+                className="w-full"
               >
-                <motion.div variants={cardHoverVariants}>
+                <motion.div variants={cardHoverVariants} className="h-full">
                   <Card className="h-full cursor-pointer transition-shadow duration-300 hover:shadow-xl">
-                    <CardHeader>
-                      <div className="flex items-center space-x-4 mb-4">
-                        <div className="w-16 h-16 bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] rounded-lg flex items-center justify-center flex-shrink-0">
-                          <feature.icon className="h-8 w-8 text-white" />
-                        </div>
-                        <CardTitle className="text-xl">{feature.title}</CardTitle>
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center space-x-4">
+                        <motion.div 
+                          className="w-12 h-12 bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] rounded-lg flex items-center justify-center flex-shrink-0"
+                          variants={iconHoverVariants}
+                        >
+                          <feature.icon className="h-6 w-6 text-white" />
+                        </motion.div>
+                        <CardTitle className="text-xl flex-1">{feature.title}</CardTitle>
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <p className="text-muted-foreground">{feature.description}</p>
                     </CardContent>
                   </Card>
