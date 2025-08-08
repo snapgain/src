@@ -175,8 +175,8 @@ function LandingPage() {
                   <Card className="h-full cursor-pointer transition-shadow duration-300 hover:shadow-xl">
                     <CardHeader>
                       <div className="flex items-center space-x-4 mb-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] rounded-lg flex items-center justify-center flex-shrink-0">
-                          <feature.icon className="h-6 w-6 text-white" />
+                        <div className="w-16 h-16 bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] rounded-lg flex items-center justify-center flex-shrink-0">
+                          <feature.icon className="h-8 w-8 text-white" />
                         </div>
                         <CardTitle className="text-xl">{feature.title}</CardTitle>
                       </div>
