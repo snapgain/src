@@ -9,9 +9,9 @@ export function Footer() {
 
   return (
     
-    <footer className="bg-[#FEE4F9] py-12 mt-20">
+    <footer className="bg-[#FEE4F9]">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-4 gap-5">
             <div>
                  <div className="flex items-center space-x-3 mb-4">
                     <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center text-2xl text-white font-bold">S</div>
@@ -20,14 +20,14 @@ export function Footer() {
                 <p className="text-muted-foreground text-sm">UK's smartest cashback comparison.
                   Real-time rates from UK stores and programs.</p>
             </div>
-            <div className="grid grid-cols-3 md:col-span-3 gap-8">
+            <div className="grid grid-cols-4 md:col-span-1 gap-4">
                  <div>
                     <p className="font-semibold mb-3">Company</p>
                     <nav className="flex flex-col space-y-2">
                         <Link to="/features" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Features</Link>
                         <Link to="/pricing" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Pricing</Link>
                         <Link to="/about" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">About Us</Link>
-                        <Link to="/real-time-policy" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Real-Time Policy</Link>
+                       
                     </nav>
                 </div>
                  <div>
@@ -36,6 +36,7 @@ export function Footer() {
                         <Link to="/privacy-policy" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Privacy Policy</Link>
                         <Link to="/terms-of-service" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Terms of Service</Link>
                         <Link to="/disclaimer" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Disclaimer</Link>
+                        <Link to="/real-time-policy" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Real-Time Policy</Link>
                     </nav>
                 </div>
                 <div>
