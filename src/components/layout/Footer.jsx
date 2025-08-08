@@ -8,7 +8,8 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-white border-t">
+    
+    <footer className="bg-[#FEE4F9] py-12 mt-20">
       <div className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-3 gap-8">
             <div>
@@ -16,9 +17,10 @@ export function Footer() {
                     <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center text-2xl text-white font-bold">S</div>
                     <span className="text-xl font-bold">SnapGain UK</span>
                 </div>
-                <p className="text-muted-foreground text-sm">UK's smartest cashback comparison. Real-time rates from UK stores and programs.</p>
+                <p className="text-muted-foreground text-sm">UK's smartest cashback comparison.
+                  Real-time rates from UK stores and programs.</p>
             </div>
-            <div className="grid grid-cols-2 md:col-span-2 gap-8">
+            <div className="grid grid-cols-3 md:col-span-3 gap-8">
                  <div>
                     <p className="font-semibold mb-3">Company</p>
                     <nav className="flex flex-col space-y-2">
@@ -33,13 +35,22 @@ export function Footer() {
                     <nav className="flex flex-col space-y-2">
                         <Link to="/privacy-policy" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Privacy Policy</Link>
                         <Link to="/terms-of-service" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Terms of Service</Link>
+                        <Link to="/disclaimer" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Disclaimer</Link>
+                    </nav>
+                </div>
+                <div>
+                    <p className="font-semibold mb-3">Support</p>
+                    <nav className="flex flex-col space-y-2">
+                        <Link to="/faq" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">FAQ</Link>
+                        <Link to="/contact" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Contact Us</Link>
+                        <Link to="/feedback" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-primary">Feedback</Link>
                     </nav>
                 </div>
             </div>
         </div>
         
         <div className="text-center text-muted-foreground text-sm mt-8 border-t pt-6">
-          <p>© {new Date().getFullYear()} SnapGain UK. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} SnapGain UK. All rights reserved. Made with ❤️ in the UK.</p>
         </div>
       </div>
     </footer>
