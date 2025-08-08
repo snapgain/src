@@ -40,24 +40,48 @@ export function AuthProvider({ children }) {
     return hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, captchaToken) => {
     setLoading(true);
     try {
-      // Mock login - aceita qualquer email/senha válida para demo
       if (email && password && email.includes('@') && password.length >= 6) {
-        const trialStart = new Date().toISOString();
-        const userData = { 
-          email, 
-          name: email.split('@')[0], 
-          isRegistered: true, 
-          trialStart,
-          subscription: 'trial' // trial, premium, canceled
-        };
-        localStorage.setItem('snapgain_user', JSON.stringify(userData));
-        setUser(userData);
-        toast({ title: "Login Successful!", description: "Welcome back to SnapGain." });
-        setLoading(false);
-        return true;
+        // Usar Supabase auth com hCaptcha
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+          options: { 
+            captchaToken 
+          },
+        });
+
+        if (error) {
+          console.error('Supabase login error:', error);
+          toast({ 
+            title: "Login Failed", 
+            description: error.message || "Invalid credentials", 
+            variant: "destructive" 
+          });
+          setLoading(false);
+          return false;
+        }
+
+        // Se login foi bem-sucedido
+        if (data.user) {
+          const trialStart = new Date().toISOString();
+          const userData = { 
+            id: data.user.id,
+            email: data.user.email, 
+            name: data.user.user_metadata?.name || email.split('@')[0], 
+            isRegistered: true, 
+            trialStart,
+            subscription: 'trial',
+            supabaseUser: data.user
+          };
+          localStorage.setItem('snapgain_user', JSON.stringify(userData));
+          setUser(userData);
+          toast({ title: "Login Successful!", description: "Welcome back to SnapGain." });
+          setLoading(false);
+          return true;
+        }
       } else {
         toast({ title: "Login Failed", description: "Please enter a valid email and password (6+ characters).", variant: "destructive" });
         setLoading(false);
@@ -71,23 +95,54 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const signup = async (name, email, password) => {
+  const signup = async (name, email, password, captchaToken) => {
     setLoading(true);
     try {
       if (name && email && password && email.includes('@') && validatePassword(password)) {
-        const trialStart = new Date().toISOString();
-        const userData = { 
-          name, 
-          email, 
-          isRegistered: false, 
-          trialStart,
-          subscription: 'trial'
-        };
-        localStorage.setItem('snapgain_user', JSON.stringify(userData));
-        setUser(userData);
-        toast({ title: "Account Created!", description: "Let's get you set up." });
-        setLoading(false);
-        return true;
+        // Usar Supabase auth com hCaptcha
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { 
+            captchaToken,
+            data: {
+              name: name
+            }
+          },
+        });
+
+        if (error) {
+          console.error('Supabase signup error:', error);
+          toast({ 
+            title: "Signup Failed", 
+            description: error.message || "Failed to create account", 
+            variant: "destructive" 
+          });
+          setLoading(false);
+          return false;
+        }
+
+        // Se signup foi bem-sucedido
+        if (data.user) {
+          const trialStart = new Date().toISOString();
+          const userData = { 
+            id: data.user.id,
+            name, 
+            email, 
+            isRegistered: false, 
+            trialStart,
+            subscription: 'trial',
+            supabaseUser: data.user
+          };
+          localStorage.setItem('snapgain_user', JSON.stringify(userData));
+          setUser(userData);
+          toast({ 
+            title: "Account Created!", 
+            description: "Please check your email to verify your account." 
+          });
+          setLoading(false);
+          return true;
+        }
       } else {
         toast({ title: "Signup Failed", description: "Please fill all fields correctly and ensure password meets requirements.", variant: "destructive" });
         setLoading(false);
