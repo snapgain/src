@@ -1,4 +1,4 @@
-// UK-focused data for SnapGain UK
+code src/pages/LandingPage.jsx// UK-focused data for SnapGain UK
 import { TrendingUp, Filter, Clock } from 'lucide-react';
 import React from 'react';
 import { ukBanks, ukRetailers, ukCashbackPlatforms, formatGBP } from './ukData.js';
