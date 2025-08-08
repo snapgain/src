@@ -126,7 +126,7 @@ function LandingPage() {
               Why Choose SnapGain?
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Stop guessing. Start saving. Maximize your rewards with our intelligent comparison platform.
+              Discover how SnapGain's powerful features help you maximize rewards across all major UK platforms with intelligent strategy comparison.
             </p>
           </motion.div>
 
