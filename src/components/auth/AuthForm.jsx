@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { GoogleAuthButton } from './GoogleAuthButton';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/use-toast';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -28,7 +30,9 @@ function AuthForm({ mode }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState();
   const [passwordError, setPasswordError] = useState('');
+  const captcha = useRef();
   const isLogin = mode === 'login';
 
   const validatePassword = (password) => {
@@ -59,8 +63,24 @@ function AuthForm({ mode }) {
     }
   };
 
+  const resetCaptcha = () => {
+    if (captcha.current) {
+      captcha.current.resetCaptcha();
+      setCaptchaToken(null);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!captchaToken) {
+      toast({ 
+        title: "Verification Required", 
+        description: "Please complete the captcha before submitting.", 
+        variant: "destructive" 
+      });
+      return;
+    }
     
     if (!isLogin) {
       const passwordValidationError = validatePassword(password);
@@ -71,14 +91,20 @@ function AuthForm({ mode }) {
     }
     
     if (isLogin) {
-      const success = await login(email, password);
+      const success = await login(email, password, captchaToken);
       if (success) {
         navigate('/dashboard');
+      } else {
+        // Reset captcha se login falhar
+        resetCaptcha();
       }
     } else {
-      const success = await signup(name, email, password);
+      const success = await signup(name, email, password, captchaToken);
       if (success) {
         navigate('/auth/register');
+      } else {
+        // Reset captcha se signup falhar
+        resetCaptcha();
       }
     }
   };
@@ -135,11 +161,28 @@ function AuthForm({ mode }) {
             </div>
           )}
         </motion.div>
+        
+        {/* hCaptcha Component */}
+        <motion.div variants={itemVariants} className="space-y-2">
+          <Label>Human Verification</Label>
+          <HCaptcha
+            ref={captcha}
+            sitekey="ES_b1112a2a44c543d8807090a20fc6b7cf"
+            onVerify={(token) => {
+              setCaptchaToken(token)
+            }}
+            onExpire={() => setCaptchaToken(null)}
+            onError={() => setCaptchaToken(null)}
+            theme="light"
+            size="normal"
+          />
+        </motion.div>
+        
         <motion.div variants={itemVariants}>
           <Button 
             type="submit" 
             className="w-full bg-primary hover:bg-primary/90 text-white"
-            disabled={!isLogin && passwordError}
+            disabled={(!isLogin && passwordError) || !captchaToken}
           >
             {isLogin ? "Sign In" : "Sign Up"}
           </Button>

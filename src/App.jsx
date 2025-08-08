@@ -17,6 +17,7 @@ import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import TermsOfServicePage from '@/pages/TermsOfServicePage';
 import RealTimePolicyPage from '@/pages/RealTimePolicyPage';
 import AviosCalculatorPage from '@/pages/AviosCalculatorPage';
+import HCaptchaTestPage from '@/pages/HCaptchaTestPage';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -36,6 +37,7 @@ function AppContent() {
         <Route path="/terms-of-service" element={<TermsOfServicePage />} />
         <Route path="/real-time-policy" element={<RealTimePolicyPage />} />
         <Route path="/avios-calculator" element={<AviosCalculatorPage />} />
+        <Route path="/hcaptcha-test" element={<HCaptchaTestPage />} />
         <Route path="/dashboard" element={
           <ProtectedRoute requireRegistration={true}>
             <DashboardPage />
