@@ -84,3 +84,16 @@ function App() {
 }
 
 export default App;
+// Exemplo no App.jsx
+import LoginButton from './components/LoginButton';
+
+function App() {
+  return (
+    <div>
+      <h1>SnapGain</h1>
+      <LoginButton />
+    </div>
+  );
+}
+
+export default App;
