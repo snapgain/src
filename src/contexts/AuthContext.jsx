@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/customSupabaseClient';
@@ -10,24 +9,75 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      setLoading(true);
-      const storedUser = localStorage.getItem('snapgain_user');
-      if (storedUser) {
-        const userObj = JSON.parse(storedUser);
-        // Verifica trial
-        if (!userObj.trialStart) {
-          userObj.trialStart = new Date().toISOString();
-          localStorage.setItem('snapgain_user', JSON.stringify(userObj));
+    // Verificar sessão existente do Supabase
+    const getSession = async () => {
+      try {
+        setLoading(true);
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
         }
-        setUser(userObj);
+        
+        if (session?.user) {
+          const trialStart = new Date().toISOString();
+          const userData = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+            isRegistered: true,
+            trialStart,
+            subscription: 'trial',
+            supabaseUser: session.user
+          };
+          localStorage.setItem('snapgain_user', JSON.stringify(userData));
+          setUser(userData);
+        } else {
+          // Tentar localStorage como fallback
+          const storedUser = localStorage.getItem('snapgain_user');
+          if (storedUser) {
+            const userObj = JSON.parse(storedUser);
+            if (!userObj.trialStart) {
+              userObj.trialStart = new Date().toISOString();
+              localStorage.setItem('snapgain_user', JSON.stringify(userObj));
+            }
+            setUser(userObj);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load session", error);
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to load user from localStorage", error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    getSession();
+
+    // Escutar mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const trialStart = new Date().toISOString();
+          const userData = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+            isRegistered: true,
+            trialStart,
+            subscription: 'trial',
+            supabaseUser: session.user
+          };
+          localStorage.setItem('snapgain_user', JSON.stringify(userData));
+          setUser(userData);
+        } else if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('snapgain_user');
+          setUser(null);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const validatePassword = (password) => {
@@ -40,31 +90,20 @@ export function AuthProvider({ children }) {
     return hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
   };
 
-  const login = async (email, password, captchaToken) => {
+  const login = async (email, password) => {
     setLoading(true);
     try {
       if (email && password && email.includes('@') && password.length >= 6) {
-        // Usar Supabase auth com hCaptcha
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
-          options: { 
-            captchaToken 
-          },
         });
 
         if (error) {
           console.error('Supabase login error:', error);
-          toast({ 
-            title: "Login Failed", 
-            description: error.message || "Invalid credentials", 
-            variant: "destructive" 
-          });
-          setLoading(false);
-          return false;
+          throw error;
         }
-
-        // Se login foi bem-sucedido
+        
         if (data.user) {
           const trialStart = new Date().toISOString();
           const userData = { 
@@ -79,19 +118,22 @@ export function AuthProvider({ children }) {
           localStorage.setItem('snapgain_user', JSON.stringify(userData));
           setUser(userData);
           toast({ title: "Login Successful!", description: "Welcome back to SnapGain." });
-          setLoading(false);
-          return true;
         }
+        
+        return data;
       } else {
-        toast({ title: "Login Failed", description: "Please enter a valid email and password (6+ characters).", variant: "destructive" });
-        setLoading(false);
-        return false;
+        throw new Error('Please provide valid email and password');
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast({ title: "Login Error", description: "Something went wrong. Please try again.", variant: "destructive" });
+      toast({ 
+        title: "Login Error", 
+        description: error.message || "Invalid email or password", 
+        variant: "destructive" 
+      });
+      throw error;
+    } finally {
       setLoading(false);
-      return false;
     }
   };
 
@@ -99,7 +141,6 @@ export function AuthProvider({ children }) {
     setLoading(true);
     try {
       if (name && email && password && email.includes('@') && validatePassword(password)) {
-        // Usar Supabase auth com hCaptcha
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -118,11 +159,9 @@ export function AuthProvider({ children }) {
             description: error.message || "Failed to create account", 
             variant: "destructive" 
           });
-          setLoading(false);
           return false;
         }
 
-        // Se signup foi bem-sucedido
         if (data.user) {
           const trialStart = new Date().toISOString();
           const userData = { 
@@ -140,19 +179,26 @@ export function AuthProvider({ children }) {
             title: "Account Created!", 
             description: "Please check your email to verify your account." 
           });
-          setLoading(false);
           return true;
         }
       } else {
-        toast({ title: "Signup Failed", description: "Please fill all fields correctly and ensure password meets requirements.", variant: "destructive" });
-        setLoading(false);
+        toast({ 
+          title: "Signup Failed", 
+          description: "Please fill all fields correctly and ensure password meets requirements.", 
+          variant: "destructive" 
+        });
         return false;
       }
     } catch (error) {
       console.error('Signup error:', error);
-      toast({ title: "Signup Error", description: "Something went wrong. Please try again.", variant: "destructive" });
-      setLoading(false);
+      toast({ 
+        title: "Signup Error", 
+        description: "Something went wrong. Please try again.", 
+        variant: "destructive" 
+      });
       return false;
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -171,7 +217,7 @@ export function AuthProvider({ children }) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider,
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${window.location.origin}/auth/callback`
         }
       });
 
@@ -186,7 +232,6 @@ export function AuthProvider({ children }) {
         return false;
       }
 
-      // O usuário será redirecionado para Google, então não precisamos fazer mais nada aqui
       return true;
     } catch (error) {
       console.error('OAuth error:', error);
@@ -200,10 +245,17 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('snapgain_user');
-    setUser(null);
-    toast({ title: "Logged Out", description: "You have been successfully logged out." });
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem('snapgain_user');
+      setUser(null);
+      toast({ title: "Logged Out", description: "You have been successfully logged out." });
+    } catch (error) {
+      console.error('Logout error:', error);
+      localStorage.removeItem('snapgain_user');
+      setUser(null);
+    }
   };
 
   const updateSubscription = (subscriptionType) => {

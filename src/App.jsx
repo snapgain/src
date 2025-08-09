@@ -6,10 +6,10 @@ import { Footer } from '@/components/layout/Footer';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
-import AboutPage from '@/pages/AboutPage';
-import FeaturesPage from '@/pages/FeaturesPage';
 import DashboardPage from '@/pages/DashboardPage';
 import ComparePage from '@/pages/ComparePage';
+import AboutPage from '@/pages/AboutPage';
+import FeaturesPage from '@/pages/FeaturesPage';
 import PricingPage from '@/pages/PricingPage';
 import ProfilePage from '@/pages/ProfilePage';
 import SettingsPage from '@/pages/SettingsPage';
@@ -20,7 +20,9 @@ import RealTimePolicyPage from '@/pages/RealTimePolicyPage';
 import FAQPage from '@/pages/FAQPage';
 import ContactPage from '@/pages/ContactPage';
 import FeedbackPage from '@/pages/FeedbackPage';
+import AuthCallbackPage from '@/pages/AuthCallbackPage';
 import './styles/globals.css';
+
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -62,7 +64,7 @@ function App() {
               <Route path="/faq" element={<FAQPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/feedback" element={<FeedbackPage />} />
-              
+              <Route path="/auth/callback" element={<AuthCallbackPage />} />
               <Route 
                 path="/dashboard" 
                 element={
