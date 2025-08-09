@@ -1,5 +1,6 @@
-/* Remove @tailwind directives if not using Tailwind CSS processor */
-```
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -23,6 +24,12 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+    
+    /* SnapGain brand colors */
+    --snapgain-purple: #7D4DFB;
+    --snapgain-pink: #FF3FCE;
+    --snapgain-green: #99FF33;
+    --snapgain-light-green: #BFFFB4;
   }
 
   .dark {
@@ -57,17 +64,16 @@
   }
 }
 
-/* Custom styles for SnapGain */
 @layer components {
   .gradient-text {
-    background: linear-gradient(135deg, #7D4DFB 0%, #FF3FCE 100%);
+    background: linear-gradient(135deg, var(--snapgain-purple) 0%, var(--snapgain-pink) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .gradient-bg {
-    background: linear-gradient(135deg, #7D4DFB 0%, #FF3FCE 100%);
+    background: linear-gradient(135deg, var(--snapgain-purple) 0%, var(--snapgain-pink) 100%);
   }
 
   .btn-primary {
@@ -77,31 +83,9 @@
   .card-hover {
     @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
   }
-
-  .text-muted-foreground {
-    color: hsl(var(--muted-foreground));
-  }
 }
 
-/* Scrollbar styles */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #7D4DFB 0%, #FF3FCE 100%);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #6D3DEB 0%, #EF2FBE 100%);
-}
-
-/* Animation utilities */
+/* Custom animations and styles */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -117,93 +101,28 @@
   animation: fadeIn 0.6s ease-out;
 }
 
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.slide-in-left {
-  animation: slideInLeft 0.8s ease-out;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }
 
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--snapgain-purple) 0%, var(--snapgain-pink) 100%);
+  border-radius: 4px;
 }
 
-.slide-in-right {
-  animation: slideInRight 0.8s ease-out;
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #6D3DEB 0%, #EF2FBE 100%);
 }
 
-/* Loading spinner */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* Hero section specific styles */
-.hero-gradient {
-  background: linear-gradient(135deg, rgba(125, 77, 251, 0.1) 0%, rgba(255, 63, 206, 0.1) 100%);
-}
-
-/* Form focus styles */
-.focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2;
-}
-
-/* Mobile responsive utilities */
+/* Responsive adjustments */
 @media (max-width: 640px) {
   .container {
-    @apply px-4;
-  }
-  
-  .text-4xl {
-    @apply text-3xl;
-  }
-  
-  .text-5xl {
-    @apply text-4xl;
-  }
-}
-
-/* Print styles */
-@media print {
-  .no-print {
-    display: none !important;
-  }
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .gradient-text {
-    background: none;
-    -webkit-text-fill-color: initial;
-    color: #000;
-  }
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 }
