@@ -19,6 +19,11 @@ export function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  // ✅ ADICIONAR A FUNÇÃO scrollToTop
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -52,9 +57,9 @@ export function Header() {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/features" onClick={scrollToTop}  className="hover:text-primary transition-colors font-medium">Features</Link>
-            <Link to="/pricing" onClick={scrollToTop}  className="hover:text-primary transition-colors font-medium">Pricing</Link>
-            <Link to="/about" onClick={scrollToTop}  className="hover:text-primary transition-colors font-medium">About Us</Link>
+            <Link to="/features" onClick={scrollToTop} className="hover:text-primary transition-colors font-medium">Features</Link>
+            <Link to="/pricing" onClick={scrollToTop} className="hover:text-primary transition-colors font-medium">Pricing</Link>
+            <Link to="/about" onClick={scrollToTop} className="hover:text-primary transition-colors font-medium">About Us</Link>
           </nav>
 
           <div className="flex items-center space-x-2">
