@@ -6,6 +6,8 @@ import { Footer } from '@/components/layout/Footer';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
+import AboutPage from '@/pages/AboutPage';
+import FeaturesPage from '@/pages/FeaturesPage';
 import DashboardPage from '@/pages/DashboardPage';
 import ComparePage from '@/pages/ComparePage';
 import PricingPage from '@/pages/PricingPage';
@@ -50,6 +52,8 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/signup" element={<SignupPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/features" element={<FeaturesPage />} />
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />

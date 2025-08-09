@@ -6,31 +6,37 @@ import { Check } from 'lucide-react';
 import StripePayment from '@/components/payment/StripePayment';
 import { useAuth } from '@/contexts/AuthContext';
 
-const PlanCard = ({ title, price, priceValue, description, features, bestValue, onSelect, billingCycle }) => (
-    <div className={`rounded-xl p-8 border-2 ${bestValue ? 'border-primary shadow-2xl' : 'border-border'} relative card-hover bg-white`}>
+const PlanCard = ({ title, price, priceSubtext, priceValue, description, features, bestValue, onSelect, billingCycle, buttonText, buttonClass }) => (
+    <div className={`rounded-xl p-8 border-2 ${bestValue ? 'border-primary shadow-2xl' : 'border-border'} relative card-hover bg-white h-full`}>
         {bestValue && (
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">
                 Best Value
             </div>
         )}
-        <h3 className="text-2xl font-bold mb-2">{title}</h3>
-        <p className="text-muted-foreground mb-6">{description}</p>
-        <div className="text-4xl font-bold mb-6">{price}</div>
         
-        <ul className="space-y-3 text-left mb-8">
+        <div className="text-center mb-6">
+            <h3 className="text-2xl font-bold mb-2">{title}</h3>
+            <div className="text-3xl font-bold">
+                {price}
+                <span className="text-lg font-normal text-muted-foreground ml-1">{priceSubtext}</span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">{description}</p>
+        </div>
+        
+        <ul className="space-y-4 text-left mb-8">
             {features.map((feature, i) => (
-                <li key={i} className="flex items-center">
-                    <Check className="w-5 h-5 mr-3 text-green-500" />
+                <li key={i} className="flex items-center space-x-3">
+                    <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
                     <span>{feature}</span>
                 </li>
             ))}
         </ul>
         
         <Button
-            onClick={() => onSelect({ title, priceValue, billingCycle, type: 'premium' })}
-            className={`w-full text-lg h-12 ${bestValue ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}
+            onClick={() => onSelect({ title, priceValue, billingCycle, type: billingCycle === 'trial' ? 'trial' : 'premium' })}
+            className={buttonClass}
         >
-            Get Started
+            {buttonText}
         </Button>
     </div>
 );
@@ -61,36 +67,59 @@ function PricingPage() {
   };
 
   const plans = {
+      freeTrial: {
+          title: 'Free Trial',
+          price: '£0',
+          priceSubtext: '3 days',
+          priceValue: 0,
+          billingCycle: 'trial',
+          description: 'Try SnapGain for free with no commitment.',
+          features: [
+              'Unlimited reward comparisons',
+              'Access to all UK platforms', 
+              'Real-time rate updates',
+              'Personalized Strategies'
+          ],
+          bestValue: false,
+          buttonText: 'Start 3-Day Free Trial',
+          buttonClass: 'w-full bg-gradient-to-r from-[#99FF33] to-[#7D4DFB] hover:from-green-500 hover:to-purple-700 text-white'
+      },
       monthly: {
           title: 'Monthly Plan',
-          price: '£7.99/month',
+          price: '£7.99',
+          priceSubtext: 'per month',
           priceValue: 7.99,
           billingCycle: 'monthly',
-          description: 'Per month, billed monthly.',
+          description: 'Perfect for getting started with smarter rewards.',
           features: [
-            'Unlimited comparisons', 
-            'Real-time cashback rates', 
-            'Personalized alerts', 
-            'Priority customer support',
-            'Cancel anytime'
+              'Everything in Free Trial',
+              'Priority customer support', 
+              'Advanced analytics',
+              'Custom notifications',
+              'Cancel anytime'
           ],
-          bestValue: false
+          bestValue: false,
+          buttonText: 'Get Started',
+          buttonClass: 'w-full bg-secondary text-secondary-foreground hover:bg-secondary/80'
       },
       annual: {
           title: 'Annual Plan',
-          price: '£59.99/year',
-          priceValue: 59.99,
+          price: '£60',
+          priceSubtext: 'per year',
+          priceValue: 60,
           billingCycle: 'annual',
-          description: 'Per year, billed annually.',
+          description: 'Best value - save over 37% compared to monthly billing.',
           features: [
-            'All monthly features', 
-            'Save over 37% (£36+ savings)', 
-            'Priority support',
-            'Advanced analytics',
-            'API access',
-            'Custom notifications'
+              'Everything in Monthly plan',
+              'Save over 37% (£36+ savings)',
+              'Priority support',
+              'API access',
+              'Advanced analytics',
+              'Custom integrations'
           ],
-          bestValue: true
+          bestValue: true,
+          buttonText: 'Get Started',
+          buttonClass: 'w-full bg-primary text-primary-foreground hover:bg-primary/90'
       }
   };
 
@@ -126,7 +155,8 @@ function PricingPage() {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <PlanCard {...plans.freeTrial} onSelect={handleSubscribe} />
           <PlanCard {...plans.monthly} onSelect={handleSubscribe} />
           <PlanCard {...plans.annual} onSelect={handleSubscribe} />
         </div>
