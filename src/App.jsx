@@ -18,7 +18,7 @@ import RealTimePolicyPage from '@/pages/RealTimePolicyPage';
 import FAQPage from '@/pages/FAQPage';
 import ContactPage from '@/pages/ContactPage';
 import FeedbackPage from '@/pages/FeedbackPage';
-import '@/styles/globals.css';
+import './styles/globals.css';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -80,19 +80,6 @@ function App() {
         </div>
       </Router>
     </AuthProvider>
-  );
-}
-
-export default App;
-// Exemplo no App.jsx
-import LoginButton from './components/LoginButton';
-
-function App() {
-  return (
-    <div>
-      <h1>SnapGain</h1>
-      <LoginButton />
-    </div>
   );
 }
 
