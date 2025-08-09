@@ -28,24 +28,49 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-900">Company</h3>
             <div className="space-y-2">
-              <Link to="/features" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
+              <Link to="snapgain.uk/features" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
                 Features
               </Link>
-              <Link to="/pricing" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
+              <Link to="snapgain.uk/pricing" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
                 Pricing
               </Link>
-              <Link to="/about" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
+              <Link to="snapgain.uk/about" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
                 About Us
               </Link>
             </div>
           </div>
 
-          {/* Support */}
+          
+          {/* Legal */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-900">Legal</h3>
+            <div className="space-y-2">
+              <Link to="snapgain.uk/privacy" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
+                Privacy Policy
+              </Link>
+              <Link to="snapgain.uk/terms" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
+                Terms of Service
+              </Link>
+              <Link to="snapgain.uk/disclaimer" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
+                Disclaimer
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Support */}
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-900">Support</h3>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
-                SnapGain uses affiliate links and public data sources. Not an official partner of any platform.
+                
+              <Link to="snapgain.uk/faq" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
+                FAQ
+              </Link>
+              <Link to="snapgain.uk/contact" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
+                Contact Us
+              </Link>
+              SnapGain uses affiliate links and public data sources. Not an official partner of any platform.
               </p>
               <a 
                 href="mailto:support@snapgain.uk" 
@@ -53,31 +78,8 @@ export function Footer() {
               >
                 support@snapgain.uk
               </a>
-              <Link to="/faq" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
-                FAQ
-              </Link>
-              <Link to="/contact" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
-                Contact Us
-              </Link>
             </div>
           </div>
-
-          {/* Legal */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Legal</h3>
-            <div className="space-y-2">
-              <Link to="/privacy" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
-                Privacy Policy
-              </Link>
-              <Link to="/terms" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
-                Terms of Service
-              </Link>
-              <Link to="/disclaimer" onClick={scrollToTop} className="block text-sm text-muted-foreground hover:text-[#7D4DFB] transition-colors">
-                Disclaimer
-              </Link>
-            </div>
-          </div>
-        </div>
 
         <div className="border-t border-gray-200 mt-6 pt-6 text-center">
           <p className="text-sm text-muted-foreground">
