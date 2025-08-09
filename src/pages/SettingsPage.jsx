@@ -1,96 +1,194 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
-import { registrationOptions } from '@/data/appData.jsx';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Bell, Shield, Smartphone, Mail } from 'lucide-react';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      delayChildren: 0.1,
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100
+    }
+  }
+};
 
 function SettingsPage() {
-  const { user } = useAuth();
-  const [name, setName] = useState(user?.user_metadata?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  
-  const [selectedBanks, setSelectedBanks] = useState(user?.user_metadata?.banks || []);
-  const [selectedCards, setSelectedCards] = useState(user?.user_metadata?.cards || []);
-  const [selectedProgrammes, setSelectedProgrammes] = useState(user?.user_metadata?.programmes || []);
-  const [selectedFavourites, setSelectedFavourites] = useState(user?.user_metadata?.favourites || []);
+  const [settings, setSettings] = useState({
+    emailNotifications: true,
+    pushNotifications: false,
+    weeklyReports: true,
+    dealAlerts: true,
+    twoFactorAuth: false,
+    marketingEmails: false
+  });
 
-  const handleUpdate = (e) => {
-    e.preventDefault();
-    toast({
-        title: "🚧 This feature isn't implemented yet—but don't worry! You can request it in your next prompt! 🚀",
-        description: "Profile updates will be available soon."
-    });
+  const handleSettingChange = (key) => {
+    setSettings(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
+  const handleSave = () => {
+    // Save settings logic here
+    console.log('Settings saved:', settings);
   };
 
   return (
     <>
       <Helmet>
         <title>Settings - SnapGain</title>
+        <meta name="description" content="Manage your SnapGain account settings and preferences." />
       </Helmet>
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <h1 className="text-3xl font-bold mb-8">Settings</h1>
-        
-        <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-1">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Profile</CardTitle>
-                        <CardDescription>Update your personal information.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleUpdate} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Full Name</Label>
-                                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" value={email} disabled />
-                            </div>
-                            <Button type="submit" className="w-full">Save Profile</Button>
-                        </form>
-                    </CardContent>
-                </Card>
-            </div>
-            <div className="md:col-span-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>My Preferences</CardTitle>
-                        <CardDescription>Manage your banks, cards, and loyalty programmes to get personalized strategies.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleUpdate} className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>My Banks</Label>
-                                    <MultiSelectCombobox options={registrationOptions.banks} selected={selectedBanks} onChange={setSelectedBanks} placeholder="Select banks..." />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>My Cards</Label>
-                                    <MultiSelectCombobox options={registrationOptions.cards} selected={selectedCards} onChange={setSelectedCards} placeholder="Select cards..." />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>My Programmes</Label>
-                                    <MultiSelectCombobox options={registrationOptions.programmes} selected={selectedProgrammes} onChange={setSelectedProgrammes} placeholder="Select programmes..." />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>My Favourites</Label>
-                                    <MultiSelectCombobox options={registrationOptions.favourites} selected={selectedFavourites} onChange={setSelectedFavourites} placeholder="Select stores..." />
-                                </div>
-                            </div>
-                            <div className="flex justify-end pt-4">
-                                <Button type="submit">Save Preferences</Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
+      
+      <div className="container mx-auto px-4 py-12 pt-32">
+        <motion.div 
+          className="max-w-2xl mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div className="text-center mb-12" variants={itemVariants}>
+            <h1 className="text-4xl font-bold mb-4">Settings</h1>
+            <p className="text-xl text-muted-foreground">
+              Customize your SnapGain experience
+            </p>
+          </motion.div>
+
+          <div className="space-y-6">
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Bell className="h-5 w-5 text-[#7D4DFB]" />
+                    <span>Notifications</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="email-notifications" className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4" />
+                      <span>Email notifications</span>
+                    </Label>
+                    <Checkbox 
+                      id="email-notifications"
+                      checked={settings.emailNotifications}
+                      onCheckedChange={() => handleSettingChange('emailNotifications')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="push-notifications" className="flex items-center space-x-2">
+                      <Smartphone className="h-4 w-4" />
+                      <span>Push notifications</span>
+                    </Label>
+                    <Checkbox 
+                      id="push-notifications"
+                      checked={settings.pushNotifications}
+                      onCheckedChange={() => handleSettingChange('pushNotifications')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="weekly-reports" className="flex items-center space-x-2">
+                      <span>Weekly savings reports</span>
+                    </Label>
+                    <Checkbox 
+                      id="weekly-reports"
+                      checked={settings.weeklyReports}
+                      onCheckedChange={() => handleSettingChange('weeklyReports')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="deal-alerts" className="flex items-center space-x-2">
+                      <span>Deal alerts</span>
+                    </Label>
+                    <Checkbox 
+                      id="deal-alerts"
+                      checked={settings.dealAlerts}
+                      onCheckedChange={() => handleSettingChange('dealAlerts')}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Shield className="h-5 w-5 text-[#FF3FCE]" />
+                    <span>Security</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Two-factor authentication</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Add an extra layer of security to your account
+                      </p>
+                    </div>
+                    <Checkbox 
+                      checked={settings.twoFactorAuth}
+                      onCheckedChange={() => handleSettingChange('twoFactorAuth')}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Marketing Preferences</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Marketing emails</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Receive updates about new features and special offers
+                      </p>
+                    </div>
+                    <Checkbox 
+                      checked={settings.marketingEmails}
+                      onCheckedChange={() => handleSettingChange('marketingEmails')}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Button 
+                onClick={handleSave}
+                className="w-full bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-purple-700 hover:to-pink-600"
+              >
+                Save Settings
+              </Button>
+            </motion.div>
+          </div>
+        </motion.div>
       </div>
     </>
   );
