@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Mail, Send, MessageCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Mail, Send, MessageCircle, CheckCircle } from 'lucide-react';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -40,6 +39,7 @@ function ContactPage() {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const handleChange = (e) => {
     setFormData(prev => ({
@@ -55,19 +55,48 @@ function ContactPage() {
     try {
       // Simulate form submission
       await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Message sent successfully! We\'ll get back to you soon.');
+      setSubmitted(true);
       setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (error) {
-      toast.error('Failed to send message. Please try again.');
+      console.error('Failed to send message');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (submitted) {
+    return (
+      <>
+        <Helmet>
+          <title>Contact Us - SnapGain</title>
+          <meta name="description" content="Get in touch with SnapGain. We're here to help with any questions about cashback optimization." />
+        </Helmet>
+        
+        <div className="container mx-auto px-4 py-12 pt-32">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h1 className="text-3xl font-bold mb-4">Message Sent Successfully!</h1>
+            <p className="text-muted-foreground mb-8">
+              Thank you for contacting us. We'll get back to you within 24 hours.
+            </p>
+            <Button 
+              onClick={() => setSubmitted(false)}
+              className="bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-purple-700 hover:to-pink-600"
+            >
+              Send Another Message
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Helmet>
-        <title>contact us - SnapGain</title>
+        <title>Contact Us - SnapGain</title>
         <meta name="description" content="Get in touch with SnapGain. We're here to help with any questions about cashback optimization." />
       </Helmet>
       

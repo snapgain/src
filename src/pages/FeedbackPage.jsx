@@ -7,8 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, MessageSquare, Lightbulb, Bug, Heart } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Star, MessageSquare, Lightbulb, Bug, Heart, CheckCircle } from 'lucide-react';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -49,6 +48,7 @@ function FeedbackPage() {
     feedback: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const handleChange = (e) => {
     setFormData(prev => ({
@@ -78,19 +78,48 @@ function FeedbackPage() {
     try {
       // Simulate form submission
       await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Thank you for your feedback! We appreciate your input.');
+      setSubmitted(true);
       setFormData({ name: '', email: '', type: '', rating: 0, feedback: '' });
     } catch (error) {
-      toast.error('Failed to submit feedback. Please try again.');
+      console.error('Failed to submit feedback');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (submitted) {
+    return (
+      <>
+        <Helmet>
+          <title>Feedback - SnapGain</title>
+          <meta name="description" content="Share your feedback with SnapGain. Help us improve your cashback experience." />
+        </Helmet>
+        
+        <div className="container mx-auto px-4 py-12 pt-32">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h1 className="text-3xl font-bold mb-4">Thank You for Your Feedback!</h1>
+            <p className="text-muted-foreground mb-8">
+              We appreciate your input and will use it to improve SnapGain for everyone.
+            </p>
+            <Button 
+              onClick={() => setSubmitted(false)}
+              className="bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-purple-700 hover:to-pink-600"
+            >
+              Submit More Feedback
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Helmet>
-        <title>feedback - SnapGain</title>
+        <title>Feedback - SnapGain</title>
         <meta name="description" content="Share your feedback with SnapGain. Help us improve your cashback experience." />
       </Helmet>
       
