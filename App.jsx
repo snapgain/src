@@ -9,6 +9,7 @@ import SignupPage from '@/pages/SignupPage';
 import DashboardPage from '@/pages/DashboardPage';
 import ComparePage from '@/pages/ComparePage';
 import AboutPage from '@/pages/AboutPage';
+import FeaturesPage from '@/pages/FeaturesPage';
 import PricingPage from '@/pages/PricingPage';
 import ProfilePage from '@/pages/ProfilePage';
 import SettingsPage from '@/pages/SettingsPage';
@@ -52,6 +53,7 @@ function App() {
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/signup" element={<SignupPage />} />
               <Route path="/about" element={<AboutPage />} />
+              <Route path="/features" element={<FeaturesPage />} />
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
