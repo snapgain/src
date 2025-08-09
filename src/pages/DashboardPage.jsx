@@ -1,118 +1,195 @@
-
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { ComparisonTool } from '@/components/comparison/ComparisonToolSimple';
-import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { Crown, Clock, CheckCircle } from 'lucide-react';
+import { TrendingUp, Star, Zap, Clock } from 'lucide-react';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      delayChildren: 0.1,
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100
+    }
+  }
+};
 
 function DashboardPage() {
-  const { user, isTrialExpired } = useAuth();
-  const navigate = useNavigate();
-
-  const getSubscriptionStatus = () => {
-    if (!user) return null;
-    
-    if (user.subscription === 'premium') {
-      return {
-        status: 'Premium',
-        color: 'bg-yellow-500',
-        icon: <Crown className="h-4 w-4" />,
-        description: 'You have full access to all features'
-      };
-    } else if (isTrialExpired) {
-      return {
-        status: 'Trial Expired',
-        color: 'bg-red-500',
-        icon: <Clock className="h-4 w-4" />,
-        description: 'Your trial has expired. Upgrade to continue'
-      };
-    } else {
-      const trialDaysLeft = user.trialStart ? 
-        Math.max(0, 3 - Math.floor((new Date() - new Date(user.trialStart)) / (24 * 60 * 60 * 1000))) : 3;
-      
-      return {
-        status: `Trial (${trialDaysLeft} days left)`,
-        color: 'bg-blue-500',
-        icon: <CheckCircle className="h-4 w-4" />,
-        description: `Enjoy your free trial for ${trialDaysLeft} more days`
-      };
-    }
-  };
-
-  const subscriptionStatus = getSubscriptionStatus();
-
   return (
     <>
       <Helmet>
         <title>Dashboard - SnapGain</title>
+        <meta name="description" content="Your SnapGain dashboard - track savings and compare cashback rates." />
       </Helmet>
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              Welcome back, <span className="gradient-text">{user?.name || 'User'}!</span>
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Ready to maximize your rewards? Let's find the best deals.
+      
+      <div className="container mx-auto px-4 py-12 pt-32">
+        <motion.div 
+          className="max-w-6xl mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div className="mb-12" variants={itemVariants}>
+            <h1 className="text-4xl font-bold mb-4">Welcome back!</h1>
+            <p className="text-xl text-muted-foreground">
+              Here's your cashback optimization overview
             </p>
-          </div>
-          
-          {subscriptionStatus && (
-            <Card className="mt-4 md:mt-0 md:ml-8">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Subscription Status</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Badge className={`${subscriptionStatus.color} text-white`}>
-                    {subscriptionStatus.icon}
-                    <span className="ml-1">{subscriptionStatus.status}</span>
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground mb-3">
-                  {subscriptionStatus.description}
-                </p>
-                {(user?.subscription !== 'premium') && (
-                  <Button 
-                    size="sm" 
-                    onClick={() => navigate('/pricing')}
-                    className="w-full"
-                  >
-                    Upgrade Now
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
+          </motion.div>
 
-        {isTrialExpired && (
-          <Card className="mb-8 border-red-200 bg-red-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-3">
-                <Clock className="h-8 w-8 text-red-500" />
-                <div>
-                  <h3 className="font-semibold text-red-900">Trial Expired</h3>
-                  <p className="text-red-700">
-                    Your free trial has ended. Upgrade to Premium to continue using SnapGain.
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Total Savings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">£234.50</div>
+                  <p className="text-xs text-muted-foreground">
+                    +20.1% from last month
                   </p>
-                  <Button 
-                    className="mt-3" 
-                    onClick={() => navigate('/pricing')}
-                  >
-                    View Pricing Plans
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                </CardContent>
+              </Card>
+            </motion.div>
 
-        <ComparisonTool />
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Active Deals
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">12</div>
+                  <p className="text-xs text-muted-foreground">
+                    3 expiring soon
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Best Rate Today
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">5.2%</div>
+                  <p className="text-xs text-muted-foreground">
+                    TopCashback - Electronics
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    This Month
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">£45.20</div>
+                  <p className="text-xs text-muted-foreground">
+                    8 transactions tracked
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <TrendingUp className="h-5 w-5 text-[#7D4DFB]" />
+                    <span>Recent Activity</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">Amazon UK</p>
+                      <p className="text-sm text-muted-foreground">2.5% cashback earned</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-green-600">+£12.50</p>
+                      <p className="text-xs text-muted-foreground">2 days ago</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">John Lewis</p>
+                      <p className="text-sm text-muted-foreground">3.0% cashback earned</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-green-600">+£18.75</p>
+                      <p className="text-xs text-muted-foreground">1 week ago</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Star className="h-5 w-5 text-[#FF3FCE]" />
+                    <span>Top Opportunities</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-3 bg-gradient-to-r from-[#7D4DFB]/10 to-[#FF3FCE]/10 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium">Currys PC World</p>
+                      <span className="text-sm font-medium text-[#7D4DFB]">4.8%</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Electronics sale - ends in 2 days
+                    </p>
+                    <Button size="sm" className="w-full">
+                      Shop Now
+                    </Button>
+                  </div>
+                  
+                  <div className="p-3 bg-gradient-to-r from-[#99FF33]/10 to-[#BFFFB4]/10 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium">ASOS</p>
+                      <span className="text-sm font-medium text-green-600">6.0%</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Fashion week special offer
+                    </p>
+                    <Button size="sm" className="w-full">
+                      Shop Now
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </motion.div>
       </div>
     </>
   );
