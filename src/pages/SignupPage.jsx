@@ -244,7 +244,7 @@ function SignupPage() {
                     )}
                   </Button>
                 </form>
-                        <div className="relative">
+                        <div className="relative my-4">
                         <div className="absolute inset-0 flex items-center">
                           <span className="w-full border-t" />
                         </div>
@@ -255,8 +255,8 @@ function SignupPage() {
                         </div>
                       </div>
 
-                     <GoogleAuthButton className="w-full" /> 
-                
+                     <GoogleAuthButton className="w-full mt-4" /> 
+
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
                     Already have an account?{' '}
