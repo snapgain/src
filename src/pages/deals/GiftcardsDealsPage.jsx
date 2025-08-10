@@ -17,7 +17,7 @@ import {
   Filter,
   Clock
 } from 'lucide-react';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile } from '@/contexts/ProfileContext';
 
 function GiftcardsDealsPage() {
   const navigate = useNavigate();

@@ -20,10 +20,10 @@ import {
   Save,
   Star
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast'; // ADICIONAR
+import { useToast } from '@/hooks/use-toast';
 
 function ProfilePage() {
-  const { toast } = useToast(); // ADICIONAR
+  const { toast } = useToast();
   const { user } = useAuth();
   const { 
     profileData, 

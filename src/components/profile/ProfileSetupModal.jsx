@@ -16,7 +16,7 @@ import {
   Plus, 
   X,
   ArrowRight,
-  Skip
+  SkipForward
 } from 'lucide-react';
 
 const ProfileSetupModal = ({ isOpen, onClose, onComplete }) => {
@@ -277,7 +277,7 @@ const ProfileSetupModal = ({ isOpen, onClose, onComplete }) => {
                         onClick={handleSkipNow}
                         className="flex items-center space-x-2"
                       >
-                        <Skip className="h-4 w-4" />
+                        <SkipForward className="h-4 w-4" />
                         <span>Skip Now</span>
                       </Button>
                       <Button 
@@ -295,7 +295,7 @@ const ProfileSetupModal = ({ isOpen, onClose, onComplete }) => {
                         onClick={handleSkipNow}
                         className="flex items-center space-x-2"
                       >
-                        <Skip className="h-4 w-4" />
+                        <SkipForward className="h-4 w-4" />
                         <span>Skip Now</span>
                       </Button>
                       <Button 

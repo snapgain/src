@@ -17,7 +17,7 @@ import {
   Heart,
   Filter
 } from 'lucide-react';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile } from '@/contexts/ProfileContext';
 
 function HotDealsPage() {
   const navigate = useNavigate();
