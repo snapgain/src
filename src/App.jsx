@@ -1,7 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { Header } from '@/components/layout/Header';  // ← Mudança aqui
+import { ProfileProvider } from '@/contexts/ProfileContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
+import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
@@ -21,8 +23,12 @@ import FAQPage from '@/pages/FAQPage';
 import ContactPage from '@/pages/ContactPage';
 import FeedbackPage from '@/pages/FeedbackPage';
 import AuthCallbackPage from '@/pages/AuthCallbackPage';
+import HotDealsPage from '@/pages/deals/HotDealsPage';
+import SupermarketDealsPage from '@/pages/deals/SupermarketDealsPage';
+import GiftcardsDealsPage from '@/pages/deals/GiftcardsDealsPage';
+import FavoriteStoresPage from '@/pages/deals/FavoriteStoresPage';
+import NotificationsPage from '@/pages/NotificationsPage';
 import './styles/globals.css';
-
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -45,66 +51,53 @@ function ProtectedRoute({ children }) {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="min-h-screen flex flex-col bg-white">
-          <Header />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/auth/login" element={<LoginPage />} />
-              <Route path="/auth/signup" element={<SignupPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/features" element={<FeaturesPage />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/disclaimer" element={<DisclaimerPage />} />
-              <Route path="/realtime-policy" element={<RealTimePolicyPage />} />
-              <Route path="/faq" element={<FAQPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/feedback" element={<FeedbackPage />} />
-              <Route path="/auth/callback" element={<AuthCallbackPage />} />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <DashboardPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/compare" 
-                element={
-                  <ProtectedRoute>
-                    <ComparePage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/settings" 
-                element={
-                  <ProtectedRoute>
-                    <SettingsPage />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </Router>
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <ProfileProvider>
+          <NotificationProvider>
+            <div className="min-h-screen bg-white">
+              <Header />
+              <main>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/auth/login" element={<LoginPage />} />
+                  <Route path="/auth/signup" element={<SignupPage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/features" element={<FeaturesPage />} />
+                  <Route path="/pricing" element={<PricingPage />} />
+                  <Route path="/privacy" element={<PrivacyPage />} />
+                  <Route path="/terms" element={<TermsPage />} />
+                  <Route path="/disclaimer" element={<DisclaimerPage />} />
+                  <Route path="/realtime-policy" element={<RealTimePolicyPage />} />
+                  <Route path="/faq" element={<FAQPage />} />
+                  <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/feedback" element={<FeedbackPage />} />
+                  <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+                  {/* Protected Routes */}
+                  <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                  <Route path="/compare" element={<ProtectedRoute><ComparePage /></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+                  <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+
+                  {/* Deals Routes */}
+                  <Route path="/deals/hot" element={<ProtectedRoute><HotDealsPage /></ProtectedRoute>} />
+                  <Route path="/deals/supermarket" element={<ProtectedRoute><SupermarketDealsPage /></ProtectedRoute>} />
+                  <Route path="/deals/giftcards" element={<ProtectedRoute><GiftcardsDealsPage /></ProtectedRoute>} />
+                  <Route path="/deals/favorites" element={<ProtectedRoute><FavoriteStoresPage /></ProtectedRoute>} />
+
+                  {/* Catch All */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+              <Footer />
+            </div>
+          </NotificationProvider>
+        </ProfileProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
