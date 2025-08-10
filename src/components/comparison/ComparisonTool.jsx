@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { usePlatformComparison } from '@/hooks/useEdgeFunctions';
 import { usePriceComparison } from '@/hooks/usePriceComparison';
+import AviosCalculator from './AviosCalculator';
 
 export function ComparisonTool() {
   const { user, isTrialExpired } = useAuth();
@@ -20,14 +21,16 @@ export function ComparisonTool() {
   const { loading: priceLoading, error: priceError, resultados: priceResults, compararPrecos } = usePriceComparison();
   
   const [selectedStore, setSelectedStore] = useState([]);
-  const [purchaseAmount, setPurchaseAmount] = useState('100');
+  const [purchaseAmount, setPurchaseAmount] = useState('0');
   const [productSearch, setProductSearch] = useState('');
-  const [selectedFilters, setSelectedFilters] = useState([]);
+  const [selectedFilters, setSelectedFilters] = useState(['cashback', 'points']);
   const [showComparison, setShowComparison] = useState(false);
   const [showPriceComparison, setShowPriceComparison] = useState(false);
+  const [showAviosCalculator, setShowAviosCalculator] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const resultsRef = useRef(null);
 
+  // Remoção das funções de conexão bancária conforme solicitado
   const [isBankConnected, setIsBankConnected] = useState(false);
   const [isCardConnected, setIsCardConnected] = useState(false);
   const [bankOffers, setBankOffers] = useState([]);
@@ -36,9 +39,22 @@ export function ComparisonTool() {
   const userFavouriteStores = stores.filter(s => s.isFavourite);
   const allStoreOptions = stores.map(s => ({ value: s.id, label: s.name }));
 
-  // Função para comparar plataformas usando Edge Function
+  // Função para comparar plataformas com validação aprimorada
   const performComparison = async () => {
-    if (selectedStore.length === 0 || !purchaseAmount) return;
+    if (selectedStore.length === 0) {
+      toast({ title: 'Selecione uma loja', description: 'Por favor, selecione uma loja para comparar.', variant: 'destructive' });
+      return;
+    }
+    
+    if (!purchaseAmount || parseFloat(purchaseAmount) <= 0) {
+      toast({ title: 'Valor inválido', description: 'Por favor, insira um valor de compra válido.', variant: 'destructive' });
+      return;
+    }
+
+    if (selectedFilters.length === 0) {
+      toast({ title: 'Selecione um filtro', description: 'Por favor, selecione pelo menos um tipo de recompensa.', variant: 'destructive' });
+      return;
+    }
 
     setIsLoading(true);
     setShowComparison(true);
@@ -52,7 +68,9 @@ export function ComparisonTool() {
       const criteria = {
         purchaseAmount: parseFloat(purchaseAmount),
         filters: selectedFilters,
-        userPreferences: user?.preferences || {}
+        userPreferences: user?.preferences || {},
+        userBanks: user?.banks || [],
+        userCards: user?.cards || []
       };
 
       await comparePlatforms(platforms, criteria);
@@ -62,12 +80,14 @@ export function ComparisonTool() {
       }, 100);
     } catch (error) {
       console.error('Erro na comparação:', error);
+      toast({ title: 'Erro na comparação', description: 'Ocorreu um erro ao processar a comparação. Tente novamente.', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Atualiza resultados em tempo real
+  // Remove a execução automática - só executa quando clicar no botão
+  /*
   useEffect(() => {
     if (selectedStore.length > 0 && purchaseAmount) {
       performComparison();
@@ -75,6 +95,7 @@ export function ComparisonTool() {
       setShowComparison(false);
     }
   }, [selectedStore, purchaseAmount, selectedFilters]);
+  */
 
   // Busca dados em tempo real das APIs das plataformas
   const [apiRewards, setApiRewards] = useState([]);
@@ -220,7 +241,7 @@ export function ComparisonTool() {
           </div>
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-            <Label className="block font-semibold mb-2 text-lg">3. Filter Options (Optional)</Label>
+            <Label className="block font-semibold mb-2 text-lg">3. Filter Options</Label>
             <div className="flex flex-wrap gap-3">
               {filterOptions.map((filter) => (
                 <motion.button
@@ -229,13 +250,13 @@ export function ComparisonTool() {
                   whileTap={{ scale: 0.96 }}
                   onClick={() => {
                     setSelectedFilters(prev => 
-                      prev.find(f => f.id === filter.id)
-                        ? prev.filter(f => f.id !== filter.id)
-                        : [...prev, filter]
+                      prev.includes(filter.id)
+                        ? prev.filter(f => f !== filter.id)
+                        : [...prev, filter.id]
                     )
                   }}
                   className={`px-5 py-2 rounded-full border-2 transition-all flex items-center text-base font-semibold shadow-sm ${
-                    selectedFilters.find(f => f.id === filter.id)
+                    selectedFilters.includes(filter.id)
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border bg-background hover:border-primary/50'
                   }`}
@@ -248,25 +269,34 @@ export function ComparisonTool() {
               ))}
             </div>
           </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="pt-4">
+            <Button
+              onClick={performComparison}
+              disabled={isLoading || selectedStore.length === 0 || !purchaseAmount || parseFloat(purchaseAmount) <= 0 || selectedFilters.length === 0}
+              size="lg"
+              className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 text-lg"
+            >
+              {isLoading ? (
+                <>
+                  <span className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></span>
+                  Calculating...
+                </>
+              ) : (
+                'Compare Rewards'
+              )}
+            </Button>
+          </motion.div>
         </CardContent>
       </Card>
 
       <div className="flex gap-4 mt-4">
         <Button
-          variant={isBankConnected ? 'secondary' : 'default'}
-          onClick={handleConnectBank}
-          disabled={isBankConnected || isLoading}
-          className="font-bold"
+          onClick={() => setShowAviosCalculator(!showAviosCalculator)}
+          variant="outline"
+          className="border-2 border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white font-bold transition-all duration-300"
         >
-          {isBankConnected ? 'Banco Conectado' : 'Conectar Banco'}
-        </Button>
-        <Button
-          variant={isCardConnected ? 'secondary' : 'default'}
-          onClick={handleConnectCard}
-          disabled={isCardConnected || isLoading}
-          className="font-bold"
-        >
-          {isCardConnected ? 'Cartão Conectado' : 'Conectar Cartão'}
+          ✈️ Avios Strategy
         </Button>
       </div>
 
@@ -278,6 +308,17 @@ export function ComparisonTool() {
           </motion.div>
         )}
         <AnimatePresence>
+          {showAviosCalculator && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mt-6"
+            >
+              <AviosCalculator />
+            </motion.div>
+          )}
+          
           {showComparison && !isLoading && (
             <ComparisonResults 
               rewards={[
