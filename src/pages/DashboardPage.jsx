@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useProfile } from '@/contexts/ProfileContext';
-import { useNavigate } from 'react-router-dom';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { 
   CreditCard, 
   TrendingUp, 
@@ -22,64 +24,14 @@ import {
   Clock,
   Flame
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      delayChildren: 0.1,
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: "spring",
-      stiffness: 100
-    }
-  }
-};
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const { profile, cards, favoriteStores } = useProfile();
-  const { user } = useAuth(); 
+  const { user } = useAuth();
   
   const userName = user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
 
-  const [timeOfDay, setTimeOfDay] = useState('');
-  
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setTimeOfDay('morning');
-    else if (hour < 17) setTimeOfDay('afternoon');
-    else setTimeOfDay('evening');
-  }, []);
-
-  const getGreeting = () => {
-    const greetings = {
-      morning: '🌅 Good morning',
-      afternoon: '☀️ Good afternoon', 
-      evening: '🌙 Good evening'
-    };
-    return greetings[timeOfDay] || '👋 Hello';
-  };
-
-  // Mock data for dashboard stats
-  const stats = {
-    totalCashback: 847.32,
-    monthlyEarnings: 124.50,
-    bestCard: 'Chase Sapphire',
-    activeCashback: 5.2
-  };
-
+  // ✅ QUICK ACTIONS CORRIGIDOS
   const quickActions = [
     {
       title: 'Hot Deals',
@@ -113,24 +65,77 @@ function DashboardPage() {
 
   const recentActivity = [
     {
+      id: 1,
+      type: 'cashback_earned',
       store: 'Amazon',
-      amount: 2.50,
+      amount: 12.50,
       date: '2 hours ago',
-      type: 'cashback'
+      icon: '🛒'
     },
     {
-      store: 'Tesco',
-      amount: 1.75,
-      date: '1 day ago',
-      type: 'cashback'
-    },
-    {
+      id: 2,
+      type: 'new_deal',
       store: 'John Lewis',
-      amount: 8.20,
+      amount: 8.0,
+      date: '1 day ago',
+      icon: '🏪'
+    },
+    {
+      id: 3,
+      type: 'cashback_earned',
+      store: 'ASOS',
+      amount: 5.75,
       date: '3 days ago',
-      type: 'cashback'
+      icon: '👕'
     }
   ];
+
+  const topPerformingCards = [
+    {
+      name: 'American Express Gold',
+      category: 'Dining & Travel',
+      cashbackEarned: 145.30,
+      monthlySpend: 1250,
+      efficiency: 95
+    },
+    {
+      name: 'Chase Sapphire',
+      category: 'General Shopping',
+      cashbackEarned: 89.20,
+      monthlySpend: 890,
+      efficiency: 88
+    },
+    {
+      name: 'Santander 123',
+      category: 'Utilities & Bills',
+      cashbackEarned: 67.85,
+      monthlySpend: 650,
+      efficiency: 82
+    }
+  ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        delayChildren: 0.1,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100
+      }
+    }
+  };
 
   return (
     <DashboardLayout
@@ -148,227 +153,192 @@ function DashboardPage() {
         animate="visible"
         className="space-y-8"
       >
-        {/* Stats Overview */}
-        <motion.div variants={itemVariants}>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+        {/* STATS OVERVIEW */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <motion.div variants={itemVariants}>
+            <Card>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                     <DollarSign className="h-6 w-6 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-green-600 font-medium">Total Cashback</p>
-                    <p className="text-2xl font-bold text-green-800">£{stats.totalCashback}</p>
+                    <p className="text-sm text-muted-foreground">Total Cashback</p>
+                    <p className="text-2xl font-bold">£{(145.30 + 89.20 + 67.85).toFixed(2)}</p>
+                    <p className="text-xs text-green-600">+12% this month</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </motion.div>
 
-            <Card className="bg-gradient-to-r from-blue-50 to-blue-50 border-blue-200">
+          <motion.div variants={itemVariants}>
+            <Card>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-blue-600" />
+                    <CreditCard className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-blue-600 font-medium">This Month</p>
-                    <p className="text-2xl font-bold text-blue-800">£{stats.monthlyEarnings}</p>
+                    <p className="text-sm text-muted-foreground">Active Cards</p>
+                    <p className="text-2xl font-bold">3</p>
+                    <p className="text-xs text-blue-600">All optimized</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </motion.div>
 
-            <Card className="bg-gradient-to-r from-purple-50 to-purple-50 border-purple-200">
+          <motion.div variants={itemVariants}>
+            <Card>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <CreditCard className="h-6 w-6 text-purple-600" />
+                    <Target className="h-6 w-6 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-purple-600 font-medium">Best Card</p>
-                    <p className="text-lg font-bold text-purple-800">{stats.bestCard}</p>
+                    <p className="text-sm text-muted-foreground">Monthly Goal</p>
+                    <p className="text-2xl font-bold">78%</p>
+                    <p className="text-xs text-purple-600">£156 to go</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </motion.div>
 
-            <Card className="bg-gradient-to-r from-orange-50 to-orange-50 border-orange-200">
+          <motion.div variants={itemVariants}>
+            <Card>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                    <Target className="h-6 w-6 text-orange-600" />
+                    <TrendingUp className="h-6 w-6 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-orange-600 font-medium">Active Rate</p>
-                    <p className="text-2xl font-bold text-orange-800">{stats.activeCashback}%</p>
+                    <p className="text-sm text-muted-foreground">Efficiency</p>
+                    <p className="text-2xl font-bold">88%</p>
+                    <p className="text-xs text-orange-600">Above average</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
 
-        {/* Quick Actions */}
+        {/* QUICK ACTIONS */}
         <motion.div variants={itemVariants}>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Zap className="h-5 w-5" />
+                <Zap className="h-5 w-5 text-[#7D4DFB]" />
                 <span>Quick Actions</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {quickActions.map((action, index) => (
-                  <Card 
-                    key={index}
-                    className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105"
-                    onClick={() => navigate(action.path)}
+                  <motion.div
+                    key={action.title}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <CardContent className="p-6">
-                      <div className={`w-12 h-12 bg-gradient-to-r ${action.color} rounded-full flex items-center justify-center mb-4 text-white`}>
-                        {action.icon}
-                      </div>
-                      <h3 className="font-semibold mb-2">{action.title}</h3>
-                      <p className="text-sm text-muted-foreground">{action.description}</p>
-                      <ArrowRight className="h-4 w-4 mt-3 text-muted-foreground" />
-                    </CardContent>
-                  </Card>
+                    <Card 
+                      className="cursor-pointer transition-all duration-200 hover:shadow-md"
+                      onClick={() => navigate(action.path)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-12 h-12 bg-gradient-to-r ${action.color} rounded-full flex items-center justify-center text-white`}>
+                            {action.icon}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-sm">{action.title}</h3>
+                            <p className="text-xs text-muted-foreground">{action.description}</p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Recent Activity & Favorite Stores */}
-        <motion.div variants={itemVariants}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Activity */}
+        {/* RECENT ACTIVITY & TOP CARDS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Recent Activity */}
+          <motion.div variants={itemVariants}>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Clock className="h-5 w-5" />
-                  <span>Recent Cashback</span>
+                  <Clock className="h-5 w-5 text-[#FF3FCE]" />
+                  <span>Recent Activity</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <CardContent className="space-y-4">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xl">{activity.icon}</span>
                       <div>
                         <p className="font-medium">{activity.store}</p>
                         <p className="text-sm text-muted-foreground">{activity.date}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-green-600">+£{activity.amount}</p>
-                        <p className="text-xs text-muted-foreground">cashback</p>
-                      </div>
                     </div>
-                  ))}
-                </div>
-                <Button variant="outline" className="w-full mt-4">
-                  View All Activity
-                </Button>
+                    <div className="text-right">
+                      <p className="font-semibold text-green-600">
+                        {activity.type === 'cashback_earned' ? `+£${activity.amount}` : `${activity.amount}%`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {activity.type === 'cashback_earned' ? 'Cashback' : 'New Rate'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
+          </motion.div>
 
-            {/* Favorite Stores */}
+          {/* Top Performing Cards */}
+          <motion.div variants={itemVariants}>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Heart className="h-5 w-5" />
-                  <span>Favorite Stores</span>
+                  <Star className="h-5 w-5 text-yellow-500" />
+                  <span>Top Performing Cards</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {favoriteStores.slice(0, 5).map((store, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                          {store[0]}
-                        </div>
-                        <span className="font-medium">{store}</span>
+              <CardContent className="space-y-4">
+                {topPerformingCards.map((card, index) => (
+                  <div key={card.name} className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">{card.name}</h4>
+                        <p className="text-sm text-muted-foreground">{card.category}</p>
                       </div>
-                      <Button size="sm" variant="ghost">
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
+                      <div className="text-right">
+                        <p className="font-semibold">£{card.cashbackEarned}</p>
+                        <p className="text-xs text-muted-foreground">This month</p>
+                      </div>
                     </div>
-                  ))}
-                </div>
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4"
-                  onClick={() => navigate('/deals/favorite-stores')}
-                >
-                  Manage Favorites
-                </Button>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Efficiency</span>
+                        <span>{card.efficiency}%</span>
+                      </div>
+                      <Progress value={card.efficiency} className="h-2" />
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </motion.div>
     </DashboardLayout>
   );
 }
 
 export default DashboardPage;
-
-import { useNavigate } from 'react-router-dom';
-
-const DashboardLayout = ({ children, title, subtitle, icon, showBackButton = true }) => {
-  const navigate = useNavigate();
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* HEADER PADRÃO */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            {/* LOGO CLICÁVEL */}
-            <div 
-              className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigate('/dashboard')}
-            >
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
-                  S
-                </div>
-                <span className="text-xl font-bold text-gray-900">SnapGain</span>
-              </div>
-            </div>
-
-            {showBackButton && (
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center space-x-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span>Back to Dashboard</span>
-              </Button>
-            )}
-            
-            <div className="flex items-center space-x-3">
-              {icon && (
-                <div className={`w-16 h-16 ${icon.bgColor} rounded-full flex items-center justify-center`}>
-                  {icon.element}
-                </div>
-              )}
-              <div>
-                <h1 className="text-4xl font-bold">{title}</h1>
-                {subtitle && (
-                  <p className="text-muted-foreground text-lg">{subtitle}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* CONTEÚDO */}
-        {children}
-      </div>
-    </div>
-  );
-};
