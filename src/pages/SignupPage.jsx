@@ -10,6 +10,7 @@ import { Eye, EyeOff, User, Mail, Lock, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
+import ProfileSetupModal from '@/components/profile/ProfileSetupModal';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -50,6 +51,7 @@ function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // ADICIONAR VERIFICAÇÃO DO SUPABASE
   useEffect(() => {
@@ -105,7 +107,8 @@ function SignupPage() {
     }
   };
 
-  const handleEmailSignup = async (e) => {
+  // Atualizar a função handleSubmit
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -258,6 +261,7 @@ function SignupPage() {
     }
   };
 
+  // Função para lidar com o Google signup
   const handleGoogleSignup = async () => {
     setIsGoogleLoading(true);
     
@@ -323,7 +327,7 @@ function SignupPage() {
               
               <CardContent className="space-y-6">
                 {/* Email/Password Form */}
-                <form onSubmit={handleEmailSignup} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Name Field */}
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
@@ -499,6 +503,13 @@ function SignupPage() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* ADICIONAR MODAL DE PROFILE SETUP */}
+      <ProfileSetupModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onComplete={() => setShowProfileModal(false)}
+      />
     </>
   );
 }

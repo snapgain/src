@@ -1,30 +1,23 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useProfile } from '@/contexts/ProfileContext';
-import { useNavigate } from 'react-router-dom';
 import { 
   ShoppingCart, 
   Search, 
-  ExternalLink, 
+  SortAsc, 
+  SortDesc, 
   Star, 
-  TrendingUp,
-  Clock,
-  Target,
-  SortAsc,
-  SortDesc,
-  Filter,
-  RefreshCw,
-  ArrowLeft,
-  Percent,
-  MapPin,
-  Users
+  MapPin, 
+  Users,
+  Heart,
+  Filter
 } from 'lucide-react';
+import { useProfile } from '@/hooks/useProfile';
 
 function SupermarketDealsPage() {
   const navigate = useNavigate();
@@ -163,36 +156,10 @@ function SupermarketDealsPage() {
       rating: 4.8,
       specialOffer: 'Free delivery on orders over £60',
       regions: ['England', 'Wales', 'Scotland'],
-      membershipRequired: false,
+      membershipRequired: true,
       deliveryOptions: ['Click & Collect', 'Home Delivery', 'Rapid'],
       avgBasketSize: '£65',
       customerSatisfaction: 96
-    },
-    {
-      id: 6,
-      store: 'Iceland',
-      title: 'Frozen Food Cashback',
-      description: 'Special cashback on frozen foods and ready meals',
-      cashbackRate: 3.2,
-      maxCashback: 20,
-      originalRate: 2.2,
-      increase: 1.0,
-      category: 'Frozen Foods',
-      validUntil: '2025-08-25',
-      featured: false,
-      trending: true,
-      logo: '🧊',
-      color: 'from-cyan-400 to-blue-500',
-      recommendedCard: 'Iceland Bonus Card',
-      isFavorite: favoriteStores.includes('Iceland'),
-      terms: 'Bonus Card members only. Frozen section only.',
-      rating: 4.2,
-      specialOffer: 'Buy 2 get 1 free on selected ranges',
-      regions: ['England', 'Wales', 'Scotland', 'Northern Ireland'],
-      membershipRequired: true,
-      deliveryOptions: ['Click & Collect', 'Home Delivery'],
-      avgBasketSize: '£28',
-      customerSatisfaction: 85
     }
   ];
 
@@ -215,50 +182,43 @@ function SupermarketDealsPage() {
     }
   };
 
-  // Filtered and sorted deals
-  const filteredDeals = useMemo(() => {
+  // Filtrar e ordenar deals
+  const filteredAndSortedDeals = useMemo(() => {
     let filtered = supermarketDeals.filter(deal => {
       const matchesSearch = deal.store.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           deal.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesFavorites = !showFavoritesOnly || deal.isFavorite;
+                           deal.title.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesRegion = selectedRegion === 'all' || deal.regions.includes(selectedRegion);
-      return matchesSearch && matchesFavorites && matchesRegion;
+      const matchesFavorites = !showFavoritesOnly || deal.isFavorite;
+      return matchesSearch && matchesRegion && matchesFavorites;
     });
 
-    // Sort deals
-    filtered.sort((a, b) => {
-      let aValue = a[sortBy];
-      let bValue = b[sortBy];
-      
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
+    return filtered.sort((a, b) => {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      switch (sortBy) {
+        case 'cashback':
+          return (a.cashbackRate - b.cashbackRate) * order;
+        case 'store':
+          return a.store.localeCompare(b.store) * order;
+        case 'rating':
+          return (a.rating - b.rating) * order;
+        default:
+          return 0;
       }
     });
+  }, [supermarketDeals, searchQuery, sortBy, sortOrder, selectedRegion, showFavoritesOnly]);
 
-    return filtered;
-  }, [searchQuery, sortBy, sortOrder, showFavoritesOnly, selectedRegion]);
-
-  const getBestSupermarketDeal = () => {
-    return filteredDeals.reduce((best, current) => {
-      return current.cashbackRate > (best?.cashbackRate || 0) ? current : best;
-    }, null);
+  const handleViewDeal = (deal) => {
+    // Redirecionar para a loja ou abrir modal com detalhes
+    window.open(`https://www.${deal.store.toLowerCase().replace(' ', '').replace('\'', '')}.co.uk`, '_blank');
   };
 
   return (
     <DashboardLayout
       title="🛒 Supermarket Deals"
-      subtitle="Best cashback deals for your grocery shopping"
+      subtitle="Best grocery cashback deals from UK supermarkets"
       icon={{
         element: <ShoppingCart className="h-8 w-8 text-white" />,
-        bgColor: "bg-gradient-to-r from-green-500 to-emerald-500"
+        bgColor: "bg-gradient-to-r from-green-500 to-blue-500"
       }}
     >
       <motion.div
@@ -267,286 +227,167 @@ function SupermarketDealsPage() {
         animate="visible"
         className="space-y-8"
       >
-        {/* Quick Stats */}
-        <motion.div variants={itemVariants}>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <Target className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-green-600 font-medium">Best Rate</p>
-                    <p className="text-xl font-bold text-green-800">
-                      {getBestSupermarketDeal()?.cashbackRate}% at {getBestSupermarketDeal()?.store}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <ShoppingCart className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium">Total Stores</p>
-                    <p className="text-xl font-bold">{filteredDeals.length}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                    <Star className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium">Your Favorites</p>
-                    <p className="text-xl font-bold">
-                      {supermarketDeals.filter(d => d.isFavorite).length}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                    <TrendingUp className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium">Trending</p>
-                    <p className="text-xl font-bold">
-                      {supermarketDeals.filter(d => d.trending).length}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </motion.div>
-
-        {/* Search and Filters */}
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                {/* Search Bar */}
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search supermarkets..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-
-                {/* Region Filter */}
-                <select
-                  value={selectedRegion}
-                  onChange={(e) => setSelectedRegion(e.target.value)}
-                  className="px-3 py-2 border border-gray-200 rounded-md min-w-[150px]"
-                >
-                  {regions.map(region => (
-                    <option key={region} value={region}>
-                      {region === 'all' ? 'All Regions' : region}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Sort Options */}
-                <div className="flex gap-2">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-md min-w-[140px]"
-                  >
-                    <option value="cashbackRate">Cashback Rate</option>
-                    <option value="rating">Rating</option>
-                    <option value="customerSatisfaction">Satisfaction</option>
-                    <option value="avgBasketSize">Basket Size</option>
-                  </select>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  >
-                    {sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-                  </Button>
-                </div>
-
-                {/* Favorites Filter */}
-                <Button
-                  variant={showFavoritesOnly ? "default" : "outline"}
-                  onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                  className="flex items-center space-x-2"
-                >
-                  <Star className={`h-4 w-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
-                  <span>Favorites</span>
-                </Button>
+        {/* FILTROS E BUSCA */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Filter className="h-5 w-5" />
+              <span>Filter Supermarket Deals</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search supermarkets..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+              
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="rounded-md border border-input bg-background px-3 py-2"
+              >
+                <option value="cashback">Sort by Cashback</option>
+                <option value="store">Sort by Store</option>
+                <option value="rating">Sort by Rating</option>
+              </select>
+              
+              <select
+                value={selectedRegion}
+                onChange={(e) => setSelectedRegion(e.target.value)}
+                className="rounded-md border border-input bg-background px-3 py-2"
+              >
+                {regions.map(region => (
+                  <option key={region} value={region}>
+                    {region === 'all' ? 'All Regions' : region}
+                  </option>
+                ))}
+              </select>
+              
+              <Button
+                variant="outline"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="flex items-center space-x-2"
+              >
+                {sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+                <span>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
+              </Button>
+              
+              <Button
+                variant={showFavoritesOnly ? "default" : "outline"}
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                className="flex items-center space-x-2"
+              >
+                <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+                <span>Favorites Only</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Supermarket Deals */}
-        <motion.div variants={itemVariants}>
-          <div className="space-y-6">
-            {filteredDeals.map((deal) => (
-              <motion.div key={deal.id} variants={itemVariants}>
-                <Card className={`transition-all duration-300 hover:shadow-xl ${deal.featured ? 'ring-2 ring-green-200 bg-gradient-to-r from-green-50/50 to-emerald-50/50' : ''}`}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      {/* Store Info */}
-                      <div className="flex items-start space-x-4 flex-1">
-                        <div className={`w-16 h-16 bg-gradient-to-r ${deal.color} rounded-xl flex items-center justify-center text-2xl shadow-lg flex-shrink-0`}>
-                          {deal.logo}
-                        </div>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-2xl font-bold">{deal.store}</h3>
-                            {deal.featured && (
-                              <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
-                                Featured
-                              </Badge>
-                            )}
-                            {deal.trending && (
-                              <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
-                                📈 Trending
-                              </Badge>
-                            )}
-                            {deal.isFavorite && (
-                              <Badge variant="outline" className="text-red-600 border-red-200">
-                                <Star className="h-3 w-3 mr-1 fill-current" />
-                                Favorite
-                              </Badge>
-                            )}
-                            <Badge variant="outline">{deal.category}</Badge>
-                          </div>
-                          
-                          <h4 className="text-lg font-semibold mb-2">{deal.title}</h4>
-                          <p className="text-muted-foreground mb-4">{deal.description}</p>
-
-                          {/* Special Offer */}
-                          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
-                            <p className="text-sm font-medium text-yellow-800">
-                              ✨ Special Offer: {deal.specialOffer}
-                            </p>
-                          </div>
-
-                          {/* Metadata Grid */}
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                            <div className="flex items-center space-x-2">
-                              <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                              <span className="text-sm">
-                                <span className="font-medium">{deal.rating}</span>
-                                <span className="text-muted-foreground ml-1">rating</span>
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2">
-                              <Users className="h-4 w-4 text-green-600" />
-                              <span className="text-sm">
-                                <span className="font-medium">{deal.customerSatisfaction}%</span>
-                                <span className="text-muted-foreground ml-1">satisfied</span>
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2">
-                              <ShoppingCart className="h-4 w-4 text-blue-600" />
-                              <span className="text-sm">
-                                <span className="font-medium">{deal.avgBasketSize}</span>
-                                <span className="text-muted-foreground ml-1">avg basket</span>
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2">
-                              <MapPin className="h-4 w-4 text-purple-600" />
-                              <span className="text-sm">
-                                <span className="font-medium">{deal.regions.length}</span>
-                                <span className="text-muted-foreground ml-1">regions</span>
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Delivery Options */}
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {deal.deliveryOptions.map((option) => (
-                              <Badge key={option} variant="secondary" className="text-xs">
-                                {option}
-                              </Badge>
-                            ))}
-                            {deal.membershipRequired && (
-                              <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
-                                Membership Required
-                              </Badge>
-                            )}
-                          </div>
-
-                          {/* Terms */}
-                          <p className="text-xs text-muted-foreground italic">{deal.terms}</p>
-                        </div>
-                      </div>
-
-                      {/* Cashback & Actions */}
-                      <div className="flex items-start space-x-6">
-                        <div className="text-center">
-                          <div className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                            {deal.cashbackRate}%
-                          </div>
-                          <div className="text-sm text-muted-foreground">Cashback</div>
-                          <div className="text-xs text-green-600 font-medium mt-1">
-                            +{deal.increase}% boost
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Max £{deal.maxCashback}
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col space-y-3">
-                          <Button 
-                            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6"
-                            onClick={() => window.open(`https://${deal.store.toLowerCase().replace(' ', '').replace('\'', '')}.com`, '_blank')}
-                          >
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Shop Now
-                          </Button>
-                          
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => navigate('/compare')}
-                          >
-                            Compare All
-                          </Button>
-                        </div>
+        {/* GRID DE DEALS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredAndSortedDeals.map((deal, index) => (
+            <motion.div key={deal.id} variants={itemVariants}>
+              <Card className="h-full hover:shadow-lg transition-shadow duration-300 relative overflow-hidden">
+                {deal.featured && (
+                  <Badge className="absolute top-2 right-2 bg-green-500 text-white">
+                    Featured
+                  </Badge>
+                )}
+                {deal.trending && (
+                  <Badge className="absolute top-2 left-2 bg-orange-500 text-white">
+                    📈 Trending
+                  </Badge>
+                )}
+                
+                <CardHeader className={`bg-gradient-to-r ${deal.color} text-white`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">{deal.logo}</span>
+                      <div>
+                        <CardTitle className="text-lg">{deal.store}</CardTitle>
+                        <p className="text-sm opacity-90">{deal.category}</p>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">{deal.cashbackRate}%</div>
+                      <div className="text-xs opacity-90">was {deal.originalRate}%</div>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="p-6 space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">{deal.title}</h3>
+                    <p className="text-muted-foreground text-sm">{deal.description}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Max Cashback:</span>
+                      <span className="font-semibold">£{deal.maxCashback}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Avg Basket:</span>
+                      <span className="font-semibold">{deal.avgBasketSize}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Satisfaction:</span>
+                      <span className="font-semibold">{deal.customerSatisfaction}%</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1">
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm font-medium">{deal.rating}</span>
+                    </div>
+                    <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span>{deal.regions.length} regions</span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Badge variant="outline" className="text-xs">
+                      {deal.specialOffer}
+                    </Badge>
+                    <div className="flex flex-wrap gap-1">
+                      {deal.deliveryOptions.map(option => (
+                        <Badge key={option} variant="secondary" className="text-xs">
+                          {option}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 space-y-2">
+                    <Button 
+                      onClick={() => handleViewDeal(deal)}
+                      className="w-full"
+                    >
+                      Shop & Earn Cashback
+                    </Button>
+                    <p className="text-xs text-muted-foreground">{deal.terms}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
 
-        {/* Empty State */}
-        {filteredDeals.length === 0 && (
+        {filteredAndSortedDeals.length === 0 && (
           <motion.div variants={itemVariants}>
             <Card>
-              <CardContent className="p-12 text-center">
-                <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No supermarket deals found</h3>
+              <CardContent className="text-center py-12">
+                <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Supermarket Deals Found</h3>
                 <p className="text-muted-foreground mb-6">
                   Try adjusting your search terms or region filters
                 </p>

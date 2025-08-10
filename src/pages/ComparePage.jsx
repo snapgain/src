@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   CreditCard, 
   Search, 
@@ -38,10 +39,25 @@ const itemVariants = {
 
 function ComparePage() {
   const { cards, addCard } = useProfile();
+  const { user } = useAuth(); 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('cashbackRate');
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [greeting, setGreeting] = useState('');
+
+  useEffect(() => {
+    const getGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) return '🌅 Good morning';
+      else if (hour < 17) return '☀️ Good afternoon';
+      else return '🌙 Good evening';
+    };
+    
+    setGreeting(getGreeting());
+  }, []);
+
+  const userName = user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
 
   // Mock credit card data
   const creditCards = [
@@ -112,8 +128,8 @@ function ComparePage() {
 
   return (
     <DashboardLayout
-      title="💳 Compare Cards"
-      subtitle="Find the perfect credit card for maximum cashback rewards"
+      title="💳 Compare"
+      subtitle={`${greeting}, ${userName}! 👋 Find the perfect deal for maximum cashback & miles rewards`}
       icon={{
         element: <CreditCard className="h-8 w-8 text-white" />,
         bgColor: "bg-gradient-to-r from-blue-500 to-purple-600"

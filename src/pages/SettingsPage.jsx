@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Bell, Shield, Smartphone, Mail, Settings } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -32,6 +33,8 @@ const itemVariants = {
 };
 
 function SettingsPage() {
+  const { toast } = useToast();
+  
   const [settings, setSettings] = useState({
     emailNotifications: true,
     pushNotifications: false,
@@ -49,9 +52,36 @@ function SettingsPage() {
   };
 
   const handleSave = () => {
-    // Save settings logic here
-    console.log('Settings saved:', settings);
+    try {
+      localStorage.setItem('snapgain_settings', JSON.stringify(settings));
+      
+      toast({
+        title: "Settings Saved",
+        description: "Your preferences have been updated successfully.",
+        variant: "default"
+      });
+      
+      console.log('Settings saved:', settings);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
+
+  useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem('snapgain_settings');
+      if (savedSettings) {
+        setSettings(JSON.parse(savedSettings));
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  }, []);
 
   return (
     <>

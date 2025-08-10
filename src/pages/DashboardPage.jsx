@@ -19,8 +19,10 @@ import {
   Heart,
   BarChart3,
   Users,
-  Clock
+  Clock,
+  Flame
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -48,7 +50,10 @@ const itemVariants = {
 function DashboardPage() {
   const navigate = useNavigate();
   const { profile, cards, favoriteStores } = useProfile();
+  const { user } = useAuth(); 
   
+  const userName = user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
+
   const [timeOfDay, setTimeOfDay] = useState('');
   
   useEffect(() => {
@@ -77,32 +82,32 @@ function DashboardPage() {
 
   const quickActions = [
     {
-      title: 'Compare Cards',
-      description: 'Find the best cashback rates',
-      icon: <CreditCard className="h-6 w-6" />,
-      color: 'from-blue-500 to-blue-600',
-      path: '/compare'
-    },
-    {
       title: 'Hot Deals',
       description: 'Limited time offers',
-      icon: <Zap className="h-6 w-6" />,
+      icon: <Flame className="h-6 w-6" />,
       color: 'from-red-500 to-red-600',
       path: '/deals/hot'
     },
     {
-      title: 'Supermarket Deals',
-      description: 'Grocery cashback offers',
+      title: 'Highest Supermarket Deal',
+      description: 'Best grocery cashback offers',
       icon: <ShoppingCart className="h-6 w-6" />,
       color: 'from-green-500 to-green-600',
       path: '/deals/supermarket'
     },
     {
-      title: 'Gift Cards',
-      description: 'Bonus gift card deals',
+      title: 'Top Gift Card',
+      description: 'Best gift card deals',
       icon: <Gift className="h-6 w-6" />,
       color: 'from-purple-500 to-purple-600',
       path: '/deals/giftcards'
+    },
+    {
+      title: 'My Favorites',
+      description: 'Your favorite stores',
+      icon: <Heart className="h-6 w-6" />,
+      color: 'from-pink-500 to-red-500',
+      path: '/deals/favorite-stores'
     }
   ];
 
@@ -130,7 +135,7 @@ function DashboardPage() {
   return (
     <DashboardLayout
       title="Dashboard"
-      subtitle={`${getGreeting()}, ${profile?.name?.split(' ')[0] || 'there'}! Welcome to your cashback hub.`}
+      subtitle={`Welcome back, ${userName}! 👋 Welcome to your Dashboard.`}
       showBackButton={false}
       icon={{
         element: <BarChart3 className="h-8 w-8 text-white" />,
@@ -309,3 +314,61 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
+
+import { useNavigate } from 'react-router-dom';
+
+const DashboardLayout = ({ children, title, subtitle, icon, showBackButton = true }) => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* HEADER PADRÃO */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            {/* LOGO CLICÁVEL */}
+            <div 
+              className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate('/dashboard')}
+            >
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                  S
+                </div>
+                <span className="text-xl font-bold text-gray-900">SnapGain</span>
+              </div>
+            </div>
+
+            {showBackButton && (
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to Dashboard</span>
+              </Button>
+            )}
+            
+            <div className="flex items-center space-x-3">
+              {icon && (
+                <div className={`w-16 h-16 ${icon.bgColor} rounded-full flex items-center justify-center`}>
+                  {icon.element}
+                </div>
+              )}
+              <div>
+                <h1 className="text-4xl font-bold">{title}</h1>
+                {subtitle && (
+                  <p className="text-muted-foreground text-lg">{subtitle}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* CONTEÚDO */}
+        {children}
+      </div>
+    </div>
+  );
+};
