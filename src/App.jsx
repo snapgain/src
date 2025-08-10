@@ -32,7 +32,8 @@ import './styles/globals.css';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
-  
+
+  // AGUARDAR MAIS TEMPO PARA CARREGAR
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -41,11 +42,14 @@ function ProtectedRoute({ children }) {
       </div>
     );
   }
+
+  // VERIFICAR SE TEM USER OU DADOS NO LOCALSTORAGE
+  const storedUser = localStorage.getItem('snapgain_user');
   
-  if (!user) {
+  if (!user && !storedUser) {
     return <Navigate to="/auth/login" replace />;
   }
-  
+
   return children;
 }
 
