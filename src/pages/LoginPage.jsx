@@ -55,41 +55,74 @@ function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
+    
+    if (!isFormValid) return;
 
+    setIsLoading(true);
+    
     try {
-      const result = await login(formData.email, formData.password);
-      if (result.success) {
-        navigate(result.redirectTo || '/compare'); // MUDANÇA AQUI
-      } else {
-        setError('Invalid email or password. Please try again.');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Welcome back!",
+          description: "You have been successfully signed in.",
+          variant: "default"
+        });
+        
+        // REDIRECIONAR PARA COMPARE AO INVÉS DE DASHBOARD
+        navigate('/compare');
       }
     } catch (error) {
-      setError('Invalid email or password. Please try again.');
+      console.error('Login error:', error);
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid email or password.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    setError('');
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/compare`, // MUDANÇA AQUI
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
+    setIsGoogleLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/compare`, // MUDANÇA AQUI
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
-      }
-    });
+      });
 
-    if (error) {
-      setError('Failed to login with Google. Please try again.');
-      setIsLoading(false);
+      if (error) {
+        toast({
+          title: "Google Sign In Failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast({
+        title: "Error",
+        description: "Google sign in failed. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 

@@ -120,9 +120,52 @@
 }
 
 /* Responsive adjustments */
+@media (max-width: 768px) {
+  /* Cards responsivos */
+  .grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .grid-cols-1.md\\:grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Spacing mobile */
+  .space-y-8 > * + * {
+    margin-top: 1.5rem !important;
+  }
+  
+  /* Card padding mobile */
+  .p-6 {
+    padding: 1rem !important;
+  }
+  
+  /* Text responsivo */
+  .text-4xl {
+    font-size: 1.875rem !important;
+  }
+  
+  .text-2xl {
+    font-size: 1.5rem !important;
+  }
+}
+
 @media (max-width: 640px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+  /* Muito pequeno */
+  .px-4 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  .space-x-4 > * + * {
+    margin-left: 0.75rem !important;
+  }
+}
+
+/* Touch targets para mobile */
+@media (max-width: 768px) {
+  button, .cursor-pointer {
+    min-height: 44px;
+    min-width: 44px;
   }
 }

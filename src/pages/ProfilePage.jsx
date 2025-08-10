@@ -20,8 +20,10 @@ import {
   Save,
   Star
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 function ProfilePage() {
+  const { toast } = useToast();
   const { user } = useAuth();
   const { 
     profileData, 
@@ -96,36 +98,111 @@ function ProfilePage() {
   };
 
   const handleSaveProfile = () => {
-    updateProfileData(localProfileData);
-    console.log('Saving profile:', localProfileData);
-    setEditMode(false);
+    try {
+      updateProfileData(localProfileData);
+      
+      // SALVAR TAMBÉM NO LOCAL STORAGE COMO BACKUP
+      localStorage.setItem('snapgain_profile', JSON.stringify(localProfileData));
+      
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been saved successfully.",
+        variant: "default"
+      });
+      
+      console.log('Saving profile:', localProfileData);
+      setEditMode(false);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save profile. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleAddBank = () => {
     if (newBank) {
-      addBank(newBank);
-      setNewBank('');
+      try {
+        addBank(newBank);
+        setNewBank('');
+        toast({
+          title: "Bank Added",
+          description: `${newBank} has been added to your banks.`,
+          variant: "default"
+        });
+      } catch (error) {
+        console.error('Error adding bank:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add bank. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
   const handleAddCard = () => {
     if (newCard) {
-      addCard(newCard);
-      setNewCard('');
+      try {
+        addCard(newCard);
+        setNewCard('');
+        toast({
+          title: "Card Added",
+          description: `${newCard} has been added to your cards.`,
+          variant: "default"
+        });
+      } catch (error) {
+        console.error('Error adding card:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add card. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
   const handleAddProgram = () => {
     if (newProgram) {
-      addProgram(newProgram);
-      setNewProgram('');
+      try {
+        addProgram(newProgram);
+        setNewProgram('');
+        toast({
+          title: "Program Added",
+          description: `${newProgram} has been added to your programs.`,
+          variant: "default"
+        });
+      } catch (error) {
+        console.error('Error adding program:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add program. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
   const handleAddStore = () => {
     if (newStore) {
-      addFavoriteStore(newStore);
-      setNewStore('');
+      try {
+        addFavoriteStore(newStore);
+        setNewStore('');
+        toast({
+          title: "Store Added",
+          description: `${newStore} has been added to your favorites.`,
+          variant: "default"
+        });
+      } catch (error) {
+        console.error('Error adding store:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add store. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
