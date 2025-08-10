@@ -17,7 +17,7 @@ import SettingsPage from './pages/SettingsPage';
 // Import deals pages
 import HotDealsPage from './pages/deals/HotDealsPage';
 import SupermarketDealsPage from './pages/deals/SupermarketDealsPage';
-import GiftCardDealsPage from './pages/deals/GiftCardsDealsPage';
+import GiftCardDealsPage from './pages/deals/GiftcardsDealsPage';
 import FavoriteStoresPage from './pages/deals/FavoriteStoresPage';
 
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -75,7 +75,7 @@ function AppWithToasts() {
         
         <Route path="/deals/giftcards" element={
           <ProtectedRoute>
-            <GiftCardsDealsPage />
+            <GiftCardDealsPage />
           </ProtectedRoute>
         } />
         
