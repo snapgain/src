@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { Progress } from '@/components/ui/Progress'; // ← Com P maiúsculo
 import { Badge } from '@/components/ui/badge';
 import { 
   CreditCard, 
