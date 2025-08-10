@@ -59,11 +59,36 @@ function LoginPage() {
     setError('');
 
     try {
-      await login(formData.email, formData.password);
-      navigate('/dashboard');
+      const result = await login(formData.email, formData.password);
+      if (result.success) {
+        navigate(result.redirectTo || '/compare'); // MUDANÇA AQUI
+      } else {
+        setError('Invalid email or password. Please try again.');
+      }
     } catch (error) {
       setError('Invalid email or password. Please try again.');
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError('');
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/compare`, // MUDANÇA AQUI
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
+      }
+    });
+
+    if (error) {
+      setError('Failed to login with Google. Please try again.');
       setIsLoading(false);
     }
   };
@@ -174,7 +199,7 @@ function LoginPage() {
                 </div>
                 </div>
 
-                  <GoogleAuthButton className="w-full" />
+                  <GoogleAuthButton className="w-full" onClick={handleGoogleLogin} />
                   
                   <div className="text-center">
                     <Link 

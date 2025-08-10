@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Bell, Shield, Smartphone, Mail } from 'lucide-react';
+import { Bell, Shield, Smartphone, Mail, Settings } from 'lucide-react';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -59,137 +60,135 @@ function SettingsPage() {
         <meta name="description" content="Manage your SnapGain account settings and preferences." />
       </Helmet>
       
-      <div className="container mx-auto px-4 py-12 pt-32">
+      <DashboardLayout
+        title="⚙️ Settings"
+        subtitle="Customize your SnapGain experience"
+        icon={{
+          element: <Settings className="h-8 w-8 text-white" />,
+          bgColor: "bg-gradient-to-r from-gray-500 to-gray-600"
+        }}
+      >
         <motion.div 
-          className="max-w-2xl mx-auto"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
+          className="space-y-6"
         >
-          <motion.div className="text-center mb-12" variants={itemVariants}>
-            <h1 className="text-4xl font-bold mb-4">Settings</h1>
-            <p className="text-xl text-muted-foreground">
-              Customize your SnapGain experience
-            </p>
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Bell className="h-5 w-5 text-[#7D4DFB]" />
+                  <span>Notifications</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="email-notifications" className="flex items-center space-x-2">
+                    <Mail className="h-4 w-4" />
+                    <span>Email notifications</span>
+                  </Label>
+                  <Checkbox 
+                    id="email-notifications"
+                    checked={settings.emailNotifications}
+                    onCheckedChange={() => handleSettingChange('emailNotifications')}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="push-notifications" className="flex items-center space-x-2">
+                    <Smartphone className="h-4 w-4" />
+                    <span>Push notifications</span>
+                  </Label>
+                  <Checkbox 
+                    id="push-notifications"
+                    checked={settings.pushNotifications}
+                    onCheckedChange={() => handleSettingChange('pushNotifications')}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="weekly-reports" className="flex items-center space-x-2">
+                    <span>Weekly savings reports</span>
+                  </Label>
+                  <Checkbox 
+                    id="weekly-reports"
+                    checked={settings.weeklyReports}
+                    onCheckedChange={() => handleSettingChange('weeklyReports')}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="deal-alerts" className="flex items-center space-x-2">
+                    <span>Deal alerts</span>
+                  </Label>
+                  <Checkbox 
+                    id="deal-alerts"
+                    checked={settings.dealAlerts}
+                    onCheckedChange={() => handleSettingChange('dealAlerts')}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
 
-          <div className="space-y-6">
-            <motion.div variants={itemVariants}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Bell className="h-5 w-5 text-[#7D4DFB]" />
-                    <span>Notifications</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="email-notifications" className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4" />
-                      <span>Email notifications</span>
-                    </Label>
-                    <Checkbox 
-                      id="email-notifications"
-                      checked={settings.emailNotifications}
-                      onCheckedChange={() => handleSettingChange('emailNotifications')}
-                    />
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5 text-[#FF3FCE]" />
+                  <span>Security</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Two-factor authentication</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Add an extra layer of security to your account
+                    </p>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="push-notifications" className="flex items-center space-x-2">
-                      <Smartphone className="h-4 w-4" />
-                      <span>Push notifications</span>
-                    </Label>
-                    <Checkbox 
-                      id="push-notifications"
-                      checked={settings.pushNotifications}
-                      onCheckedChange={() => handleSettingChange('pushNotifications')}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="weekly-reports" className="flex items-center space-x-2">
-                      <span>Weekly savings reports</span>
-                    </Label>
-                    <Checkbox 
-                      id="weekly-reports"
-                      checked={settings.weeklyReports}
-                      onCheckedChange={() => handleSettingChange('weeklyReports')}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="deal-alerts" className="flex items-center space-x-2">
-                      <span>Deal alerts</span>
-                    </Label>
-                    <Checkbox 
-                      id="deal-alerts"
-                      checked={settings.dealAlerts}
-                      onCheckedChange={() => handleSettingChange('dealAlerts')}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                  <Checkbox 
+                    checked={settings.twoFactorAuth}
+                    onCheckedChange={() => handleSettingChange('twoFactorAuth')}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-            <motion.div variants={itemVariants}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Shield className="h-5 w-5 text-[#FF3FCE]" />
-                    <span>Security</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Two-factor authentication</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Add an extra layer of security to your account
-                      </p>
-                    </div>
-                    <Checkbox 
-                      checked={settings.twoFactorAuth}
-                      onCheckedChange={() => handleSettingChange('twoFactorAuth')}
-                    />
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Marketing Preferences</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Marketing emails</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive updates about new features and special offers
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                  <Checkbox 
+                    checked={settings.marketingEmails}
+                    onCheckedChange={() => handleSettingChange('marketingEmails')}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-            <motion.div variants={itemVariants}>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Marketing Preferences</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Marketing emails</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive updates about new features and special offers
-                      </p>
-                    </div>
-                    <Checkbox 
-                      checked={settings.marketingEmails}
-                      onCheckedChange={() => handleSettingChange('marketingEmails')}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <Button 
-                onClick={handleSave}
-                className="w-full bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-purple-700 hover:to-pink-600"
-              >
-                Save Settings
-              </Button>
-            </motion.div>
-          </div>
+          <motion.div variants={itemVariants}>
+            <Button 
+              onClick={handleSave}
+              className="w-full bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-purple-700 hover:to-pink-600"
+            >
+              Save Settings
+            </Button>
+          </motion.div>
         </motion.div>
-      </div>
+      </DashboardLayout>
     </>
   );
 }
