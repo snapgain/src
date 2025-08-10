@@ -1,5 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
+import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -118,6 +120,8 @@ function LandingPage() {
         <title>SnapGain - UK's Smartest Cashback Comparison</title>
         <meta name="description" content="Compare cashback rates, loyalty points, and gift card promotions instantly. Make every purchase count with SnapGain - your intelligent rewards companion." />
       </Helmet>
+      
+      <Header />  {/* ✅ ADICIONAR HEADER */}
       
       <div className="min-h-screen pt-16">
         {/* Hero Section */}
@@ -411,6 +415,8 @@ function LandingPage() {
           </div>
         </motion.div>
       </div>
+
+      <Footer />  {/* ✅ ADICIONAR FOOTER */}
     </>
   );
 }
