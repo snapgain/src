@@ -20,6 +20,18 @@ import SupermarketDealsPage from './pages/deals/SupermarketDealsPage';
 import GiftCardDealsPage from './pages/deals/GiftcardsDealsPage';
 import FavoriteStoresPage from './pages/deals/FavoriteStoresPage';
 
+// ✅ ADICIONAR IMPORTS DAS PÁGINAS EXISTENTES:
+import FeaturesPage from './pages/FeaturesPage';
+import PricingPage from './pages/PricingPage';
+import AboutPage from './pages/AboutPage';
+import FAQPage from './pages/FAQPage';
+import ContactPage from './pages/ContactPage';
+import FeedbackPage from './pages/FeedbackPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
+import DisclaimerPage from './pages/DisclaimerPage';
+import RealTimePolicyPage from './pages/RealTimePolicyPage';
+
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import './styles/globals.css';
 
@@ -34,6 +46,18 @@ function AppWithToasts() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        
+        {/* ✅ ADICIONAR ROTAS DAS PÁGINAS EXISTENTES */}
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/feedback" element={<FeedbackPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/disclaimer" element={<DisclaimerPage />} />
+        <Route path="/realtime-policy" element={<RealTimePolicyPage />} />
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={
