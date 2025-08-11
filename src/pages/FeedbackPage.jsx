@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
+import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
+import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -95,6 +97,8 @@ function FeedbackPage() {
           <meta name="description" content="Share your feedback with SnapGain. Help us improve your cashback experience." />
         </Helmet>
         
+         <Header />  {/* ✅ ADICIONAR HEADER */}
+
         <div className="container mx-auto px-4 py-12 pt-32">
           <div className="max-w-2xl mx-auto text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -304,7 +308,10 @@ function FeedbackPage() {
           </div>
         </motion.div>
       </div>
+
+      <Footer />  {/* ✅ ADICIONAR FOOTER */}
     </>
+    
   );
 }
 

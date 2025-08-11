@@ -1,5 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
+import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Star, Clock, Heart, Smartphone, Shield } from 'lucide-react';
@@ -94,6 +96,8 @@ function FeaturesPage() {
         <meta name="description" content="Discover SnapGain's powerful features: real-time reward comparison, personalized strategies, and smart calculations to maximize your UK cashback." />
       </Helmet>
       
+       <Header />  {/* ✅ ADICIONAR HEADER */}
+
       <div className="min-h-screen pt-16">
         {/* Hero Section */}
         <motion.div 
@@ -212,6 +216,8 @@ function FeaturesPage() {
           </div>
         </motion.div>
       </div>
+
+      <Footer />  {/* ✅ ADICIONAR FOOTER */}
     </>
   );
 }
