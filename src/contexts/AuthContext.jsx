@@ -178,7 +178,7 @@ export function AuthProvider({ children }) {
         const trialStart = new Date().toISOString();
         const userData = { 
           id: data.user.id,
-          email: data.user.email, 
+          email: data.user.email,
           name: data.user.user_metadata?.name || email.split('@')[0], 
           isRegistered: true, 
           trialStart,
@@ -217,29 +217,25 @@ export function AuthProvider({ children }) {
       console.log('🔵 Starting signup process...');
       console.log('📧 Email (raw):', email);
       console.log('👤 Name (raw):', name);
-      console.log('🔒 Password (raw):', password);
-      console.log('🔒 Password length:', password?.length);
+      console.log('🔒 Password length:', password?.length);  // ✅ SÓ LENGTH POR SEGURANÇA
       console.log('🤖 Captcha token:', captchaToken ? 'Present' : 'Missing');
       
       // DETECTAR PARÂMETROS TROCADOS
       if (email && !email.includes('@') && name && name.includes('@')) {
         console.warn('⚠️ Parâmetros possivelmente trocados! Corrigindo...');
-        console.log('🔄 Trocando name e email');
         const temp = email;
         email = name;
         name = temp;
-        console.log('✅ Após correção - Email:', email, 'Name:', name);
       }
       
       if (!name || !email || !password || !email.includes('@')) {
         console.error('❌ Validation failed after correction');
-        console.log('🔍 Final values:', { name, email, passwordLength: password?.length });
         toast({
           title: "Signup Failed",
           description: "Please fill all fields correctly.",
           variant: "destructive"
         });
-        return false;
+        return { success: false, needsProfileSetup: false };  // ✅ RETORNAR OBJETO
       }
 
       // LIMPAR STORAGE ANTES DE SIGNUP
@@ -249,7 +245,7 @@ export function AuthProvider({ children }) {
       
       const signUpOptions = {
         email: email.trim(),
-        password: password,
+        password: password,  // ✅ ENVIAR PASSWORD REAL, NÃO LENGTH
         options: { 
           data: {
             name: name.trim()
@@ -257,39 +253,38 @@ export function AuthProvider({ children }) {
         }
       };
 
-      // ADICIONAR CAPTCHA APENAS SE EXISTIR
       if (captchaToken) {
         signUpOptions.options.captchaToken = captchaToken;
         console.log('🤖 Added captcha token to options');
       }
 
-      console.log('📋 SignUp options:', {
+      console.log('📋 Signup payload:', {
         email: signUpOptions.email,
         passwordLength: signUpOptions.password.length,
         hasName: !!signUpOptions.options.data.name,
-        hasCaptcha: !!signUpOptions.options.captchaToken
+        redirectTo: `${window.location.origin}/dashboard`
       });
 
       const { data, error } = await supabase.auth.signUp(signUpOptions);
 
-      console.log('📊 Supabase response:');
+      console.log('📊 Raw Supabase response:');
       console.log('✅ Data:', data);
-      console.log('❌ Error:', error);
-
+      
       if (error) {
-        console.error('🚨 Supabase signup error:', error);
-        console.error('🔍 Error details:', {
+        console.log('❌ Error:', error);
+        console.log('🚨 Supabase signup error details:', {
           message: error.message,
           status: error.status,
-          statusCode: error.statusCode
+          statusCode: error.statusCode,
+          name: error.name,
+          details: error.details || 'Generic Error'
         });
-        
         toast({ 
           title: "Signup Failed", 
           description: error.message || "Failed to create account", 
           variant: "destructive" 
         });
-        return false;
+        return { success: false, needsProfileSetup: false };  // ✅ RETORNAR OBJETO
       }
 
       if (data?.user) {
@@ -300,26 +295,40 @@ export function AuthProvider({ children }) {
           confirmed: data.user.email_confirmed_at ? 'Yes' : 'No'
         });
         
+        // ✅ CRIAR USUÁRIO TEMPORÁRIO PARA PROFILE SETUP
+        const trialStart = new Date().toISOString();
+        const tempUserData = {
+          id: data.user.id,
+          email: data.user.email,
+          name: name.trim(),
+          isRegistered: false,      // ✅ AINDA NÃO REGISTRADO COMPLETAMENTE
+          needsProfileSetup: true,  // ✅ PRECISA FAZER SETUP
+          trialStart,
+          subscription: 'trial',
+          supabaseUser: data.user
+        };
+        
+        safeJsonSave('snapgain_user', tempUserData);
+        setUser(tempUserData);
+        
         toast({ 
           title: "Account Created!", 
-          description: "Please check your email to verify your account." 
+          description: "Please complete your profile setup."  // ✅ MENSAGEM ATUALIZADA
         });
-        return true;
+        
+        return { success: true, needsProfileSetup: true };  // ✅ NOVO RETORNO
       } else {
         console.warn('⚠️ No user in response but no error');
-        console.log('📄 Full data:', data);
-        return false;
+        return { success: false, needsProfileSetup: false };  // ✅ ao invés de: return false;
       }
     } catch (error) {
       console.error('💥 Signup catch error:', error);
-      console.error('🔍 Error stack:', error.stack);
-      
       toast({ 
         title: "Signup Error", 
         description: error.message || "Something went wrong. Please try again.", 
         variant: "destructive" 
       });
-      return false;
+      return { success: false, needsProfileSetup: false };
     } finally {
       console.log('🏁 Signup process finished');
       setLoading(false);
@@ -381,7 +390,12 @@ export function AuthProvider({ children }) {
 
   const completeRegistration = (formData) => {
     setLoading(true);
-    const updatedUser = { ...user, ...formData, isRegistered: true };
+    const updatedUser = { 
+      ...user, 
+      ...formData, 
+      isRegistered: true,        // ✅ AGORA SIM REGISTRADO
+      needsProfileSetup: false   // ✅ NÃO PRECISA MAIS SETUP
+    };
     safeJsonSave('snapgain_user', updatedUser);
     setUser(updatedUser);
     toast({ title: "Registration Complete!", description: "You're all set to use SnapGain." });
