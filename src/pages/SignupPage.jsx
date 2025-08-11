@@ -108,16 +108,19 @@ function SignupPage() {
   };
 
   // Atualizar a função handleSubmit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
+ // SUBSTITUIR APENAS A FUNÇÃO handleSubmit (linhas 108-265):
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!validateForm()) {
+    return;
+  }
+  
+  setIsLoading(true);
+  setErrors({});  // ✅ CORRIGIR: era setError mas a variável é errors
+  
+  try {
       console.log('⏳ Starting signup process...');
       console.log('📝 Form data:', {
         name: formData.name,
@@ -134,7 +137,7 @@ function SignupPage() {
 
       const signUpData = {
         email: formData.email.trim(),
-        password: formData.password,
+        password: formData.password,  // ✅ ENVIAR PASSWORD REAL
         options: {
           data: {
             name: formData.name.trim()
@@ -171,12 +174,6 @@ function SignupPage() {
             description: "Too many signup attempts. Please wait 60 minutes or try Google signup.",
             variant: "destructive"
           });
-          
-          // DESABILITAR BOTÃO POR 60 SEGUNDOS
-          setTimeout(() => {
-            // Reabilitar depois de 1 minuto
-          }, 60000);
-          
           return;
         } else if (error.message.includes('email')) {
           toast({
@@ -209,23 +206,22 @@ function SignupPage() {
           console.log('🔐 Session created:', !!data.session);
         }
         
-        toast({
-          title: "Account Created!",
-          description: data.user.email_confirmed_at 
-            ? "Account created successfully! Redirecting..." 
-            : "Please check your email to verify your account.",
-        });
-        
-        // Delay before redirect to show toast
-        setTimeout(() => {
-          if (data.user.email_confirmed_at) {
-            console.log('🏠 Redirecting to dashboard...');
-            navigate('/dashboard');
-          } else {
-            console.log('📧 Redirecting to login for email verification...');
-            navigate('/auth/login?message=check-email');
-          }
-        }, 1500);
+        // ✅ VERIFICAR SE PRECISA DE PROFILE SETUP
+        if (data.user.email_confirmed_at) {
+          // Se email já confirmado, mostrar ProfileSetupModal
+          toast({
+            title: "Account Created!",
+            description: "Please complete your profile setup.",
+          });
+          setShowProfileModal(true);  // ✅ MOSTRAR MODAL
+        } else {
+          // Se email não confirmado, pedir verificação
+          toast({
+            title: "Account Created!",
+            description: "Please check your email to verify your account.",
+          });
+          navigate('/auth/login?message=check-email');
+        }
         
       } else if (data) {
         console.warn('⚠️ Data received but no user:', data);
