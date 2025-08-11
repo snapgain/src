@@ -118,7 +118,7 @@ const handleSubmit = async (e) => {
   }
   
   setIsLoading(true);
-  setErrors({});  // ✅ CORRIGIR: era setError mas a variável é errors
+  setErrors({});
   
   try {
       console.log('⏳ Starting signup process...');
@@ -148,7 +148,7 @@ const handleSubmit = async (e) => {
 
       console.log('📋 Signup payload:', {
         email: signUpData.email,
-        passwordLength: signUpData.password.length,
+        passwordProvided: !!signUpData.password,  // ✅ CORRIGIR: não mostrar length
         hasName: !!signUpData.options.data.name,
         redirectTo: signUpData.options.emailRedirectTo
       });
@@ -157,10 +157,10 @@ const handleSubmit = async (e) => {
 
       console.log('📊 Raw Supabase response:');
       console.log('✅ Data:', data);
-      console.log('❌ Error:', error);
-
+      
       if (error) {
-        console.error('🚨 Supabase signup error details:', {
+        console.log('❌ Error:', error);
+        console.log('🚨 Supabase signup error details:', {
           message: error.message,
           status: error.status,
           statusCode: error.statusCode,
@@ -172,6 +172,13 @@ const handleSubmit = async (e) => {
           toast({
             title: "Rate limit exceeded",
             description: "Too many signup attempts. Please wait 60 minutes or try Google signup.",
+            variant: "destructive"
+          });
+          return;
+        } else if (error.status === 504) {
+          toast({
+            title: "Server timeout",
+            description: "The server is taking too long to respond. Please try again.",
             variant: "destructive"
           });
           return;
@@ -206,22 +213,12 @@ const handleSubmit = async (e) => {
           console.log('🔐 Session created:', !!data.session);
         }
         
-        // ✅ VERIFICAR SE PRECISA DE PROFILE SETUP
-        if (data.user.email_confirmed_at) {
-          // Se email já confirmado, mostrar ProfileSetupModal
-          toast({
-            title: "Account Created!",
-            description: "Please complete your profile setup.",
-          });
-          setShowProfileModal(true);  // ✅ MOSTRAR MODAL
-        } else {
-          // Se email não confirmado, pedir verificação
-          toast({
-            title: "Account Created!",
-            description: "Please check your email to verify your account.",
-          });
-          navigate('/auth/login?message=check-email');
-        }
+        // ✅ SEMPRE MOSTRAR PROFILE SETUP MODAL APÓS SIGNUP
+        toast({
+          title: "Account Created!",
+          description: "Please complete your profile setup.",
+        });
+        setShowProfileModal(true);
         
       } else if (data) {
         console.warn('⚠️ Data received but no user:', data);
