@@ -101,6 +101,8 @@ function ContactPage() {
         <title>Contact Us - SnapGain</title>
         <meta name="description" content="Get in touch with SnapGain. We're here to help with any questions about cashback optimization." />
       </Helmet>
+
+      <Header />  {/* ✅ ADICIONAR HEADER */}
       
       <div className="container mx-auto px-4 py-12 pt-32">
         <motion.div 
