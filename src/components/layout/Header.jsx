@@ -138,13 +138,13 @@ export function Header() {
               <>
                 <Button 
                   variant="ghost" 
-                  onClick={() => { navigate('/auth/login'); scrollToTop(); }}
+                  onClick={() => { navigate('/login'); scrollToTop(); }}
                   className="font-medium"
                 >
                   Sign In
                 </Button>
                 <Button 
-                  onClick={() => { navigate('/auth/signup'); scrollToTop(); }}
+                  onClick={() => { navigate('/signup'); scrollToTop(); }}
                   className="bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-purple-700 hover:to-pink-700 text-white font-medium"
                 >
                   Get Started
