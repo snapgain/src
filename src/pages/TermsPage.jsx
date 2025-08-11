@@ -1,5 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
+import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
 import { motion } from 'framer-motion';
 import { FileText, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
@@ -34,6 +36,8 @@ function TermsPage() {
         <meta name="description" content="SnapGain's Terms of Service - Rules and guidelines for using our cashback comparison platform." />
       </Helmet>
       
+       <Header />  {/* ✅ ADICIONAR HEADER */}
+
       <div className="container mx-auto px-4 py-12 pt-32">
         <motion.div 
           className="max-w-4xl mx-auto"
@@ -143,6 +147,8 @@ function TermsPage() {
           </motion.div>
         </motion.div>
       </div>
+
+      <Footer />  {/* ✅ ADICIONAR FOOTER */}
     </>
   );
 }

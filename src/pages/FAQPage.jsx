@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
+import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
+import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -78,6 +80,8 @@ function FAQPage() {
         <meta name="description" content="Frequently asked questions about SnapGain's cashback comparison service." />
       </Helmet>
       
+       <Header />  {/* ✅ ADICIONAR HEADER */}
+
       <div className="container mx-auto px-4 py-12 pt-32">
         <motion.div 
           className="max-w-4xl mx-auto"
@@ -154,6 +158,8 @@ function FAQPage() {
           </motion.div>
         </motion.div>
       </div>
+
+      <Footer />  {/* ✅ ADICIONAR FOOTER */}
     </>
   );
 }

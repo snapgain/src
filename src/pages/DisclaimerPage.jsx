@@ -1,5 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
+import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
 import { motion } from 'framer-motion';
 import { AlertTriangle, Info, ExternalLink, Shield } from 'lucide-react';
 
@@ -34,6 +36,8 @@ function DisclaimerPage() {
         <meta name="description" content="SnapGain's Disclaimer - Important information about our cashback comparison service." />
       </Helmet>
       
+       <Header />  {/* ✅ ADICIONAR HEADER */}
+
       <div className="container mx-auto px-4 py-12 pt-32">
         <motion.div 
           className="max-w-4xl mx-auto"
@@ -145,6 +149,8 @@ function DisclaimerPage() {
           </motion.div>
         </motion.div>
       </div>
+
+      <Footer />  {/* ✅ ADICIONAR FOOTER */}
     </>
   );
 }

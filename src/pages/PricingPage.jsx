@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
+import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
+import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -104,6 +106,8 @@ function PricingPage() {
         <meta name="description" content="Choose the perfect SnapGain plan for your cashback needs. Start with a free trial and upgrade when ready." />
       </Helmet>
       
+       <Header />  {/* ✅ ADICIONAR HEADER */}
+
       <div className="min-h-screen pt-16">
         {/* Hero Section */}
         <motion.div 
@@ -317,6 +321,8 @@ function PricingPage() {
           </div>
         </motion.div>
       </div>
+
+      <Footer />  {/* ✅ ADICIONAR FOOTER */}
     </>
   );
 }

@@ -1,5 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
+import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
 import { motion } from 'framer-motion';
 import { Clock, AlertCircle, Zap } from 'lucide-react';
 
@@ -34,6 +36,8 @@ function RealTimePolicyPage() {
         <meta name="description" content="SnapGain's Real Time Policy - How we update and maintain accurate cashback rates." />
       </Helmet>
       
+       <Header />  {/* ✅ ADICIONAR HEADER */}
+
       <div className="container mx-auto px-4 py-12 pt-32">
         <motion.div 
           className="max-w-4xl mx-auto"
@@ -118,6 +122,8 @@ function RealTimePolicyPage() {
           </motion.div>
         </motion.div>
       </div>
+
+      <Footer />  {/* ✅ ADICIONAR FOOTER */}
     </>
   );
 }
