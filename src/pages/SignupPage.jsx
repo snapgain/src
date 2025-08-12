@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import ProfileSetupModal from '@/components/profile/ProfileSetupModal';
+import ResendConfirmationEmail from "@/components/auth/ResendConfirmationEmail";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -52,6 +53,8 @@ function SignupPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  <ResendConfirmationEmail defaultEmail={formData?.email || ""} />
 
   // ADICIONAR VERIFICAÇÃO DO SUPABASE
   useEffect(() => {
