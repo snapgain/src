@@ -108,147 +108,170 @@ function SignupPage() {
   };
 
   // Atualizar a função handleSubmit
- // SUBSTITUIR APENAS A FUNÇÃO handleSubmit (linhas 108-265):
+  // SUBSTITUIR A FUNÇÃO handleSubmit (linha 108):
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (!validateForm()) {
-    return;
-  }
-  
-  setIsLoading(true);
-  setErrors({});
-  
-  try {
-      console.log('⏳ Starting signup process...');
-      console.log('📝 Form data:', {
-        name: formData.name,
-        email: formData.email,
-        passwordLength: formData.password.length,
-        confirmPasswordLength: formData.confirmPassword.length
-      });
-
-      // AUMENTAR O DELAY PARA 5 SEGUNDOS
-      console.log('⏱️ Waiting 5 seconds to avoid rate limit...');
-      await new Promise(resolve => setTimeout(resolve, 5000));
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsLoading(true);
+    setErrors({});
+    
+    // ✅ FUNÇÃO PARA RETRY AUTOMÁTICO
+    const attemptSignup = async (retryCount = 0) => {
+      const maxRetries = 3;
       
-      console.log('🚀 Calling Supabase signUp...');
-
-      const signUpData = {
-        email: formData.email.trim(),
-        password: formData.password,  // ✅ ENVIAR PASSWORD REAL
-        options: {
-          data: {
-            name: formData.name.trim()
-          },
-          emailRedirectTo: `${window.location.origin}/dashboard`
-        }
-      };
-
-      console.log('📋 Signup payload:', {
-        email: signUpData.email,
-        passwordProvided: !!signUpData.password,  // ✅ CORRIGIR: não mostrar length
-        hasName: !!signUpData.options.data.name,
-        redirectTo: signUpData.options.emailRedirectTo
-      });
-
-      const { data, error } = await supabase.auth.signUp(signUpData);
-
-      console.log('📊 Raw Supabase response:');
-      console.log('✅ Data:', data);
-      
-      if (error) {
-        console.log('❌ Error:', error);
-        console.log('🚨 Supabase signup error details:', {
-          message: error.message,
-          status: error.status,
-          statusCode: error.statusCode,
-          name: error.name,
-          details: error.__isSupabaseError ? 'Supabase Error' : 'Generic Error'
+      try {
+        console.log('⏳ Starting signup process...');
+        console.log('📝 Form data:', {
+          name: formData.name,
+          email: formData.email,
+          passwordLength: formData.password.length,
+          confirmPasswordLength: formData.confirmPassword.length
         });
+
+        // DELAY APENAS NO PRIMEIRO RETRY
+        if (retryCount > 0) {
+          console.log(`⏱️ Retry ${retryCount}/${maxRetries} - Waiting 3 seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
         
-        if (error.message.includes('rate limit') || error.message.includes('429') || error.status === 429) {
-          toast({
-            title: "Rate limit exceeded",
-            description: "Too many signup attempts. Please wait 60 minutes or try Google signup.",
-            variant: "destructive"
+        console.log('🚀 Calling Supabase signUp...');
+
+        const signUpData = {
+          email: formData.email.trim(),
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name.trim()
+            },
+            emailRedirectTo: `${window.location.origin}/dashboard`
+          }
+        };
+
+        console.log('📋 Signup payload:', {
+          email: signUpData.email,
+          passwordProvided: !!signUpData.password,
+          hasName: !!signUpData.options.data.name,
+          redirectTo: signUpData.options.emailRedirectTo
+        });
+
+        const { data, error } = await supabase.auth.signUp(signUpData);
+
+        console.log('📊 Raw Supabase response:');
+        console.log('✅ Data:', data);
+        
+        if (error) {
+          console.log('❌ Error:', error);
+          console.log('🚨 Supabase signup error details:', {
+            message: error.message,
+            status: error.status,
+            statusCode: error.statusCode,
+            name: error.name,
+            details: error.__isSupabaseError ? 'Supabase Error' : 'Generic Error'
           });
+          
+          // ✅ RETRY PARA ERRO 504
+          if ((error.status === 504 || error.name === 'AuthRetryableFetchError') && retryCount < maxRetries) {
+            console.log(`🔄 Server timeout, retrying... (${retryCount + 1}/${maxRetries})`);
+            return attemptSignup(retryCount + 1);
+          }
+          
+          if (error.message.includes('rate limit') || error.message.includes('429') || error.status === 429) {
+            toast({
+              title: "Rate limit exceeded",
+              description: "Too many signup attempts. Please wait 60 minutes or try Google signup.",
+              variant: "destructive"
+            });
+            return;
+          } else if (error.status === 504) {
+            toast({
+              title: "Server temporarily unavailable",
+              description: "Please try again in a few minutes.",
+              variant: "destructive"
+            });
+            return;
+          } else if (error.message.includes('email')) {
+            toast({
+              title: "Email issue",
+              description: error.message,
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Signup Failed",
+              description: error.message || "Failed to create account",
+              variant: "destructive"
+            });
+          }
           return;
-        } else if (error.status === 504) {
-          toast({
-            title: "Server timeout",
-            description: "The server is taking too long to respond. Please try again.",
-            variant: "destructive"
+        }
+
+        console.log('🔍 Checking response data...');
+        
+        if (data?.user) {
+          console.log('✅ User created successfully!');
+          console.log('👤 User details:', {
+            id: data.user.id,
+            email: data.user.email,
+            confirmed: data.user.email_confirmed_at ? 'Yes' : 'No',
+            createdAt: data.user.created_at
           });
-          return;
-        } else if (error.message.includes('email')) {
+          
+          if (data.session) {
+            console.log('🔐 Session created:', !!data.session);
+          }
+          
           toast({
-            title: "Email issue",
-            description: error.message,
+            title: "Account Created!",
+            description: "Please complete your profile setup.",
+          });
+          setShowProfileModal(true);
+          
+        } else if (data) {
+          console.warn('⚠️ Data received but no user:', data);
+          toast({
+            title: "Unexpected response",
+            description: "Account creation status unclear. Please try logging in.",
             variant: "destructive"
           });
         } else {
+          console.error('❌ No data and no error - this should not happen');
           toast({
-            title: "Signup Failed",
-            description: error.message || "Failed to create account",
+            title: "Unknown error",
+            description: "Please try again or contact support.",
             variant: "destructive"
           });
         }
-        return;
-      }
-
-      console.log('🔍 Checking response data...');
-      
-      if (data?.user) {
-        console.log('✅ User created successfully!');
-        console.log('👤 User details:', {
-          id: data.user.id,
-          email: data.user.email,
-          confirmed: data.user.email_confirmed_at ? 'Yes' : 'No',
-          createdAt: data.user.created_at
-        });
+      } catch (error) {
+        console.error('💥 Signup catch error:', error);
         
-        if (data.session) {
-          console.log('🔐 Session created:', !!data.session);
+        // ✅ RETRY PARA NETWORK ERRORS
+        if ((error.name === 'TypeError' || error.message.includes('fetch')) && retryCount < maxRetries) {
+          console.log(`🔄 Network error, retrying... (${retryCount + 1}/${maxRetries})`);
+          return attemptSignup(retryCount + 1);
         }
         
-        // ✅ SEMPRE MOSTRAR PROFILE SETUP MODAL APÓS SIGNUP
-        toast({
-          title: "Account Created!",
-          description: "Please complete your profile setup.",
+        console.error('🔍 Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+          cause: error.cause
         });
-        setShowProfileModal(true);
         
-      } else if (data) {
-        console.warn('⚠️ Data received but no user:', data);
         toast({
-          title: "Unexpected response",
-          description: "Account creation status unclear. Please try logging in.",
-          variant: "destructive"
-        });
-      } else {
-        console.error('❌ No data and no error - this should not happen');
-        toast({
-          title: "Unknown error",
-          description: "Please try again or contact support.",
+          title: "Network Error",
+          description: "Please check your connection and try again.",
           variant: "destructive"
         });
       }
-    } catch (error) {
-      console.error('💥 Signup catch error:', error);
-      console.error('🔍 Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-        cause: error.cause
-      });
-      
-      toast({
-        title: "Network Error",
-        description: "Please check your connection and try again.",
-        variant: "destructive"
-      });
+    };
+    
+    try {
+      await attemptSignup();
     } finally {
       setIsLoading(false);
     }
@@ -415,11 +438,12 @@ const handleSubmit = async (e) => {
                     )}
                   </div>
 
-                  {/* Submit Button */}
+                  {/* Submit Button - ✅ CORRIGIR PARA MOBILE */}
                   <Button 
                     type="submit" 
-                    className="w-full bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-[#6B42F5] hover:to-[#E935B8]"
+                    className="w-full bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-[#6B42F5] hover:to-[#E935B8] touch-manipulation"
                     disabled={isLoading}
+                    style={{ minHeight: '44px' }}  // ✅ ALTURA MÍNIMA PARA MOBILE
                   >
                     {isLoading ? (
                       <>
@@ -444,12 +468,13 @@ const handleSubmit = async (e) => {
                   </div>
                 </div>
 
-                {/* Google Button */}
+                {/* Google Button - ✅ CORRIGIR PARA MOBILE */}
                 <Button
                   variant="outline"
                   onClick={handleGoogleSignup}
                   disabled={isGoogleLoading}
-                  className="w-full"
+                  className="w-full touch-manipulation"
+                  style={{ minHeight: '44px' }}  // ✅ ALTURA MÍNIMA PARA MOBILE
                 >
                   {isGoogleLoading ? (
                     <>
@@ -481,12 +506,13 @@ const handleSubmit = async (e) => {
                   )}
                 </Button>
 
-                {/* Login Link */}
+                {/* Login Link - ✅ CORRIGIR PARA MOBILE */}
                 <div className="text-center text-sm">
                   <span className="text-muted-foreground">Already have an account? </span>
                   <button
                     onClick={() => navigate('/auth/login')}
-                    className="font-semibold text-primary hover:underline"
+                    className="font-semibold text-primary hover:underline touch-manipulation"
+                    style={{ minHeight: '44px', padding: '8px' }}  // ✅ ÁREA DE TOQUE MAIOR
                   >
                     Sign in
                   </button>
