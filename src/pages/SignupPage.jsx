@@ -112,13 +112,24 @@ function SignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+      // ✅ NOVO: trava duplo submit nesse bloco, mesmo com múltiplos renders/listeners
+  if (window.__snapgain_auth_busy) {
+    console.warn('Signup already in progress — ignoring duplicate submit.');
+    return;
+  }
+  window.__snapgain_auth_busy = true; // ✅ NOVO
     
+    try {
     if (!validateForm()) {
       return;
     }
-    
+
     setIsLoading(true);
     setErrors({});
+
+     // ✅ NOVO: jitter base para retries desta aba (evita rajada simultânea)
+    const jitterBase = Math.floor(Math.random() * 500); // 0–500ms
     
     // ✅ FUNÇÃO PARA RETRY AUTOMÁTICO
     const attemptSignup = async (retryCount = 0) => {
@@ -135,8 +146,9 @@ function SignupPage() {
 
         // DELAY APENAS NO PRIMEIRO RETRY
         if (retryCount > 0) {
-          console.log(`⏱️ Retry ${retryCount}/${maxRetries} - Waiting 3 seconds...`);
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          const waitMs = 3000 + jitterBase * retryCount; // ✅ NOVO: jitter progressivo
+          console.log(`⏱️ Retry ${retryCount}/${maxRetries} - Waiting ${waitMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitMs));
         }
         
         console.log('🚀 Calling Supabase signUp...');
@@ -275,6 +287,10 @@ function SignupPage() {
     } finally {
       setIsLoading(false);
     }
+    } finally {
+    // ✅ NOVO: libera o lock mesmo em erro
+    window.__snapgain_auth_busy = false;
+  }
   };
 
   // Função para lidar com o Google signup
