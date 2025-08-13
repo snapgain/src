@@ -9,9 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
-
-
-
+import ProfileSetupModal from '@/components/profile/ProfileSetupModal'; // ajuste se o teu path for diferente
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/components/ui/use-toast'; // ajuste se o teu hook for noutro path
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -37,57 +37,58 @@ const itemVariants = {
 };
 
 function LoginPage() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const isFormValid = formData.email && formData.password;
+
   const handleChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!isFormValid) return;
 
     setIsLoading(true);
-    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      if (data.user) {
+      if (data?.user) {
         toast({
           title: "Welcome back!",
           description: "You have been successfully signed in.",
           variant: "default"
         });
-        
-        // REDIRECIONAR PARA COMPARE AO INVÉS DE DASHBOARD
-        navigate('/compare');
+
+        const session = data?.session;
+        if (session) {
+          const needsOnboarding = !session.user?.user_metadata?.onboarding_done;
+          if (needsOnboarding) {
+            setShowProfileModal(true);
+          } else {
+            navigate("/compare", { replace: true });
+          }
+        }
       }
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (err) {
+      console.error('Login error:', err);
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid email or password.",
+        description: err?.message || "Invalid email or password.",
         variant: "destructive"
       });
     } finally {
@@ -95,37 +96,22 @@ function LoginPage() {
     }
   };
 
-
-
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
-    
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/compare`, // MUDANÇA AQUI
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
+          redirectTo: `${window.location.origin}/compare`,
+          queryParams: { access_type: 'offline', prompt: 'consent' }
         }
       });
-
       if (error) {
-        toast({
-          title: "Google Sign In Failed",
-          description: error.message,
-          variant: "destructive"
-        });
+        toast({ title: "Google Sign In Failed", description: error.message, variant: "destructive" });
       }
-    } catch (error) {
-      console.error('Google login error:', error);
-      toast({
-        title: "Error",
-        description: "Google sign in failed. Please try again.",
-        variant: "destructive"
-      });
+    } catch (err) {
+      console.error('Google login error:', err);
+      toast({ title: "Error", description: "Google sign in failed. Please try again.", variant: "destructive" });
     } finally {
       setIsGoogleLoading(false);
     }
@@ -135,7 +121,7 @@ function LoginPage() {
     <>
       <Helmet>
         <title>Login - SnapGain</title>
-        <meta name="description" content="Login to your SnapGain account and start maximizing your cashback rewards." />
+        <meta name="description" content="Login to your SnapGain account and start maximising your cashback rewards." />
       </Helmet>
       
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 pt-32">
@@ -156,9 +142,10 @@ function LoginPage() {
                 </div>
                 <CardTitle className="text-2xl">Welcome back</CardTitle>
                 <p className="text-muted-foreground">
-                  Sign in to your account to continue maximizing your cashback rewards
+                  Sign in to your account to continue maximising your cashback rewards
                 </p>
               </CardHeader>
+
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {error && (
@@ -203,11 +190,7 @@ function LoginPage() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-3 text-muted-foreground hover:text-gray-600"
                       >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
@@ -226,18 +209,19 @@ function LoginPage() {
                       'Sign in'
                     )}
                   </Button>
-                  <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                   Or continue with
-                  </span>
-                </div>
-                </div>
 
-                  <GoogleAuthButton className="w-full" onClick={handleGoogleLogin} />
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">
+                        Or continue with
+                      </span>
+                    </div>
+                  </div>
+
+                  <GoogleAuthButton className="w-full" onClick={handleGoogleLogin} loading={isGoogleLoading} />
                   
                   <div className="text-center">
                     <Link 
@@ -249,7 +233,6 @@ function LoginPage() {
                   </div>
                 </form>
 
-                
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
                     Don't have an account?{' '}
@@ -266,6 +249,42 @@ function LoginPage() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* ✅ Abre o modal de perfil após login se faltar onboarding */}
+      <ProfileSetupModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onComplete={async () => {
+  try {
+    // 1) Mark in user_metadata so the UI knows onboarding is done
+    await supabase.auth.updateUser({ data: { onboarding_done: true } });
+
+    // 2) Persist on the backend (user_profiles)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) {
+      await supabase
+        .from('user_profiles')
+        .upsert(
+          {
+            user_id: user.id,           // ← link to auth.users
+            onboarding_done: true,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }     // ← keeps it idempotent
+        );
+    }
+  } catch (e) {
+    console.warn('Could not persist onboarding flag:', e);
+    // (Optional) toast non-destructive here
+  }
+
+  // Close modal and go to /compare
+  // Use whichever state setter exists in the page:
+  setShowProfileModal?.(false);   // Login page
+  setShowOnboarding?.(false);     // Compare page
+  navigate('/compare', { replace: true });
+}}
+      />
     </>
   );
 }

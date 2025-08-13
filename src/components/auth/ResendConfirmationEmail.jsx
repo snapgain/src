@@ -87,7 +87,7 @@ export default function ResendConfirmationEmail({ defaultEmail = "" }) {
             aria-hidden="true"
             className="
               absolute inset-0 rounded-md p-[1px]
-              bg-gradient-to-r from-[#4285F4]/80 to-[#4285F4]
+              bg-gradient-to-r from-[#E935B8]/80 to-[#FFFFFF]
               opacity-90 group-hover:opacity-100
               transition-opacity
             "
@@ -96,8 +96,8 @@ export default function ResendConfirmationEmail({ defaultEmail = "" }) {
           <span
             className="
               relative rounded-[6px] bg-white px-3 py-2
-              group-active:bg-[#4285F4] group-active:text-white
-              group-hover:bg-white
+              group-active:bg-[#E935B8] group-active:text-white
+              group-hover:bg--gradient-to-r from-[#E935B8]/80 to-[#FFFFFF]
               transition-colors
             "
           >

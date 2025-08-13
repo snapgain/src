@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from "@/lib/supabase";
+import ProfileSetupModal from "@/components/profile/ProfileSetupModal";
+import { useNavigate } from "react-router-dom";
 import { 
   CreditCard, 
   Search, 
@@ -46,6 +49,10 @@ function ComparePage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [greeting, setGreeting] = useState('');
 
+  // ✅ NOVO: controlar onboarding no /compare (caso o utilizador caia aqui sem ter concluído)
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const navigate = useNavigate();
+
   useEffect(() => {
     const getGreeting = () => {
       const hour = new Date().getHours();
@@ -53,8 +60,20 @@ function ComparePage() {
       else if (hour < 17) return '☀️ Good afternoon';
       else return '🌙 Good evening';
     };
-    
     setGreeting(getGreeting());
+  }, []);
+
+  // ✅ NOVO: verifica sessão e se falta onboarding
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!mounted) return;
+      if (!session) return; // o teu guard de rota deve cuidar de não autenticados
+      const needs = !session.user?.user_metadata?.onboarding_done;
+      if (needs) setShowOnboarding(true);
+    })();
+    return () => { mounted = false; };
   }, []);
 
   const userName = user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
@@ -320,6 +339,42 @@ function ComparePage() {
           </motion.div>
         )}
       </motion.div>
+
+      {/* ✅ NOVO: Modal de onboarding aqui também, se necessário */}
+      <ProfileSetupModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onComplete={async () => {
+  try {
+    // 1) Mark in user_metadata so the UI knows onboarding is done
+    await supabase.auth.updateUser({ data: { onboarding_done: true } });
+
+    // 2) Persist on the backend (user_profiles)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) {
+      await supabase
+        .from('user_profiles')
+        .upsert(
+          {
+            user_id: user.id,           // ← link to auth.users
+            onboarding_done: true,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }     // ← keeps it idempotent
+        );
+    }
+  } catch (e) {
+    console.warn('Could not persist onboarding flag:', e);
+    // (Optional) toast non-destructive here
+  }
+
+  // Close modal and go to /compare
+  // Use whichever state setter exists in the page:
+  setShowProfileModal?.(false);   // Login page
+  setShowOnboarding?.(false);     // Compare page
+  navigate('/compare', { replace: true });
+}}
+      />
     </DashboardLayout>
   );
 }
