@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
-import ProfileSetupModal from '@/components/ProfileSetupModal'; // ajuste se o teu path for diferente
+import ProfileSetupModal from '@/components/profile/ProfileSetupModal'; // ajuste se o teu path for diferente
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast'; // ajuste se o teu hook for noutro path
 

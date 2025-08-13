@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from "@/lib/supabase";
-import ProfileSetupModal from "@/components/ProfileSetupModal";
+import ProfileSetupModal from "@/components/profile/ProfileSetupModal";
 import { useNavigate } from "react-router-dom";
 import { 
   CreditCard, 
