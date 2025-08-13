@@ -11,7 +11,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import ProfileSetupModal from '@/components/profile/ProfileSetupModal';
-import ResendConfirmationEmail from "@/components/auth/ResendConfirmationEmail";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -523,9 +522,7 @@ function SignupPage() {
                     </>
                   )}
                 </Button>
-                  {/* src/components/auth/ResendConfirmationEmail.jsx */}
-                <ResendConfirmationEmail />
-                
+              
                 {/* Login Link - ✅ CORRIGIR PARA MOBILE */}
                 <div className="text-center text-sm">
                   <span className="text-muted-foreground">Already have an account? </span>
