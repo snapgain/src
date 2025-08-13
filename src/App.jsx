@@ -46,7 +46,7 @@ function AppWithToasts() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        
+
         {/* ✅ ADICIONAR ROTAS DAS PÁGINAS EXISTENTES */}
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/pricing" element={<PricingPage />} />
