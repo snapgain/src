@@ -1,26 +1,21 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase"; // ← adjust if your path differs
+import { supabase } from "@/lib/supabase";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export default function ResendConfirmationEmail({ defaultEmail = "" }) {
   const [email, setEmail] = useState(defaultEmail);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [cooldown, setCooldown] = useState(0); // Supabase rate limit ~60s
+  const [busy, setBusy] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [open, setOpen] = useState(false); // ← controla o popup
 
   useEffect(() => setEmail(defaultEmail), [defaultEmail]);
 
-  useEffect(() => {
-    if (!cooldown) return;
-    const id = setInterval(() => setCooldown((s) => Math.max(0, s - 1)), 1000);
-    return () => clearInterval(id);
-  }, [cooldown]);
-
-  const handleResend = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    if (cooldown || !email) return;
+    if (!email || busy || cooldown) return;
 
-    setLoading(true);
-    setMessage("");
+    setBusy(true);
 
     try {
       const { error } = await supabase.auth.resend({
@@ -30,38 +25,106 @@ export default function ResendConfirmationEmail({ defaultEmail = "" }) {
           emailRedirectTo: `${import.meta.env.VITE_SITE_URL || window.location.origin}/dashboard`,
         },
       });
-
       if (error) throw error;
 
-      setMessage("Confirmation email re-sent. Please check your inbox (and your junk folder).");
+      // abre o popup de sucesso
+      setOpen(true);
+
+      // inicia cooldown (aprox. 60s)
       setCooldown(60);
+      const timer = setInterval(() => {
+        setCooldown((s) => {
+          if (s <= 1) clearInterval(timer);
+          return Math.max(0, s - 1);
+        });
+      }, 1000);
     } catch (err) {
-      setMessage(
-        err?.message || "Something went wrong. Please try again in a moment."
-      );
+      // opcional: mostrar erro simples (sem popup)
+      console.error(err);
+      alert(err?.message || "Something went wrong. Please try again shortly.");
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
 
   return (
-    <form onSubmit={handleResend} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-      <label htmlFor="resend-email" style={{ position: "absolute", left: "-9999px" }}>
-        Email address
-      </label>
-      <input
-        id="resend-email"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email address"
-        required
-        disabled={loading}
-      />
-      <button type="submit" disabled={loading || cooldown > 0}>
-        {cooldown ? `Try again in ${cooldown}s` : loading ? "Sending…" : "Re-send confirmation email"}
-      </button>
-      {message && <small>{message}</small>}
-    </form>
+    <>
+      <form onSubmit={onSubmit} className="flex items-center gap-2">
+        {/* Label invisível para acessibilidade */}
+        <label htmlFor="resend-email" className="sr-only">Email address</label>
+
+        {/* INPUT — borda fina e discreta */}
+        <input
+          id="resend-email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email address used to sign up"
+          required
+          disabled={busy}
+          className="
+            h-9 w-[260px] rounded-md border border-gray-300
+            bg-white px-3 text-sm
+            placeholder:text-gray-400
+            focus:outline-none focus:ring-2 focus:ring-[#4285F4] focus:border-[#4285F4]
+            disabled:opacity-60
+          "
+        />
+
+        {/* BUTTON — branco com borda em degradê; fica #4285F4 sólido ao clicar */}
+        <button
+          type="submit"
+          disabled={busy || cooldown > 0}
+          className="
+            group relative inline-flex items-center justify-center
+            rounded-md text-sm font-medium
+            transition-colors focus:outline-none
+            disabled:cursor-not-allowed disabled:opacity-60
+          "
+        >
+          {/* “borda” em gradiente */}
+          <span
+            aria-hidden="true"
+            className="
+              absolute inset-0 rounded-md p-[1px]
+              bg-gradient-to-r from-[#4285F4]/80 to-[#4285F4]
+              opacity-90 group-hover:opacity-100
+              transition-opacity
+            "
+          />
+          {/* interior branco; fica sólido ao pressionar */}
+          <span
+            className="
+              relative rounded-[6px] bg-white px-3 py-2
+              group-active:bg-[#4285F4] group-active:text-white
+              group-hover:bg-white
+              transition-colors
+            "
+          >
+            {cooldown ? `Try again in ${cooldown}s` : busy ? "Sending…" : "Re-send confirmation"}
+          </span>
+        </button>
+      </form>
+
+      {/* POPUP de sucesso */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmation email re-sent</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Please check your inbox (and your junk folder).
+          </p>
+          <div className="mt-4 flex justify-end">
+            <Button
+              onClick={() => setOpen(false)}
+              className="relative"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
