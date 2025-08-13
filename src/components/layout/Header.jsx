@@ -133,7 +133,7 @@ export function Header() {
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    navigate('/auth/login');
+                    navigate('/login');
                     scrollToTop();
                   }}
                   className="font-medium"
@@ -142,7 +142,7 @@ export function Header() {
                 </Button>
                 <Button
                   onClick={() => {
-                    navigate('/auth/signup');
+                    navigate('/signup');
                     scrollToTop();
                   }}
                   className="bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-purple-700 hover:to-pink-700 text-white font-medium"
@@ -277,7 +277,7 @@ export function Header() {
                     <Button
                       variant="ghost"
                       onClick={() => {
-                        navigate('/auth/login');
+                        navigate('/login');
                         setMobileMenuOpen(false);
                         scrollToTop();
                       }}
@@ -287,7 +287,7 @@ export function Header() {
                     </Button>
                     <Button
                       onClick={() => {
-                        navigate('/auth/signup');
+                        navigate('/signup');
                         setMobileMenuOpen(false);
                         scrollToTop();
                       }}
