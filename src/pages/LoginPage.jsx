@@ -10,6 +10,9 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
 
+
+
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -91,6 +94,8 @@ function LoginPage() {
       setIsLoading(false);
     }
   };
+
+
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
@@ -243,7 +248,9 @@ function LoginPage() {
                     </Link>
                   </div>
                 </form>
+
                 
+
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
                     Don't have an account?{' '}

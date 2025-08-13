@@ -53,8 +53,7 @@ function SignupPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [showProfileModal, setShowProfileModal] = useState(false);
-
-  <ResendConfirmationEmail defaultEmail={formData?.email || ""} />
+  
 
   // ADICIONAR VERIFICAÇÃO DO SUPABASE
   useEffect(() => {
@@ -524,7 +523,9 @@ function SignupPage() {
                     </>
                   )}
                 </Button>
-
+                  {/* src/components/auth/ResendConfirmationEmail.jsx */}
+                <ResendConfirmationEmail />
+                
                 {/* Login Link - ✅ CORRIGIR PARA MOBILE */}
                 <div className="text-center text-sm">
                   <span className="text-muted-foreground">Already have an account? </span>
