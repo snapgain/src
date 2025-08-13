@@ -7,8 +7,8 @@ import { ToastContainer } from './components/ui/toast'; // ✅ ADICIONAR
 
 // Import pages
 import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
+import LoginPage from './pages/auth/LoginPage';
+import SignupPage from './pages/auth/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import ComparePage from './pages/ComparePage';
 import ProfilePage from './pages/ProfilePage';
@@ -44,9 +44,9 @@ function AppWithToasts() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        
+        <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/signup" element={<SignupPage />} />
+
         {/* ✅ ADICIONAR ROTAS DAS PÁGINAS EXISTENTES */}
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/pricing" element={<PricingPage />} />
