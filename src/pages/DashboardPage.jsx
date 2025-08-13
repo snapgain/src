@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
-import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
+
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -150,7 +149,7 @@ function DashboardPage() {
         bgColor: "bg-gradient-to-r from-blue-500 to-purple-600"
       }}
     >
-      <Header />  {/* ✅ ADICIONAR HEADER */}
+     
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -334,7 +333,7 @@ function DashboardPage() {
                       </div>
                       <Progress value={card.efficiency} className="h-2" />
                     </div>
-                      <Footer />  {/* ✅ ADICIONAR FOOTER */}
+                   
                   </div>
                   
                 ))}

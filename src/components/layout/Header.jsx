@@ -1,11 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Home, BarChart3, User, Settings as SettingsIcon, Menu, X } from 'lucide-react';
-import { useState } from 'react';
-import NotificationDropdown from '@/components/notifications/NotificationDropdown';
-import { useNotifications } from '@/contexts/NotificationContext';
 
 export function Header() {
   const navigate = useNavigate();
@@ -13,20 +10,26 @@ export function Header() {
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   const handleLogout = async () => {
     await logout();
     navigate('/');
   };
 
-  // Verificar se está na área de membros
-  const isDashboardArea = ['/dashboard', '/compare', '/profile', '/settings'].includes(location.pathname);
+  const pathname = location.pathname;
+  const isDashboardArea =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/compare') ||
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/settings');
 
-  // Função para verificar se link está ativo
-  const isActiveLink = (path) => location.pathname === path;
+  const displayName =
+    user?.user_metadata?.name ||
+    user?.email?.split('@')[0] ||
+    'User';
+  const initial = displayName.charAt(0).toUpperCase();
+
+  const isActiveLink = (path) => pathname === path;
 
   return (
     <header className="bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50">
@@ -45,49 +48,49 @@ export function Header() {
           {/* Navegação Desktop */}
           <div className="hidden md:flex items-center space-x-6">
             {user && isDashboardArea ? (
-              // 🎯 NAVEGAÇÃO DA ÁREA DE MEMBROS
+              // Área de membros
               <nav className="flex items-center space-x-1">
-                <Link 
-                  to="/dashboard" 
+                <Link
+                  to="/dashboard"
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                    isActiveLink('/dashboard') 
-                      ? 'bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] text-white' 
+                    isActiveLink('/dashboard')
+                      ? 'bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] text-white'
                       : 'hover:text-primary transition-colors'
                   }`}
                 >
                   <Home className="h-4 w-4" />
                   <span>Dashboard</span>
                 </Link>
-                
-                <Link 
-                  to="/compare" 
+
+                <Link
+                  to="/compare"
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                    isActiveLink('/compare') 
-                      ? 'bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] text-white' 
+                    isActiveLink('/compare')
+                      ? 'bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] text-white'
                       : 'hover:text-primary transition-colors'
                   }`}
                 >
                   <BarChart3 className="h-4 w-4" />
                   <span>Compare</span>
                 </Link>
-                
-                <Link 
-                  to="/profile" 
+
+                <Link
+                  to="/profile"
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                    isActiveLink('/profile') 
-                      ? 'bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] text-white' 
+                    isActiveLink('/profile')
+                      ? 'bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] text-white'
                       : 'hover:text-primary transition-colors'
                   }`}
                 >
                   <User className="h-4 w-4" />
                   <span>Profile</span>
                 </Link>
-                
-                <Link 
-                  to="/settings" 
+
+                <Link
+                  to="/settings"
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                    isActiveLink('/settings') 
-                      ? 'bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] text-white' 
+                    isActiveLink('/settings')
+                      ? 'bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] text-white'
                       : 'hover:text-primary transition-colors'
                   }`}
                 >
@@ -96,7 +99,7 @@ export function Header() {
                 </Link>
               </nav>
             ) : (
-              // 🌐 NAVEGAÇÃO PÚBLICA
+              // Público
               <nav className="flex items-center space-x-6">
                 <Link to="/features" onClick={scrollToTop} className="hover:text-primary transition-colors font-medium">
                   Features
@@ -111,40 +114,37 @@ export function Header() {
             )}
           </div>
 
-          {/* Botões de Ação */}
+          {/* Ações Desktop */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <div className="flex items-center space-x-4">
-                {/* Avatar do usuário */}
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] rounded-full flex items-center justify-center">
-                    <span className="text-white font-medium text-sm">
-                      {user.name ? user.name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase() || 'U'}
-                    </span>
+                    <span className="text-white font-medium text-sm">{initial}</span>
                   </div>
-                  <span className="font-medium text-sm">
-                    {user.name || user.email?.split('@')[0]}
-                  </span>
+                  <span className="font-medium text-sm">{displayName}</span>
                 </div>
-                <Button 
-                  variant="outline" 
-                  onClick={handleLogout}
-                  className="text-sm"
-                >
+                <Button variant="outline" onClick={handleLogout} className="text-sm">
                   Logout
                 </Button>
               </div>
             ) : (
               <>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => { navigate('/login'); scrollToTop(); }}
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    navigate('/auth/login');
+                    scrollToTop();
+                  }}
                   className="font-medium"
                 >
                   Sign In
                 </Button>
-                <Button 
-                  onClick={() => { navigate('/signup'); scrollToTop(); }}
+                <Button
+                  onClick={() => {
+                    navigate('/auth/signup');
+                    scrollToTop();
+                  }}
                   className="bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-purple-700 hover:to-pink-700 text-white font-medium"
                 >
                   Get Started
@@ -155,22 +155,17 @@ export function Header() {
 
           {/* Menu Mobile */}
           <div className="md:hidden">
-            <Button
-              variant="ghost"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2"
-            >
+            <Button variant="ghost" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2">
               {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
         </div>
 
-        {/* Menu Mobile Expandido */}
+        {/* Menu Mobile */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-100">
+          <div className="md:hidden border-top border-gray-100">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {user && isDashboardArea ? (
-                // Mobile - Área de Membros
                 <>
                   <Link
                     to="/dashboard"
@@ -222,49 +217,56 @@ export function Header() {
                   </Link>
                 </>
               ) : (
-                // Mobile - Navegação Pública
                 <>
                   <Link
                     to="/features"
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary"
-                    onClick={() => { setMobileMenuOpen(false); scrollToTop(); }}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      scrollToTop();
+                    }}
                   >
                     Features
                   </Link>
                   <Link
                     to="/pricing"
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary"
-                    onClick={() => { setMobileMenuOpen(false); scrollToTop(); }}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      scrollToTop();
+                    }}
                   >
                     Pricing
                   </Link>
                   <Link
                     to="/about"
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary"
-                    onClick={() => { setMobileMenuOpen(false); scrollToTop(); }}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      scrollToTop();
+                    }}
                   >
                     About Us
                   </Link>
                 </>
               )}
-              
+
               {/* Botões Mobile */}
               <div className="pt-4 border-t border-gray-200">
                 {user ? (
                   <div className="space-y-2">
                     <div className="flex items-center space-x-3 px-3 py-2">
                       <div className="w-8 h-8 bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] rounded-full flex items-center justify-center">
-                        <span className="text-white font-medium text-sm">
-                          {user.name ? user.name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase() || 'U'}
-                        </span>
+                        <span className="text-white font-medium text-sm">{initial}</span>
                       </div>
-                      <span className="font-medium">
-                        {user.name || user.email?.split('@')[0]}
-                      </span>
+                      <span className="font-medium">{displayName}</span>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        handleLogout();
+                        setMobileMenuOpen(false);
+                      }}
                       className="w-full mx-3"
                     >
                       Logout
@@ -272,15 +274,23 @@ export function Header() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => { navigate('/auth/login'); setMobileMenuOpen(false); scrollToTop(); }}
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        navigate('/auth/login');
+                        setMobileMenuOpen(false);
+                        scrollToTop();
+                      }}
                       className="w-full mx-3"
                     >
                       Sign In
                     </Button>
-                    <Button 
-                      onClick={() => { navigate('/auth/signup'); setMobileMenuOpen(false); scrollToTop(); }}
+                    <Button
+                      onClick={() => {
+                        navigate('/auth/signup');
+                        setMobileMenuOpen(false);
+                        scrollToTop();
+                      }}
                       className="w-full mx-3 bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-purple-700 hover:to-pink-700 text-white"
                     >
                       Get Started

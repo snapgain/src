@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
+import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
