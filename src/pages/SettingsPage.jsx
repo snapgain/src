@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
+import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
+import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -89,7 +91,9 @@ function SettingsPage() {
         <title>Settings - SnapGain</title>
         <meta name="description" content="Manage your SnapGain account settings and preferences." />
       </Helmet>
-      
+
+      <Header />  {/* ✅ ADICIONAR HEADER */}
+
       <DashboardLayout
         title="⚙️ Settings"
         subtitle="Customize your SnapGain experience"
@@ -219,6 +223,7 @@ function SettingsPage() {
           </motion.div>
         </motion.div>
       </DashboardLayout>
+      <Footer />  {/* ✅ ADICIONAR FOOTER */}
     </>
   );
 }

@@ -141,7 +141,7 @@ function TermsPage() {
               <p className="text-muted-foreground">
                 <strong>Last Updated:</strong> January 9, 2025<br />
                 <strong>Governing Law:</strong> These terms are governed by the laws of England and Wales<br />
-                <strong>Questions?</strong> Contact us at <a href="mailto:legal@snapgain.uk" className="text-[#7D4DFB] hover:text-purple-800">legal@snapgain.uk</a>
+                <strong>Questions?</strong> Contact us at <a href="mailto:support@snapgain.uk" className="text-[#7D4DFB] hover:text-purple-800">legal@snapgain.uk</a>
               </p>
             </div>
           </motion.div>
