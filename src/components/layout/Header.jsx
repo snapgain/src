@@ -23,6 +23,15 @@ export function Header() {
     pathname.startsWith('/profile') ||
     pathname.startsWith('/settings');
 
+    const pathname = location.pathname;
+   // Qualquer rota protegida (área de membros)
+   const isDashboardArea = /^\/(dashboard|compare|profile|settings|deals)/.test(pathname);
+   // Regra de navegação do logo/nome:
+   // - se estiver logado E em área de membros → /dashboard
+   // - caso contrário (público) → /
+   const logoHref = user && isDashboardArea ? '/dashboard' : '/';
+
+
   const displayName =
     user?.user_metadata?.name ||
     user?.email?.split('@')[0] ||
@@ -36,7 +45,7 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" onClick={scrollToTop} className="flex items-center space-x-2">
+          <Link to={logoHref} onClick={scrollToTop} className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">S</span>
             </div>
