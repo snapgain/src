@@ -1,6 +1,23 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Gift, 
+  Search, 
+  SortAsc, 
+  SortDesc, 
+  Star, 
+  Percent,
+  Heart,
+  Filter,
+  Clock
+} from 'lucide-react';
+import { useProfile } from '@/contexts/ProfileContext';
 // ... outros imports permanecem iguais
 
 function FavoriteStoresPage() {

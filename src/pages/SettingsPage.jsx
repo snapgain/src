@@ -92,7 +92,7 @@ function SettingsPage() {
         <meta name="description" content="Manage your SnapGain account settings and preferences." />
       </Helmet>
 
-      <Header />  {/* ✅ ADICIONAR HEADER */}
+      
 
       <DashboardLayout
         title="⚙️ Settings"
@@ -223,7 +223,7 @@ function SettingsPage() {
           </motion.div>
         </motion.div>
       </DashboardLayout>
-      <Footer />  {/* ✅ ADICIONAR FOOTER */}
+      
     </>
   );
 }
