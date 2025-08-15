@@ -16,13 +16,7 @@ export function Header() {
     navigate('/');
   };
 
-  const pathname = location.pathname;
-  const isDashboardArea =
-    pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/compare') ||
-    pathname.startsWith('/profile') ||
-    pathname.startsWith('/settings');
-
+  
     const pathname = location.pathname;
    // Qualquer rota protegida (área de membros)
    const isDashboardArea = /^\/(dashboard|compare|profile|settings|deals)/.test(pathname);
