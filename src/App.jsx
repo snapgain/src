@@ -6,6 +6,7 @@ import { useToast } from './hooks/use-toast'; // ✅ ADICIONAR
 import { ToastContainer } from './components/ui/toast'; // ✅ ADICIONAR
 import { useAuth } from "@/contexts/AuthContext";
 import Maintenance from "@/pages/Maintenance";
+import { RequireAuth, AppRouter } from './App';
 
 // Import pages
 import LandingPage from '@/pages/LandingPage';
