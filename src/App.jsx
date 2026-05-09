@@ -1,116 +1,146 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
-import { AuthProvider } from './contexts/AuthContext';
-import { ProfileProvider } from './contexts/ProfileContext';
-
-import { useToast } from './hooks/use-toast';
-import { ToastContainer } from './components/ui/toast';
-import { useAuth } from '@/contexts/AuthContext';
-
-// Páginas públicas
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
+import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from '@/contexts/SupabaseAuthContext';
 import LandingPage from '@/pages/LandingPage';
+import AuthPage from '@/pages/AuthPage';
+import SettingsPage from '@/pages/SettingsPage';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { Layout } from '@/components/layout/Layout';
 import FeaturesPage from '@/pages/FeaturesPage';
 import PricingPage from '@/pages/PricingPage';
 import AboutPage from '@/pages/AboutPage';
-import FAQPage from '@/pages/FAQPage';
-import ContactPage from '@/pages/ContactPage';
-import FeedbackPage from '@/pages/FeedbackPage';
-import PrivacyPage from '@/pages/PrivacyPage';
-import TermsPage from '@/pages/TermsPage';
-import DisclaimerPage from '@/pages/DisclaimerPage';
-import RealTimePolicyPage from '@/pages/RealTimePolicyPage';
-
-// Auth
-import LoginPage from '@/pages/LoginPage';
-import SignupPage from '@/pages/SignupPage';
-
-// Membros
-import DashboardPage from '@/pages/DashboardPage';
+import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
+import TermsOfServicePage from '@/pages/TermsOfServicePage';
+import HomePage from '@/pages/HomePage';
+import SearchPage from '@/pages/SearchPage';
+import StoreDetailPage from '@/pages/StoreDetailPage';
 import ComparePage from '@/pages/ComparePage';
-import ProfilePage from '@/pages/ProfilePage';
-import SettingsPage from '@/pages/SettingsPage';
+import StrategyPage from '@/pages/StrategyPage';
+import SavedStrategiesPage from '@/pages/SavedStrategiesPage';
+import WalletPage from '@/pages/WalletPage';
+import AlertsPage from '@/pages/AlertsPage';
+import LibraryPage from '@/pages/LibraryPage';
+import AdminHotDealsPage from '@/pages/AdminHotDealsPage';
+import MilesPage from '@/pages/MilesPage';
+import CashbackPage from '@/pages/CashbackPage';
+import HotDealsPage from '@/pages/HotDealsPage';
+import MenuPage from '@/pages/MenuPage';
+import SubscriptionSuccessPage from '@/pages/SubscriptionSuccessPage';
+import OnboardingPage from '@/pages/OnboardingPage';
 
-// Deals (membros)
-import HotDealsPage from './pages/deals/HotDealsPage';
-import SupermarketDealsPage from './pages/deals/SupermarketDealsPage';
-import GiftCardDealsPage from './pages/deals/GiftcardsDealsPage';
-import FavoriteStoresPage from './pages/deals/FavoriteStoresPage';
-
-// Guards
-import ProtectedRoute from './components/auth/ProtectedRoute';
-
-// Página de manutenção (cria em src/pages/Maintenance.jsx)
-import Maintenance from '@/pages/Maintenance';
-
-import './styles/globals.css';
-
-// ---------- PublicGate: se manutenção ON e user NÃO logado → mostra Maintenance ----------
-function PublicGate({ children }) {
-  const { user } = useAuth();
-  const MAINT = import.meta.env.VITE_MAINTENANCE_MODE === '1';
-  if (MAINT && !user) return <Maintenance />;
-  return children;
-}
-
-// ---------- App com Toasts e Router único ----------
-function AppWithToasts() {
-  const { toasts, dismiss } = useToast();
-
+function AppContent() {
   return (
-    <>
-      <Router>
-        <Routes>
-          {/* ROTAS PÚBLICAS (GATED) */}
-          <Route path="/" element={<PublicGate><LandingPage /></PublicGate>} />
-          <Route path="/features" element={<PublicGate><FeaturesPage /></PublicGate>} />
-          <Route path="/pricing" element={<PublicGate><PricingPage /></PublicGate>} />
-          <Route path="/about" element={<PublicGate><AboutPage /></PublicGate>} />
-          <Route path="/faq" element={<PublicGate><FAQPage /></PublicGate>} />
-          <Route path="/contact" element={<PublicGate><ContactPage /></PublicGate>} />
-          <Route path="/feedback" element={<PublicGate><FeedbackPage /></PublicGate>} />
-          <Route path="/privacy" element={<PublicGate><PrivacyPage /></PublicGate>} />
-          <Route path="/terms" element={<PublicGate><TermsPage /></PublicGate>} />
-          <Route path="/disclaimer" element={<PublicGate><DisclaimerPage /></PublicGate>} />
-          <Route path="/realtime-policy" element={<PublicGate><RealTimePolicyPage /></PublicGate>} />
-
-          {/* AUTH (sempre acessível) */}
-          <Route path="/auth/login" element={<LoginPage />} />
-          <Route path="/auth/signup" element={<SignupPage />} />
-          {/* Aliases antigos */}
-          <Route path="/login" element={<Navigate to="/auth/login" replace />} />
-          <Route path="/signup" element={<Navigate to="/auth/signup" replace />} />
-
-          {/* ROTAS PROTEGIDAS (ÁREA DE MEMBROS) */}
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/compare" element={<ProtectedRoute><ComparePage /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-
-          {/* Deals */}
-          <Route path="/deals/hot" element={<ProtectedRoute><HotDealsPage /></ProtectedRoute>} />
-          <Route path="/deals/supermarket" element={<ProtectedRoute><SupermarketDealsPage /></ProtectedRoute>} />
-          <Route path="/deals/giftcards" element={<ProtectedRoute><GiftCardDealsPage /></ProtectedRoute>} />
-          <Route path="/deals/favorite-stores" element={<ProtectedRoute><FavoriteStoresPage /></ProtectedRoute>} />
-
-          {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-
-      {/* Toasts */}
-      <ToastContainer toasts={toasts} onDismiss={dismiss} />
-    </>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth/:mode" element={<AuthPage />} />
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+        <Route path="/home" element={
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/search" element={
+          <ProtectedRoute>
+            <SearchPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/store/:storeId" element={
+          <ProtectedRoute>
+            <StoreDetailPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/compare" element={
+          <ProtectedRoute>
+            <ComparePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/strategy" element={
+          <ProtectedRoute>
+            <StrategyPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/saved-strategies" element={
+          <ProtectedRoute>
+            <SavedStrategiesPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/wallet" element={
+          <ProtectedRoute>
+            <WalletPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/alerts" element={
+          <ProtectedRoute>
+            <AlertsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/library" element={
+          <ProtectedRoute>
+            <LibraryPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/hot-deals" element={
+          <ProtectedRoute>
+            <AdminHotDealsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/miles" element={
+          <ProtectedRoute>
+            <MilesPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/cashback" element={
+          <ProtectedRoute>
+            <CashbackPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/hot-deals" element={
+          <ProtectedRoute>
+            <HotDealsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/menu" element={
+          <ProtectedRoute>
+            <MenuPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/subscription/success" element={
+          <ProtectedRoute>
+            <SubscriptionSuccessPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/onboarding" element={
+          <ProtectedRoute requireOnboarding={false}>
+            <OnboardingPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard" element={<Navigate to="/home" replace />} />
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        } />
+      </Route>
+    </Routes>
   );
 }
 
-// ---------- App (providers) ----------
 function App() {
   return (
     <AuthProvider>
-      <ProfileProvider>
-        <AppWithToasts />
-      </ProfileProvider>
+      <Helmet>
+        <title>SnapGain - Smart Comparison App</title>
+        <meta name="description" content="Compare cashback, points, and gift cards in real-time. Find the best way to pay and maximize your rewards on every purchase." />
+      </Helmet>
+      <Toaster />
+      <AppContent />
     </AuthProvider>
   );
 }

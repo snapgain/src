@@ -1,27 +1,39 @@
-
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
+import { SplashScreen } from '@/components/SplashScreen';
 
-function ProtectedRoute({ children, requireRegistration = false }) {
-  const { user, loading } = useAuth();
+/**
+ * ProtectedRoute — gates a route on:
+ *   1. Authenticated session (otherwise → /auth/login).
+ *   2. Onboarding completed (otherwise → /onboarding) unless the
+ *      route opts out via requireOnboarding={false}.
+ *
+ * While auth or profile is loading, renders the branded SplashScreen
+ * instead of the bare spinner.
+ */
+function ProtectedRoute({ children, requireOnboarding = true }) {
+  const { user, loading: authLoading } = useAuth();
+  const { profile, loading: subLoading } = useSubscription();
   const location = useLocation();
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  if (authLoading) return <SplashScreen />;
 
   if (!user) {
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
-  
-  // Só redireciona para registro se explicitamente requerido (como na página dashboard)
-  if (requireRegistration && !user.isRegistered && location.pathname !== '/auth/register') {
-      return <Navigate to="/auth/register" state={{ from: location }} replace />;
+
+  // Wait for the profile to resolve so we don't bounce them around
+  if (requireOnboarding && subLoading) return <SplashScreen />;
+
+  if (
+    requireOnboarding &&
+    profile &&
+    profile.onboarding_done === false &&
+    location.pathname !== '/onboarding'
+  ) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return children;

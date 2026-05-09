@@ -1,229 +1,173 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
-import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
-import { motion } from 'framer-motion';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import { Link } from 'react-router-dom';
+import { Sparkles, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Bell, Shield, Smartphone, Mail, Settings } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      delayChildren: 0.1,
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: "spring",
-      stiffness: 100
-    }
-  }
-};
+import { toast } from '@/components/ui/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
+import { registrationOptions } from '@/data/appData.jsx';
+import { useSubscription } from '@/hooks/useSubscription';
+import { ManageBillingButton } from '@/components/ManageBillingButton';
 
 function SettingsPage() {
-  const { toast } = useToast();
-  
-  const [settings, setSettings] = useState({
-    emailNotifications: true,
-    pushNotifications: false,
-    weeklyReports: true,
-    dealAlerts: true,
-    twoFactorAuth: false,
-    marketingEmails: false
-  });
+  const { user } = useAuth();
+  const sub = useSubscription();
+  const [name, setName] = useState(user?.user_metadata?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
 
-  const handleSettingChange = (key) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+  const [selectedBanks, setSelectedBanks] = useState([]);
+  const [selectedCards, setSelectedCards] = useState([]);
+  const [selectedProgrammes, setSelectedProgrammes] = useState([]);
+  const [selectedFavourites, setSelectedFavourites] = useState([]);
+
+  const handleUpdate = (e) => {
+    e.preventDefault();
+    toast({
+        title: "🚧 This feature isn't implemented yet—but don't worry! You can request it in your next prompt! 🚀",
+        description: "Profile updates will be available soon."
+    });
   };
 
-  const handleSave = () => {
-    try {
-      localStorage.setItem('snapgain_settings', JSON.stringify(settings));
-      
-      toast({
-        title: "Settings Saved",
-        description: "Your preferences have been updated successfully.",
-        variant: "default"
-      });
-      
-      console.log('Settings saved:', settings);
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  useEffect(() => {
-    try {
-      const savedSettings = localStorage.getItem('snapgain_settings');
-      if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
-      }
-    } catch (error) {
-      console.error('Error loading settings:', error);
-    }
-  }, []);
+  const subBadge = sub.isActive
+    ? { label: `Subscribed · ${sub.plan || 'monthly'}`, color: 'bg-primary/10 text-primary', icon: CheckCircle2 }
+    : sub.inTrial
+    ? { label: `Trial · ${sub.trialDaysLeft} day${sub.trialDaysLeft === 1 ? '' : 's'} left`, color: 'bg-light-pink text-secondary', icon: Clock }
+    : { label: 'Free plan', color: 'bg-muted text-muted-foreground', icon: AlertCircle };
+  const SubIcon = subBadge.icon;
 
   return (
     <>
       <Helmet>
         <title>Settings - SnapGain</title>
-        <meta name="description" content="Manage your SnapGain account settings and preferences." />
       </Helmet>
+      <div className="container mx-auto px-4 py-12 max-w-4xl space-y-6">
+        <h1 className="text-3xl font-bold">Settings</h1>
 
-      
-
-      <DashboardLayout
-        title="⚙️ Settings"
-        subtitle="Customize your SnapGain experience"
-        icon={{
-          element: <Settings className="h-8 w-8 text-white" />,
-          bgColor: "bg-gradient-to-r from-gray-500 to-gray-600"
-        }}
-      >
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="space-y-6"
-        >
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Bell className="h-5 w-5 text-[#7D4DFB]" />
-                  <span>Notifications</span>
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  Subscription
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="email-notifications" className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4" />
-                    <span>Email notifications</span>
-                  </Label>
-                  <Checkbox 
-                    id="email-notifications"
-                    checked={settings.emailNotifications}
-                    onCheckedChange={() => handleSettingChange('emailNotifications')}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="push-notifications" className="flex items-center space-x-2">
-                    <Smartphone className="h-4 w-4" />
-                    <span>Push notifications</span>
-                  </Label>
-                  <Checkbox 
-                    id="push-notifications"
-                    checked={settings.pushNotifications}
-                    onCheckedChange={() => handleSettingChange('pushNotifications')}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="weekly-reports" className="flex items-center space-x-2">
-                    <span>Weekly savings reports</span>
-                  </Label>
-                  <Checkbox 
-                    id="weekly-reports"
-                    checked={settings.weeklyReports}
-                    onCheckedChange={() => handleSettingChange('weeklyReports')}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="deal-alerts" className="flex items-center space-x-2">
-                    <span>Deal alerts</span>
-                  </Label>
-                  <Checkbox 
-                    id="deal-alerts"
-                    checked={settings.dealAlerts}
-                    onCheckedChange={() => handleSettingChange('dealAlerts')}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                <CardDescription className="mt-1">
+                  £7.99/month or £60/year. Cancel anytime.
+                </CardDescription>
+              </div>
+              <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${subBadge.color}`}>
+                <SubIcon className="w-3.5 h-3.5" />
+                {subBadge.label}
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {sub.isActive && sub.periodEndsAt && (
+              <p className="text-sm text-muted-foreground">
+                Renews on{' '}
+                <span className="font-semibold">
+                  {new Date(sub.periodEndsAt).toLocaleDateString()}
+                </span>
+                {sub.periodDaysLeft ? ` (${sub.periodDaysLeft} days)` : ''}.
+              </p>
+            )}
+            {sub.inTrial && sub.trialEndsAt && (
+              <p className="text-sm text-muted-foreground">
+                Trial ends on{' '}
+                <span className="font-semibold">
+                  {new Date(sub.trialEndsAt).toLocaleDateString()}
+                </span>
+                . Subscribe before then to keep premium access.
+              </p>
+            )}
+            {!sub.isPremium && (
+              <p className="text-sm text-muted-foreground">
+                You&rsquo;re on the free plan. Subscribe to unlock advanced
+                comparison strategies, smart alerts, and unlimited simulations.
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {!sub.isActive ? (
+                <Button asChild>
+                  <Link to="/pricing">
+                    {sub.inTrial ? 'Upgrade now' : 'See plans'}
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild variant="outline">
+                  <Link to="/pricing">Change plan</Link>
+                </Button>
+              )}
+              {sub.isActive && (
+                <ManageBillingButton variant="outline">
+                  Manage subscription
+                </ManageBillingButton>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5 text-[#FF3FCE]" />
-                  <span>Security</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Two-factor authentication</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Add an extra layer of security to your account
-                    </p>
-                  </div>
-                  <Checkbox 
-                    checked={settings.twoFactorAuth}
-                    onCheckedChange={() => handleSettingChange('twoFactorAuth')}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Marketing Preferences</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Marketing emails</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive updates about new features and special offers
-                    </p>
-                  </div>
-                  <Checkbox 
-                    checked={settings.marketingEmails}
-                    onCheckedChange={() => handleSettingChange('marketingEmails')}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={itemVariants}>
-            <Button 
-              onClick={handleSave}
-              className="w-full bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-purple-700 hover:to-pink-600"
-            >
-              Save Settings
-            </Button>
-          </motion.div>
-        </motion.div>
-      </DashboardLayout>
-      
+        <div className="grid md:grid-cols-3 gap-8">
+            <div className="md:col-span-1">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Profile</CardTitle>
+                        <CardDescription>Update your personal information.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleUpdate} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Full Name</Label>
+                                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input id="email" type="email" value={email} disabled />
+                            </div>
+                            <Button type="submit" className="w-full">Save Profile</Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="md:col-span-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>My Preferences</CardTitle>
+                        <CardDescription>Manage your banks, cards, and loyalty programmes to get personalized strategies.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleUpdate} className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>My Banks</Label>
+                                    <MultiSelectCombobox options={registrationOptions.banks} selected={selectedBanks} onChange={setSelectedBanks} placeholder="Select banks..." />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>My Cards</Label>
+                                    <MultiSelectCombobox options={registrationOptions.cards} selected={selectedCards} onChange={setSelectedCards} placeholder="Select cards..." />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>My Programmes</Label>
+                                    <MultiSelectCombobox options={registrationOptions.programmes} selected={selectedProgrammes} onChange={setSelectedProgrammes} placeholder="Select programmes..." />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>My Favourites</Label>
+                                    <MultiSelectCombobox options={registrationOptions.favourites} selected={selectedFavourites} onChange={setSelectedFavourites} placeholder="Select stores..." />
+                                </div>
+                            </div>
+                            <div className="flex justify-end pt-4">
+                                <Button type="submit">Save Preferences</Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+      </div>
     </>
   );
 }

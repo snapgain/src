@@ -1,328 +1,160 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet';
-import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
-import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { Check, Sparkles, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, TrendingUp, Star, Clock } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { StripePayment } from '@/components/payments/StripePayment';
+import { Card, CardContent } from '@/components/ui/card';
+import { SubscribeButton } from '@/components/SubscribeButton';
+import { useSubscription } from '@/hooks/useSubscription';
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      delayChildren: 0.1,
-      staggerChildren: 0.1
-    }
-  }
-};
+const PlanCard = ({ title, price, period, description, features, bestValue, plan, currentPlan, isActive }) => {
+  const isCurrent = isActive && currentPlan === plan;
+  return (
+    <div
+      className={`rounded-xl p-8 border-2 ${
+        bestValue ? 'border-primary shadow-2xl' : 'border-border'
+      } relative card-hover bg-white`}
+    >
+      {bestValue && (
+        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">
+          Best value
+        </div>
+      )}
+      <h3 className="text-2xl font-bold mb-2">{title}</h3>
+      <p className="text-muted-foreground mb-6">{description}</p>
+      <div className="mb-6">
+        <span className="text-4xl font-bold">{price}</span>
+        {period && (
+          <span className="text-base text-muted-foreground ml-1">{period}</span>
+        )}
+      </div>
 
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: "spring",
-      stiffness: 100
-    }
-  }
-};
+      <ul className="space-y-3 text-left mb-8">
+        {features.map((feature, i) => (
+          <li key={i} className="flex items-start">
+            <Check className="w-5 h-5 mr-3 text-green-500 mt-0.5 shrink-0" />
+            <span>{feature}</span>
+          </li>
+        ))}
+      </ul>
 
-const cardHoverVariants = {
-  rest: { scale: 1, y: 0 },
-  hover: { 
-    scale: 1.05, 
-    y: -10,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 20
-    }
-  }
-};
-
-const buttonHoverVariants = {
-  rest: { scale: 1 },
-  hover: { 
-    scale: 1.05,
-    transition: {
-      type: "spring",
-      stiffness: 400,
-      damping: 10
-    }
-  },
-  tap: { scale: 0.95 }
+      {isCurrent ? (
+        <Button disabled className="w-full text-lg h-12">
+          <Check className="w-5 h-5 mr-2" />
+          Current plan
+        </Button>
+      ) : (
+        <SubscribeButton
+          plan={plan}
+          className={`w-full text-lg h-12 ${
+            bestValue
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-secondary text-secondary-foreground'
+          }`}
+        >
+          {isActive ? 'Switch to this plan' : 'Start subscription'}
+        </SubscribeButton>
+      )}
+    </div>
+  );
 };
 
 function PricingPage() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState(null);
-  const [showPayment, setShowPayment] = useState(false);
+  const { isPremium, inTrial, isActive, plan, trialDaysLeft, periodDaysLeft, periodEndsAt } = useSubscription();
 
-  const handleSubscribe = (plan) => {
-    if (!user) {
-      navigate('/auth/signup');
-      return;
-    }
-    setSelectedPlan(plan);
-    setShowPayment(true);
+  const plans = {
+    monthly: {
+      title: 'Monthly',
+      price: '£7.99',
+      period: '/ month',
+      plan: 'monthly',
+      description: 'Per month, billed monthly. Cancel anytime.',
+      features: [
+        'Unlimited comparisons',
+        'Real-time rate updates',
+        'Personalised wallet routing',
+        'Stack strategies (gift card + cashback + points)',
+        'Smart alerts',
+      ],
+      bestValue: false,
+    },
+    yearly: {
+      title: 'Annual',
+      price: '£60',
+      period: '/ year',
+      plan: 'yearly',
+      description: 'Per year, billed annually. Two months free.',
+      features: [
+        'Everything in Monthly',
+        'Save over £35 vs monthly',
+        'Priority support',
+        'Early access to new features',
+      ],
+      bestValue: true,
+    },
   };
-
-  const handlePaymentSuccess = () => {
-    setShowPayment(false);
-    navigate('/dashboard');
-  };
-
-  const handlePaymentCancel = () => {
-    setShowPayment(false);
-    setSelectedPlan(null);
-  };
-
-  if (showPayment) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 pt-20 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <StripePayment
-            plan={{ ...selectedPlan, price: selectedPlan.priceValue }}
-            onSuccess={handlePaymentSuccess}
-            onCancel={handlePaymentCancel}
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
       <Helmet>
-        <title>Pricing - SnapGain UK</title>
-        <meta name="description" content="Choose the perfect SnapGain plan for your cashback needs. Start with a free trial and upgrade when ready." />
+        <title>Pricing — SnapGain</title>
       </Helmet>
-      
-       <Header />  {/* ✅ ADICIONAR HEADER */}
+      <div className="container mx-auto px-4 py-16">
+        <div className="text-center mb-10 space-y-3">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            Choose your <span className="gradient-text">perfect plan</span>
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Start with a 7-day free trial. No commitments, cancel anytime.
+          </p>
+        </div>
 
-      <div className="min-h-screen pt-16">
-        {/* Hero Section */}
-        <motion.div 
-          className="text-center max-w-4xl mx-auto mb-16 pt-16 px-4"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.h1 
-            className="text-4xl md:text-6xl font-bold mb-6"
-            variants={itemVariants}
-          >
-            Choose Your <span className="bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] bg-clip-text text-transparent">Plan</span>
-          </motion.h1>
-          
-          <motion.p 
-            className="text-xl md:text-2xl text-muted-foreground mb-8"
-            variants={itemVariants}
-          >
-            Start free, upgrade when you're ready to maximize your rewards
-          </motion.p>
-        </motion.div>
+        {/* Live status banner */}
+        {isPremium && (
+          <Card className="mb-8 max-w-3xl mx-auto bg-gradient-to-br from-light-pink/30 to-light-green/30 border-primary/30">
+            <CardContent className="py-4 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="font-semibold">
+                    {isActive
+                      ? `Subscribed (${plan || 'monthly'})`
+                      : `Trial: ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} left`}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {isActive && periodEndsAt
+                      ? `Renews ${new Date(periodEndsAt).toLocaleDateString()}${
+                          periodDaysLeft ? ` · ${periodDaysLeft} days left` : ''
+                        }`
+                      : 'Free trial — no card needed yet.'}
+                  </p>
+                </div>
+              </div>
+              {isActive && (
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/settings">
+                    Manage <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
+                  </Link>
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Pricing Section */}
-        <motion.div 
-          className="container mx-auto px-4 py-20"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Free Trial Plan */}
-            <motion.div 
-              variants={itemVariants}
-              initial="rest"
-              whileHover="hover"
-            >
-              <motion.div variants={cardHoverVariants}>
-                <Card className="relative h-full border-2 cursor-pointer transition-shadow duration-300 hover:shadow-xl">
-                  <CardHeader className="text-center pb-2">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-[#99FF33] to-[#7D4DFB] flex items-center justify-center">
-                      <Clock className="h-8 w-8 text-white" />
-                    </div>
-                    <CardTitle className="text-2xl">Free Trial</CardTitle>
-                    <div className="text-3xl font-bold">£0 <span className="text-lg font-normal text-muted-foreground">3 days</span></div>
-                    <p className="text-sm text-muted-foreground">Try SnapGain for free with no commitment.</p>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4 mb-8">
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Unlimited reward comparisons</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Access to all UK platforms</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Real-time rate updates</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Personalized Strategies</span>
-                      </div>
-                    </div>
-                    <motion.div
-                      variants={buttonHoverVariants}
-                      initial="rest"
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      <Button 
-                        className="w-full bg-gradient-to-r from-[#99FF33] to-[#7D4DFB] hover:from-green-500 hover:to-purple-700 text-white"
-                        onClick={() => handleSubscribe({ title: 'Free Trial', priceValue: 0, billingCycle: 'trial' })}
-                      >
-                        Start 3-Day Free Trial
-                      </Button>
-                    </motion.div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <PlanCard
+            {...plans.monthly}
+            currentPlan={plan}
+            isActive={isActive}
+          />
+          <PlanCard {...plans.yearly} currentPlan={plan} isActive={isActive} />
+        </div>
 
-            {/* Monthly Plan */}
-            <motion.div 
-              variants={itemVariants}
-              initial="rest"
-              whileHover="hover"
-            >
-              <motion.div variants={cardHoverVariants}>
-                <Card className="relative h-full border-2 border-purple-200 cursor-pointer transition-shadow duration-300 hover:shadow-xl">
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-[#7D4DFB] text-white">
-                    Most Popular
-                  </Badge>
-                  <CardHeader className="text-center pb-2">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] flex items-center justify-center">
-                      <TrendingUp className="h-8 w-8 text-white" />
-                    </div>
-                    <CardTitle className="text-2xl">Monthly</CardTitle>
-                    <div className="text-3xl font-bold">£7.99 <span className="text-lg font-normal text-muted-foreground">/per month</span></div>
-                    <p className="text-sm text-muted-foreground">Perfect for trying things out.</p>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4 mb-8">
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Everything in Free Trial</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Advanced strategy breakdowns</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Favourites & History</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Smart Card Integration</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Premium customer support</span>
-                      </div>
-                    </div>
-                    <motion.div
-                      variants={buttonHoverVariants}
-                      initial="rest"
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      <Button 
-                        className="w-full bg-gradient-to-r from-[#7D4DFB] to-[#FF3FCE] hover:from-purple-700 hover:to-pink-600 text-white"
-                        onClick={() => handleSubscribe({ title: 'Monthly Plan', priceValue: 7.99, billingCycle: 'monthly' })}
-                      >
-                        Start 3-Day Free Trial
-                      </Button>
-                    </motion.div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-
-            {/* Yearly Plan */}
-            <motion.div 
-              variants={itemVariants}
-              initial="rest"
-              whileHover="hover"
-            >
-              <motion.div variants={cardHoverVariants}>
-                <Card className="relative h-full border-2 border-pink-200 cursor-pointer transition-shadow duration-300 hover:shadow-xl">
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-[#FF3FCE] text-white">
-                    Best Value
-                  </Badge>
-                  <CardHeader className="text-center pb-2">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-[#FF3FCE] to-[#7D4DFB] flex items-center justify-center">
-                      <Star className="h-8 w-8 text-white" />
-                    </div>
-                    <CardTitle className="text-2xl">Yearly</CardTitle>
-                    <div className="text-3xl font-bold">£60 <span className="text-lg font-normal text-muted-foreground">/per year</span></div>
-                    <div className="bg-[#BFFFB4] text-green-800 text-sm px-3 py-1 rounded-full inline-block mb-2">
-                      Save over 35% and commit to saving.
-                    </div>
-                    <p className="text-sm text-muted-foreground">Best value for serious reward optimizers.</p>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4 mb-8">
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Everything in Monthly plan</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>2 months free (35%+ savings)</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Priority feature access</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Exclusive strategy insights</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>Annual rate trend reports</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span>VIP customer support</span>
-                      </div>
-                    </div>
-                    <motion.div
-                      variants={buttonHoverVariants}
-                      initial="rest"
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      <Button 
-                        className="w-full bg-gradient-to-r from-[#FF3FCE] to-[#99FF33] hover:from-pink-600 hover:to-green-500 text-white"
-                        onClick={() => handleSubscribe({ title: 'Annual Plan', priceValue: 60, billingCycle: 'annual' })}
-                      >
-                        Start 3-Day Free Trial
-                      </Button>
-                    </motion.div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-          </div>
-        </motion.div>
+        <p className="text-xs text-muted-foreground text-center mt-8 max-w-2xl mx-auto">
+          Payments are securely processed by Stripe. SnapGain never stores your
+          card details. You can cancel anytime from the Settings page.
+        </p>
       </div>
-
-      <Footer />  {/* ✅ ADICIONAR FOOTER */}
     </>
   );
 }

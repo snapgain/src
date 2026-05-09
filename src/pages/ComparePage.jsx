@@ -1,381 +1,359 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Calculator, Trophy, Wallet, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { useProfile } from '@/contexts/ProfileContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from "@/lib/supabase";
-import ProfileSetupModal from "@/components/profile/ProfileSetupModal";
-import { useNavigate } from "react-router-dom";
-import { 
-  CreditCard, 
-  Search, 
-  Star, 
-  TrendingUp, 
-  DollarSign, 
-  Percent,
-  Filter,
-  SortAsc,
-  SortDesc,
-  ExternalLink
-} from 'lucide-react';
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { duration: 0.5 }
-  }
-};
+import { Label } from '@/components/ui/label';
+import {
+  useStores,
+  useStoreBySlug,
+  useStoreOffers,
+  useMilesPrograms,
+} from '@/hooks/useCatalog';
+import { useUserWallet } from '@/hooks/useUserState';
+import { useSubscription } from '@/hooks/useSubscription';
+import { computeStrategies } from '@/lib/strategies';
+import { Lock, Sparkles } from 'lucide-react';
 
 function ComparePage() {
-  const { cards, addCard } = useProfile();
-  const { user } = useAuth(); 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('cashbackRate');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [greeting, setGreeting] = useState('');
-
-  // ✅ NOVO: controlar onboarding no /compare (caso o utilizador caia aqui sem ter concluído)
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  const initialSlug = searchParams.get('store') || '';
+  const initialAmount = Number(searchParams.get('amount')) || 100;
+
+  const { stores, loading: storesLoading } = useStores();
+  const [selectedSlug, setSelectedSlug] = useState(initialSlug);
+  const [amount, setAmount] = useState(String(initialAmount));
+  const [walletOnly, setWalletOnly] = useState(false);
+
+  // Sync state with URL
   useEffect(() => {
-    const getGreeting = () => {
-      const hour = new Date().getHours();
-      if (hour < 12) return '🌅 Good morning';
-      else if (hour < 17) return '☀️ Good afternoon';
-      else return '🌙 Good evening';
+    setSelectedSlug(searchParams.get('store') || '');
+    const a = Number(searchParams.get('amount'));
+    if (a) setAmount(String(a));
+  }, [searchParams]);
+
+  const { store } = useStoreBySlug(selectedSlug || null);
+  const { cashbackOffers, pointOffers, giftCardOffers, loading: offersLoading } =
+    useStoreOffers(store?.id);
+  const { programs: milesPrograms } = useMilesPrograms();
+  const wallet = useUserWallet();
+  const { isPremium } = useSubscription();
+
+  const numericAmount = Number(amount) || 0;
+
+  const userWalletForStrategy = useMemo(() => {
+    if (!walletOnly) return null;
+    return {
+      cashbackPlatformNames: wallet.cashbackPlatformNames,
+      milesProgramNames: wallet.milesProgramNames,
     };
-    setGreeting(getGreeting());
-  }, []);
+  }, [walletOnly, wallet.cashbackPlatformNames, wallet.milesProgramNames]);
 
-  // ✅ NOVO: verifica sessão e se falta onboarding
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!mounted) return;
-      if (!session) return; // o teu guard de rota deve cuidar de não autenticados
-      const needs = !session.user?.user_metadata?.onboarding_done;
-      if (needs) setShowOnboarding(true);
-    })();
-    return () => { mounted = false; };
-  }, []);
+  const strategies = useMemo(
+    () =>
+      computeStrategies({
+        store,
+        amount: numericAmount,
+        cashbackOffers,
+        pointOffers,
+        giftCardOffers,
+        milesPrograms,
+        userWallet: userWalletForStrategy,
+        includeStacks: isPremium,
+      }),
+    [store, numericAmount, cashbackOffers, pointOffers, giftCardOffers, milesPrograms, userWalletForStrategy, isPremium]
+  );
 
-  const userName = user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
-
-  // Mock credit card data
-  const creditCards = [
-    {
-      id: 1,
-      name: 'Chase Sapphire Preferred',
-      bank: 'Chase',
-      cashbackRate: 5.0,
-      annualFee: 95,
-      welcomeBonus: 500,
-      category: 'Travel',
-      features: ['Travel Insurance', 'No Foreign Transaction Fees', 'Priority Boarding'],
-      color: 'from-blue-600 to-blue-700',
-      rating: 4.8,
-      isRecommended: true
-    },
-    {
-      id: 2,
-      name: 'Cashback Freedom Card',
-      bank: 'Bank of America',
-      cashbackRate: 4.5,
-      annualFee: 0,
-      welcomeBonus: 200,
-      category: 'Cashback',
-      features: ['No Annual Fee', 'Rotating Categories', 'Mobile Banking'],
-      color: 'from-green-500 to-green-600',
-      rating: 4.6,
-      isRecommended: false
-    },
-    {
-      id: 3,
-      name: 'Premium Rewards Card',
-      bank: 'American Express',
-      cashbackRate: 6.0,
-      annualFee: 150,
-      welcomeBonus: 750,
-      category: 'Premium',
-      features: ['Concierge Service', 'Airport Lounge Access', 'Global Acceptance'],
-      color: 'from-purple-600 to-purple-700',
-      rating: 4.9,
-      isRecommended: true
-    }
-  ];
-
-  const categories = ['all', 'Travel', 'Cashback', 'Premium', 'Business'];
-
-  const filteredCards = useMemo(() => {
-    let filtered = creditCards.filter(card => {
-      const matchesSearch = card.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           card.bank.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || card.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+  // What the user is missing without premium: best stack we'd otherwise show
+  const premiumPreview = useMemo(() => {
+    if (isPremium || !store || numericAmount <= 0) return null;
+    const withStacks = computeStrategies({
+      store,
+      amount: numericAmount,
+      cashbackOffers,
+      pointOffers,
+      giftCardOffers,
+      milesPrograms,
+      userWallet: userWalletForStrategy,
+      includeStacks: true,
     });
+    const bestStack = withStacks.find((s) => s.type === 'stack');
+    if (!bestStack) return null;
+    const bestFlat = strategies[0];
+    if (!bestFlat) return null;
+    const delta = bestStack.gbpReturn - bestFlat.gbpReturn;
+    if (delta <= 0) return null;
+    return { bestStack, delta };
+  }, [isPremium, store, numericAmount, cashbackOffers, pointOffers, giftCardOffers, milesPrograms, userWalletForStrategy, strategies]);
 
-    filtered.sort((a, b) => {
-      let aValue = a[sortBy];
-      let bValue = b[sortBy];
-      
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
+  const top = strategies[0];
+  const showWalletEmptyHint = walletOnly && wallet.isEmpty && !wallet.loading;
 
-    return filtered;
-  }, [searchQuery, sortBy, sortOrder, selectedCategory]);
+  const goToStrategy = () => {
+    if (!store || numericAmount <= 0) return;
+    navigate(
+      `/strategy?store=${encodeURIComponent(store.slug)}&amount=${numericAmount}`
+    );
+  };
 
   return (
-    <DashboardLayout
-      title="💳 Compare"
-      subtitle={`${greeting}, ${userName}! 👋 Find the perfect deal for maximum cashback & miles rewards`}
-      icon={{
-        element: <CreditCard className="h-8 w-8 text-white" />,
-        bgColor: "bg-gradient-to-r from-blue-500 to-purple-600"
-      }}
-    >
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="space-y-8"
-      >
-        {/* Search and Filters */}
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search credit cards..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+    <>
+      <Helmet>
+        <title>Compare rewards — SnapGain</title>
+      </Helmet>
 
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-3 py-2 border border-gray-200 rounded-md min-w-[150px]"
-                >
-                  {categories.map(category => (
-                    <option key={category} value={category}>
-                      {category === 'all' ? 'All Categories' : category}
-                    </option>
-                  ))}
-                </select>
+      <div className="container mx-auto px-4 py-8 space-y-6">
+        <Link
+          to="/home"
+          className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Home
+        </Link>
 
-                <div className="flex gap-2">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-md"
-                  >
-                    <option value="cashbackRate">Cashback Rate</option>
-                    <option value="annualFee">Annual Fee</option>
-                    <option value="welcomeBonus">Welcome Bonus</option>
-                    <option value="rating">Rating</option>
-                  </select>
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+            Compare rewards
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Pick a store and an amount, and we&rsquo;ll rank every reward route
+            we track by estimated £ return.
+          </p>
+        </motion.section>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  >
-                    {sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-                  </Button>
-                </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Calculator className="w-5 h-5 text-primary" />
+              Comparison
+            </CardTitle>
+            <CardDescription>
+              Real-time rates from your Supabase catalog. Live updates via
+              Realtime when an admin edits a row.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="store">1. Select store</Label>
+              <select
+                id="store"
+                value={selectedSlug}
+                onChange={(e) => setSelectedSlug(e.target.value)}
+                disabled={storesLoading}
+                className="w-full h-12 px-3 rounded-xl border-2 border-primary/30 bg-background text-base focus:outline-none focus:border-primary"
+              >
+                <option value="">— pick a store —</option>
+                {stores.map((s) => (
+                  <option key={s.id} value={s.slug}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="amount">2. Purchase amount</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-lg">
+                  £
+                </span>
+                <Input
+                  id="amount"
+                  type="number"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="pl-8 h-12 text-base"
+                  placeholder="100"
+                />
               </div>
+            </div>
+
+            <div className="md:col-span-2 pt-2 flex items-start justify-between gap-3 flex-wrap border-t mt-2 pt-4">
+              <div>
+                <p className="font-semibold flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-primary" />
+                  Show only my wallet
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Filter strategies down to platforms and programs you actually use.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWalletOnly((v) => !v)}
+                className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+                  walletOnly
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background hover:border-primary/50'
+                }`}
+                aria-pressed={walletOnly}
+              >
+                {walletOnly ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 mr-1.5 inline" />
+                    Personalised
+                  </>
+                ) : (
+                  'All routes'
+                )}
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {showWalletEmptyHint && (
+          <Card className="bg-light-pink/40 border-primary/20">
+            <CardContent className="py-4 flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <p className="font-semibold">Your wallet is empty</p>
+                <p className="text-sm text-muted-foreground">
+                  Add at least one cashback platform or miles program so we can
+                  filter routes you can actually use.
+                </p>
+              </div>
+              <Button asChild>
+                <Link to="/wallet">Set up wallet</Link>
+              </Button>
             </CardContent>
           </Card>
-        </motion.div>
-
-        {/* Credit Cards */}
-        <motion.div variants={itemVariants}>
-          <div className="space-y-6">
-            {filteredCards.map((card) => (
-              <motion.div key={card.id} variants={itemVariants}>
-                <Card className={`transition-all duration-300 hover:shadow-xl ${card.isRecommended ? 'ring-2 ring-blue-200 bg-gradient-to-r from-blue-50/50 to-purple-50/50' : ''}`}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4 flex-1">
-                        <div className={`w-16 h-16 bg-gradient-to-r ${card.color} rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg`}>
-                          {card.bank[0]}
-                        </div>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-2xl font-bold">{card.name}</h3>
-                            {card.isRecommended && (
-                              <Badge className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-                                ⭐ Recommended
-                              </Badge>
-                            )}
-                            <Badge variant="outline">{card.category}</Badge>
-                          </div>
-                          
-                          <p className="text-lg text-muted-foreground mb-4">{card.bank}</p>
-
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                            <div className="flex items-center space-x-2">
-                              <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                              <span className="text-sm">
-                                <span className="font-medium">{card.rating}</span>
-                                <span className="text-muted-foreground ml-1">rating</span>
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2">
-                              <DollarSign className="h-4 w-4 text-green-600" />
-                              <span className="text-sm">
-                                <span className="font-medium">£{card.welcomeBonus}</span>
-                                <span className="text-muted-foreground ml-1">bonus</span>
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2">
-                              <CreditCard className="h-4 w-4 text-blue-600" />
-                              <span className="text-sm">
-                                <span className="font-medium">£{card.annualFee}</span>
-                                <span className="text-muted-foreground ml-1">annual fee</span>
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2">
-                              <Percent className="h-4 w-4 text-purple-600" />
-                              <span className="text-sm">
-                                <span className="font-medium">{card.cashbackRate}%</span>
-                                <span className="text-muted-foreground ml-1">cashback</span>
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2">
-                            {card.features.map((feature) => (
-                              <Badge key={feature} variant="secondary" className="text-xs">
-                                {feature}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start space-x-6">
-                        <div className="text-center">
-                          <div className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                            {card.cashbackRate}%
-                          </div>
-                          <div className="text-sm text-muted-foreground">Cashback</div>
-                        </div>
-                        
-                        <div className="flex flex-col space-y-3">
-                          <Button 
-                            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6"
-                            onClick={() => addCard(card)}
-                          >
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Apply Now
-                          </Button>
-                          
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                          >
-                            Learn More
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Empty State */}
-        {filteredCards.length === 0 && (
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardContent className="p-12 text-center">
-                <CreditCard className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No cards found</h3>
-                <p className="text-muted-foreground mb-6">
-                  Try adjusting your search terms or category filters
-                </p>
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('all');
-                  }}
-                >
-                  Clear Filters
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
         )}
-      </motion.div>
 
-      {/* ✅ NOVO: Modal de onboarding aqui também, se necessário */}
-      <ProfileSetupModal
-        isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        onComplete={async () => {
-  try {
-    // 1) Mark in user_metadata so the UI knows onboarding is done
-    await supabase.auth.updateUser({ data: { onboarding_done: true } });
+        {selectedSlug && (
+          <section className="space-y-4">
+            <div className="flex items-end justify-between gap-4 flex-wrap">
+              <div>
+                <h2 className="text-2xl font-bold">
+                  {strategies.length}{' '}
+                  {strategies.length === 1 ? 'route' : 'routes'} for{' '}
+                  {store?.name || '…'}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Ranked by estimated return on £{numericAmount}
+                </p>
+              </div>
+              {top && (
+                <Button onClick={goToStrategy}>
+                  See best strategy step-by-step
+                </Button>
+              )}
+            </div>
 
-    // 2) Persist on the backend (user_profiles)
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user?.id) {
-      await supabase
-        .from('user_profiles')
-        .upsert(
-          {
-            user_id: user.id,           // ← link to auth.users
-            onboarding_done: true,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' }     // ← keeps it idempotent
-        );
-    }
-  } catch (e) {
-    console.warn('Could not persist onboarding flag:', e);
-    // (Optional) toast non-destructive here
-  }
+            {premiumPreview && (
+              <Card className="bg-gradient-to-br from-light-pink/30 to-light-green/30 border-primary/30">
+                <CardContent className="py-4 flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-semibold flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-secondary" />
+                        Stack strategies are premium
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Subscribe to see <span className="font-medium">{premiumPreview.bestStack.title}</span> at{' '}
+                        <span className="font-bold gradient-text">
+                          {premiumPreview.bestStack.gbpReturnDisplay}
+                        </span>
+                        {' '}— that&rsquo;s £{premiumPreview.delta.toFixed(2)} more than the best flat route.
+                      </p>
+                    </div>
+                  </div>
+                  <Button asChild>
+                    <Link to="/pricing">See plans</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
-  // Close modal and go to /compare
-  // Use whichever state setter exists in the page:
-  setShowProfileModal?.(false);   // Login page
-  setShowOnboarding?.(false);     // Compare page
-  navigate('/compare', { replace: true });
-}}
-      />
-    </DashboardLayout>
+            {offersLoading ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Loading offers…
+                </CardContent>
+              </Card>
+            ) : strategies.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  No offers tracked for this store yet.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {strategies.map((s, idx) => (
+                  <Card
+                    key={s.id}
+                    className={
+                      idx === 0
+                        ? 'card-hover border-primary/40 bg-gradient-to-br from-light-pink/30 to-white'
+                        : 'card-hover'
+                    }
+                  >
+                    <CardContent className="py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          {idx === 0 && (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary uppercase tracking-wide">
+                              <Trophy className="w-3.5 h-3.5" />
+                              Best route
+                            </span>
+                          )}
+                          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                            {s.type}
+                          </span>
+                        </div>
+                        <div className="font-semibold text-lg pt-1">
+                          {s.title}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {s.subtitle}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold gradient-text">
+                          {s.gbpReturnDisplay}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={idx === 0 ? 'default' : 'outline'}
+                        onClick={() =>
+                          navigate(
+                            `/strategy?store=${encodeURIComponent(
+                              store.slug
+                            )}&route=${encodeURIComponent(
+                              s.id
+                            )}&amount=${numericAmount}`
+                          )
+                        }
+                      >
+                        Open
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+      </div>
+    </>
   );
 }
 
