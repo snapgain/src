@@ -1,0 +1,21 @@
+{
+  "name": "SnapGain - Configuração Automática",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": {
+      "label": "SnapGain App",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postCreateCommand": "cd 'Estrutura de Pastas e Arquivos Essenciais' && npm install && echo 'VITE_SUPABASE_URL=https://ffowgyjdbgkphsflxybk.supabase.co\nVITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmb3dneWpkYmdrcGhzZmx4eWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwMjkwNzIsImV4cCI6MjA2ODYwNTA3Mn0.nhHxBCIloaci-emq6svbD2XT3kaR85Jl-SJTW3s9eiQ\nVITE_EDGE_FUNCTIONS_URL=https://ffowgyjdbgkphsflxybk.supabase.co/functions/v1' > .env.local && chmod +x node_modules/.bin/* && npm run dev",
+  "remoteUser": "node"
+}

@@ -1,0 +1,30 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "env": {
+    "VITE_SUPABASE_URL": "https://ffowgyjdbgkphsflxybk.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmb3dneWpkYmdrcGhzZmx4eWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwMjkwNzIsImV4cCI6MjA2ODYwNTA3Mn0.nhHxBCIloaci-emq6svbD2XT3kaR85Jl-SJTW3s9eiQ",
+    "VITE_EDGE_FUNCTIONS_URL": "https://ffowgyjdbgkphsflxybk.supabase.co/functions/v1",
+    "VITE_APP_ENV": "production",
+    "VITE_APP_URL": "https://snapgain.uk",
+    "VITE_SUPABASE_REDIRECT_URL": "https://snapgain.uk/auth/callback",
+    "VITE_SITE_URL": "https://snapgain.uk",
+    "VITE_HCAPTCHA_SITE_KEY": "ES_b1112a2a44c543d8807090a20fc6b7cf"
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
+  ]
+}

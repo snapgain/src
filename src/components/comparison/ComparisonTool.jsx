@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, TrendingUp, Search } from 'lucide-react';
+import { Calculator, TrendingUp, Search, ShoppingCart, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { stores, filterOptions, rewardOptions } from '@/data/appData';
@@ -11,13 +11,24 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
+import { usePlatformComparison } from '@/hooks/useEdgeFunctions';
+import { usePriceComparison } from '@/hooks/usePriceComparison';
 
 export function ComparisonTool() {
+<<<<<<<< HEAD:src/components/comparison/ComparisonTool.jsx
   const { user } = useAuth();
+========
+  const { user, isTrialExpired } = useAuth();
+  const { comparePlatforms, loading: edgeLoading, results: edgeResults } = usePlatformComparison();
+  const { loading: priceLoading, error: priceError, resultados: priceResults, compararPrecos } = usePriceComparison();
+  
+>>>>>>>> 6c70c49fb6aada2cec871bdeecbebd2474a097b3:components/comparison/ComparisonTool.jsx
   const [selectedStore, setSelectedStore] = useState([]);
   const [purchaseAmount, setPurchaseAmount] = useState('100');
+  const [productSearch, setProductSearch] = useState('');
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [showComparison, setShowComparison] = useState(false);
+  const [showPriceComparison, setShowPriceComparison] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const resultsRef = useRef(null);
 
@@ -29,16 +40,41 @@ export function ComparisonTool() {
   const userFavouriteStores = stores.filter(s => s.isFavourite);
   const allStoreOptions = stores.map(s => ({ value: s.id, label: s.name }));
 
+  // Função para comparar plataformas usando Edge Function
+  const performComparison = async () => {
+    if (selectedStore.length === 0 || !purchaseAmount) return;
+
+    setIsLoading(true);
+    setShowComparison(true);
+
+    try {
+      const platforms = selectedStore.map(storeId => {
+        const store = stores.find(s => s.id === storeId);
+        return store?.name;
+      }).filter(Boolean);
+
+      const criteria = {
+        purchaseAmount: parseFloat(purchaseAmount),
+        filters: selectedFilters,
+        userPreferences: user?.preferences || {}
+      };
+
+      await comparePlatforms(platforms, criteria);
+      
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } catch (error) {
+      console.error('Erro na comparação:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Atualiza resultados em tempo real
   useEffect(() => {
-    // Só mostra comparação se loja foi selecionada
     if (selectedStore.length > 0 && purchaseAmount) {
-      setIsLoading(true);
-      setShowComparison(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 400); // Simula tempo de cálculo
+      performComparison();
     } else {
       setShowComparison(false);
     }
