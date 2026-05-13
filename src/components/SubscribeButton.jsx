@@ -25,7 +25,20 @@ export function SubscribeButton({ plan = 'monthly', children, ...buttonProps }) 
   const handleClick = async () => {
     if (busy) return;
     if (!user) {
-      navigate('/auth/login', { state: { from: location } });
+      // Store the checkout intent so the OAuth round-trip (or email
+      // signup flow) can pick it up after auth resolves, and send
+      // the user straight back into Stripe Checkout. Without this
+      // the user signs up, lands on /home, and never pays.
+      try {
+        localStorage.setItem(
+          'pendingCheckout',
+          JSON.stringify({ plan, timestamp: Date.now() })
+        );
+      } catch {
+        // localStorage can be unavailable in some private modes;
+        // not a blocker, the user can click subscribe again post-auth.
+      }
+      navigate('/auth/signup', { state: { from: location } });
       return;
     }
     setBusy(true);

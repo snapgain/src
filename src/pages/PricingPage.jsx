@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
-import { Check, Sparkles, ExternalLink } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Check, Sparkles, ExternalLink, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SubscribeButton } from '@/components/SubscribeButton';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/lib/customSupabaseClient';
+import { toast } from '@/components/ui/use-toast';
 
 const PlanCard = ({ title, price, period, description, features, bestValue, plan, currentPlan, isActive }) => {
   const isCurrent = isActive && currentPlan === plan;
@@ -60,7 +63,52 @@ const PlanCard = ({ title, price, period, description, features, bestValue, plan
 };
 
 function PricingPage() {
+  const { user } = useAuth();
   const { isPremium, inTrial, isActive, plan, trialDaysLeft, periodDaysLeft, periodEndsAt } = useSubscription();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const autoFiredRef = useRef(false);
+
+  // Banner state: "subscribe=required" comes from ProtectedRoute when a
+  // non-premium user tries to access a gated route.
+  const subscribeRequired = searchParams.get('subscribe') === 'required';
+
+  // Auto-fire checkout: when AuthCallbackPage redirects here with
+  // ?action=checkout&plan=xxx after the OAuth round-trip, we want to
+  // immediately push the user into Stripe Checkout without making them
+  // click again.
+  useEffect(() => {
+    if (autoFiredRef.current) return;
+    if (!user) return;
+    const action = searchParams.get('action');
+    if (action !== 'checkout') return;
+    autoFiredRef.current = true;
+
+    const targetPlan = searchParams.get('plan') === 'yearly' ? 'yearly' : 'monthly';
+
+    // Clear the query string so a page reload doesn't re-fire.
+    const next = new URLSearchParams(searchParams);
+    next.delete('action');
+    next.delete('plan');
+    setSearchParams(next, { replace: true });
+
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          'create-checkout-session',
+          { body: { plan: targetPlan } }
+        );
+        if (error) throw error;
+        if (!data?.url) throw new Error('No checkout URL returned');
+        window.location.href = data.url;
+      } catch (err) {
+        toast({
+          title: 'Could not start checkout',
+          description: err?.message || 'Try clicking the plan button again.',
+          variant: 'destructive',
+        });
+      }
+    })();
+  }, [user, searchParams, setSearchParams]);
 
   const plans = {
     monthly: {
@@ -102,12 +150,32 @@ function PricingPage() {
         <title>Pricing — SnapGain</title>
       </Helmet>
       <div className="container mx-auto px-4 py-16">
+        {/* Subscribe-required banner — shown when ProtectedRoute bounced
+            a non-premium user here from a gated route. */}
+        {subscribeRequired && !isPremium && (
+          <Card className="mb-8 max-w-3xl mx-auto bg-amber-50 border-amber-300">
+            <CardContent className="py-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-amber-900">
+                  Pick a plan to unlock SnapGain
+                </p>
+                <p className="text-sm text-amber-800 mt-1">
+                  SnapGain is a premium-only product. Choose Monthly or
+                  Annual below to get the comparison engine, the 9
+                  strategy guides, and the BA Household Account wizard.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="text-center mb-10 space-y-3">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             Choose your <span className="gradient-text">perfect plan</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Start with a 7-day free trial. No commitments, cancel anytime.
+            One plan unlocks everything. Cancel anytime.
           </p>
         </div>
 

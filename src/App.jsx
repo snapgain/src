@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/SupabaseAuthContext';
 import LandingPage from '@/pages/LandingPage';
 import AuthPage from '@/pages/AuthPage';
+import AuthCallbackPage from '@/pages/AuthCallbackPage';
 import SettingsPage from '@/pages/SettingsPage';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Layout } from '@/components/layout/Layout';
@@ -43,6 +44,8 @@ function AppContent() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<LandingPage />} />
+        {/* OAuth callback — Supabase redirects here after Google login */}
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/auth/:mode" element={<AuthPage />} />
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/pricing" element={<PricingPage />} />
@@ -128,28 +131,28 @@ function AppContent() {
           </ProtectedRoute>
         } />
         <Route path="/menu" element={
-          <ProtectedRoute>
+          <ProtectedRoute requirePremium={false}>
             <MenuPage />
           </ProtectedRoute>
         } />
         <Route path="/subscription/success" element={
-          <ProtectedRoute>
+          <ProtectedRoute requirePremium={false}>
             <SubscriptionSuccessPage />
           </ProtectedRoute>
         } />
         <Route path="/onboarding" element={
-          <ProtectedRoute requireOnboarding={false}>
+          <ProtectedRoute requireOnboarding={false} requirePremium={false}>
             <OnboardingPage />
           </ProtectedRoute>
         } />
         <Route path="/dashboard" element={<Navigate to="/home" replace />} />
         <Route path="/profile" element={
-          <ProtectedRoute>
+          <ProtectedRoute requirePremium={false}>
             <ProfilePage />
           </ProtectedRoute>
         } />
         <Route path="/settings" element={
-          <ProtectedRoute>
+          <ProtectedRoute requirePremium={false}>
             <SettingsPage />
           </ProtectedRoute>
         } />
