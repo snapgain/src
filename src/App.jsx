@@ -36,6 +36,7 @@ import ProfilePage from '@/pages/ProfilePage';
 import ContactPage from '@/pages/ContactPage';
 import AppsPage from '@/pages/AppsPage';
 import StrategyLibraryPage from '@/pages/StrategyLibraryPage';
+import Maintenance from '@/pages/Maintenance';
 import { DisplaySettingsBoot } from '@/components/DisplaySettingsBoot';
 import { I18nProvider } from '@/lib/i18n';
 
@@ -161,7 +162,21 @@ function AppContent() {
   );
 }
 
+// ┌──────────────────────────────────────────────────────────────────┐
+// │  MAINTENANCE_MODE                                                │
+// │                                                                  │
+// │  Set to false to bring the public site back online. When true,   │
+// │  every URL (including /pricing, /auth, /home) renders the        │
+// │  Maintenance page. Auth providers + routing are skipped entirely │
+// │  so no analytics fire and no Supabase calls happen for visitors. │
+// └──────────────────────────────────────────────────────────────────┘
+const MAINTENANCE_MODE = true;
+
 function App() {
+  if (MAINTENANCE_MODE) {
+    return <Maintenance />;
+  }
+
   return (
     <AuthProvider>
       <I18nProvider>
