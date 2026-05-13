@@ -79,11 +79,12 @@ export function Header() {
   return (
     <header className="bg-background/80 backdrop-blur-sm border-b sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3">
-        {/* 3-column grid keeps the nav truly centered regardless of logo size
-            or right-side button width (true visual centering vs. flex-between). */}
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-          {/* Logo */}
-          <Link to={user ? '/home' : '/'} className="shrink-0">
+        {/* Symmetric 3-column grid: each column is equal width (1fr),
+            so the nav (middle) sits at the absolute visual center of
+            the page regardless of logo or button widths. */}
+        <div className="grid grid-cols-3 items-center gap-4">
+          {/* Logo (left column, content aligned start) */}
+          <Link to={user ? '/home' : '/'} className="justify-self-start">
             <img
               src="/snapgain-logo.png"
               alt="SnapGain"

@@ -315,9 +315,9 @@ function TravelAngle() {
     },
     {
       route: 'London → São Paulo',
-      type: 'one-way (off-peak)',
-      price: '~60,000 Avios + £250',
-      spend: '~6 to 7 months of £500/mo routed',
+      type: 'return',
+      price: '55,000 Avios + £330',
+      spend: '~7 months of £500/mo routed',
     },
   ];
   return (
@@ -614,9 +614,9 @@ function RealNumbers() {
 //   Avios = Cashback £ / 0.0092  (1 Avios = £0.0092 at Avios Booster)
 //
 // Flight costs (total £ value of Avios + cash co-pay):
-//   Dublin return  = 16k × 0.0092 + £133 = £280
-//   Lisbon return  = 42k × 0.0092 + £50  = £436
-//   São Paulo OW   = 60k × 0.0092 + £250 = £802 (approximate)
+//   Dublin return    = 16k × 0.0092 + £133 = £280
+//   Lisbon return    = 42k × 0.0092 + £50  = £436
+//   São Paulo return = 55k × 0.0092 + £330 = £836 (verified Nov 2026)
 // ────────────────────────────────────────────────────────────────────
 function Calculator({ onPrimary }) {
   const [spend, setSpend] = useState(500);
@@ -628,7 +628,7 @@ function Calculator({ onPrimary }) {
   const flights = [
     { name: 'Manchester → Dublin return', cost: 280, icon: '🇮🇪' },
     { name: 'London → Lisbon return', cost: 436, icon: '🇵🇹' },
-    { name: 'London → São Paulo one-way', cost: 802, icon: '🇧🇷' },
+    { name: 'London → São Paulo return', cost: 836, icon: '🇧🇷' },
   ];
 
   const monthsFor = (cost) =>
