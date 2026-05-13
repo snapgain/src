@@ -889,7 +889,7 @@ function PricingCTA({ onSubscribe }) {
           Stop guessing. Start flying.
         </h2>
         <p className="text-lg md:text-xl text-muted-foreground mb-8">
-          One plan. Everything unlocked. £7.99/month or £60/year (save £35).
+          One plan. Everything unlocked. £14.99/month or £120/year (save £60).
         </p>
 
         <ul className="text-left max-w-md mx-auto space-y-3 mb-10">
