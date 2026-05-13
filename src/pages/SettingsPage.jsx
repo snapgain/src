@@ -1,65 +1,192 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import { Sparkles, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  Bell,
+  Shield,
+  Megaphone,
+  Palette,
+  Eye,
+  Type,
+  Sparkles,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Sun,
+  Moon,
+  Monitor,
+  Save,
+  BookOpen,
+  AlignLeft,
+} from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
-import { registrationOptions } from '@/data/appData.jsx';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { useSubscription } from '@/hooks/useSubscription';
 import { ManageBillingButton } from '@/components/ManageBillingButton';
+import { loadUserPrefs, saveUserPrefs } from '@/lib/userPrefs';
+import { applyDisplaySettings } from '@/lib/displaySettings';
+import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
+
+/** Theme metadata that doesn't translate (icons, swatches). Labels
+ *  and hints come from i18n via t() at render time. */
+const STANDARD_THEMES = [
+  { id: 'light', labelKey: 'settings.themeLight', Icon: Sun, swatch: '#ffffff' },
+  { id: 'dark', labelKey: 'settings.themeDark', Icon: Moon, swatch: '#1c1c24' },
+  { id: 'auto', labelKey: 'settings.themeAuto', Icon: Monitor, swatch: 'linear-gradient(90deg,#fff 50%,#1c1c24 50%)' },
+];
+
+const READING_THEMES = [
+  { id: 'cream', labelKey: 'settings.themeCream', hintKey: 'settings.themeCreamHint', swatch: '#FFFDD0' },
+  { id: 'yellow', labelKey: 'settings.themeYellow', hintKey: 'settings.themeYellowHint', swatch: '#FFFFE0' },
+  { id: 'peach', labelKey: 'settings.themePeach', hintKey: 'settings.themePeachHint', swatch: '#FFE5CC' },
+];
+
+const CALM_THEMES = [
+  { id: 'calm', labelKey: 'settings.themeCalmLabel', hintKey: 'settings.themeCalmHint', swatch: '#F5F5DC' },
+];
+
+const FONT_SIZE_OPTIONS = [
+  { id: 'sm', labelKey: 'settings.fontSmall' },
+  { id: 'md', labelKey: 'settings.fontMedium' },
+  { id: 'lg', labelKey: 'settings.fontLarge' },
+];
+
+const FONT_FAMILY_OPTIONS = [
+  { id: 'default', labelKey: 'settings.fontDefault', hintKey: 'settings.fontDefaultHint' },
+  { id: 'accessible', labelKey: 'settings.fontAccessible', hintKey: 'settings.fontAccessibleHint' },
+];
+
+const LINE_SPACING_OPTIONS = [
+  { id: 'normal', labelKey: 'settings.lineNormal' },
+  { id: 'wide', labelKey: 'settings.lineWide', hintKey: 'settings.lineWideHint' },
+];
 
 function SettingsPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const sub = useSubscription();
-  const [name, setName] = useState(user?.user_metadata?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
+  const { t } = useTranslation();
 
-  const [selectedBanks, setSelectedBanks] = useState([]);
-  const [selectedCards, setSelectedCards] = useState([]);
-  const [selectedProgrammes, setSelectedProgrammes] = useState([]);
-  const [selectedFavourites, setSelectedFavourites] = useState([]);
+  const [prefs, setPrefs] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const handleUpdate = (e) => {
-    e.preventDefault();
-    toast({
-        title: "🚧 This feature isn't implemented yet—but don't worry! You can request it in your next prompt! 🚀",
-        description: "Profile updates will be available soon."
+  // Load saved preferences
+  useEffect(() => {
+    let alive = true;
+    if (!user) return;
+    loadUserPrefs(user.id).then((p) => {
+      if (alive) setPrefs(p);
     });
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+
+  // Apply display settings live as the user toggles them
+  useEffect(() => {
+    if (prefs) applyDisplaySettings(prefs);
+  }, [prefs]);
+
+  const updatePref = (patch) => setPrefs((p) => ({ ...p, ...patch }));
+
+  const handleSave = async () => {
+    if (!user || !prefs) return;
+    setSaving(true);
+    try {
+      await saveUserPrefs(user.id, prefs);
+      toast({
+        title: t('settings.saved'),
+        description: t('settings.savedDesc'),
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
+  if (!prefs) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            {t('settings.loading')}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // ─── Subscription badge ────────────────────────────────────────
   const subBadge = sub.isActive
-    ? { label: `Subscribed · ${sub.plan || 'monthly'}`, color: 'bg-primary/10 text-primary', icon: CheckCircle2 }
+    ? {
+        label: `${t('settings.subscribed')} · ${sub.plan || 'monthly'}`,
+        color: 'bg-primary/10 text-primary',
+        icon: CheckCircle2,
+      }
     : sub.inTrial
-    ? { label: `Trial · ${sub.trialDaysLeft} day${sub.trialDaysLeft === 1 ? '' : 's'} left`, color: 'bg-light-pink text-secondary', icon: Clock }
-    : { label: 'Free plan', color: 'bg-muted text-muted-foreground', icon: AlertCircle };
+    ? {
+        label: `${t('settings.trial')} · ${sub.trialDaysLeft} ${
+          sub.trialDaysLeft === 1
+            ? t('settings.daysLeft')
+            : t('settings.daysLeftPlural')
+        }`,
+        color: 'bg-light-pink text-secondary',
+        icon: Clock,
+      }
+    : {
+        label: t('settings.freePlan'),
+        color: 'bg-muted text-muted-foreground',
+        icon: AlertCircle,
+      };
   const SubIcon = subBadge.icon;
 
   return (
     <>
       <Helmet>
-        <title>Settings - SnapGain</title>
+        <title>Settings — SnapGain</title>
       </Helmet>
-      <div className="container mx-auto px-4 py-12 max-w-4xl space-y-6">
-        <h1 className="text-3xl font-bold">Settings</h1>
 
+      <div className="container mx-auto px-4 py-8 max-w-3xl space-y-5">
+        {/* ─── Title ────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="text-center space-y-2"
+        >
+          <h1 className="text-2xl md:text-3xl font-bold">{t('settings.title')}</h1>
+          <p className="text-muted-foreground text-sm">
+            {t('settings.subtitle')}
+          </p>
+        </motion.div>
+
+        {/* ─── Subscription ────────────────────────────────────── */}
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-primary" />
-                  Subscription
+                  {t('settings.subscription')}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  £7.99/month or £60/year. Cancel anytime.
+                  {t('settings.subscriptionTagline')}
                 </CardDescription>
               </div>
-              <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${subBadge.color}`}>
+              <span
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${subBadge.color}`}
+              >
                 <SubIcon className="w-3.5 h-3.5" />
                 {subBadge.label}
               </span>
@@ -68,107 +195,401 @@ function SettingsPage() {
           <CardContent className="space-y-3">
             {sub.isActive && sub.periodEndsAt && (
               <p className="text-sm text-muted-foreground">
-                Renews on{' '}
+                {t('settings.renewsOn')}{' '}
                 <span className="font-semibold">
                   {new Date(sub.periodEndsAt).toLocaleDateString()}
                 </span>
-                {sub.periodDaysLeft ? ` (${sub.periodDaysLeft} days)` : ''}.
+                {sub.periodDaysLeft
+                  ? ` (${sub.periodDaysLeft} ${t('settings.days')})`
+                  : ''}
+                .
               </p>
             )}
             {sub.inTrial && sub.trialEndsAt && (
               <p className="text-sm text-muted-foreground">
-                Trial ends on{' '}
+                {t('settings.trialEndsOnPrefix')}{' '}
                 <span className="font-semibold">
                   {new Date(sub.trialEndsAt).toLocaleDateString()}
                 </span>
-                . Subscribe before then to keep premium access.
+                {t('settings.trialEndsOnSuffix')}
               </p>
             )}
             {!sub.isPremium && (
               <p className="text-sm text-muted-foreground">
-                You&rsquo;re on the free plan. Subscribe to unlock advanced
-                comparison strategies, smart alerts, and unlimited simulations.
+                {t('settings.freeCopy')}
               </p>
             )}
             <div className="flex flex-wrap gap-2 pt-1">
               {!sub.isActive ? (
                 <Button asChild>
                   <Link to="/pricing">
-                    {sub.inTrial ? 'Upgrade now' : 'See plans'}
+                    {sub.inTrial
+                      ? t('settings.upgradeNow')
+                      : t('settings.seePlans')}
                   </Link>
                 </Button>
               ) : (
                 <Button asChild variant="outline">
-                  <Link to="/pricing">Change plan</Link>
+                  <Link to="/pricing">{t('settings.changePlan')}</Link>
                 </Button>
               )}
               {sub.isActive && (
                 <ManageBillingButton variant="outline">
-                  Manage subscription
+                  {t('settings.manageSubscription')}
                 </ManageBillingButton>
               )}
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-1">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Profile</CardTitle>
-                        <CardDescription>Update your personal information.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleUpdate} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Full Name</Label>
-                                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" value={email} disabled />
-                            </div>
-                            <Button type="submit" className="w-full">Save Profile</Button>
-                        </form>
-                    </CardContent>
-                </Card>
+        {/* ─── Notifications ────────────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Bell className="w-5 h-5 text-primary" />
+              {t('settings.notifications')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <ToggleRow
+              id="notif-email"
+              label={t('settings.emailNotifications')}
+              checked={prefs.notifEmail}
+              onChange={(v) => updatePref({ notifEmail: v })}
+            />
+            <ToggleRow
+              id="notif-push"
+              label={t('settings.pushNotifications')}
+              checked={prefs.notifPush}
+              onChange={(v) => updatePref({ notifPush: v })}
+            />
+            <ToggleRow
+              id="notif-weekly"
+              label={t('settings.weeklyReports')}
+              checked={prefs.notifWeekly}
+              onChange={(v) => updatePref({ notifWeekly: v })}
+            />
+            <ToggleRow
+              id="notif-deals"
+              label={t('settings.dealAlerts')}
+              checked={prefs.notifDeals}
+              onChange={(v) => updatePref({ notifDeals: v })}
+            />
+          </CardContent>
+        </Card>
+
+        {/* ─── Security ────────────────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              {t('settings.security')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ToggleRow
+              id="two-factor"
+              label={t('settings.twoFactor')}
+              description={t('settings.twoFactorDesc')}
+              checked={prefs.twoFactorEnabled}
+              onChange={(v) => updatePref({ twoFactorEnabled: v })}
+            />
+          </CardContent>
+        </Card>
+
+        {/* ─── Marketing Preferences ──────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Megaphone className="w-5 h-5 text-primary" />
+              {t('settings.marketing')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ToggleRow
+              id="marketing"
+              label={t('settings.marketingEmails')}
+              description={t('settings.marketingDesc')}
+              checked={prefs.marketingEmails}
+              onChange={(v) => updatePref({ marketingEmails: v })}
+            />
+          </CardContent>
+        </Card>
+
+        {/* ─── Display & Reading ───────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Palette className="w-5 h-5 text-primary" />
+              {t('settings.displayReading')}
+            </CardTitle>
+            <CardDescription>{t('settings.displayReadingDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Standard themes */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">{t('settings.theme')}</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {STANDARD_THEMES.map(({ id, labelKey, Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => updatePref({ theme: id })}
+                    className={cn(
+                      'flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-colors text-sm font-medium',
+                      prefs.theme === id
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border hover:border-primary/50 text-foreground'
+                    )}
+                    aria-pressed={prefs.theme === id}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {t(labelKey)}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="md:col-span-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>My Preferences</CardTitle>
-                        <CardDescription>Manage your banks, cards, and loyalty programmes to get personalized strategies.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleUpdate} className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>My Banks</Label>
-                                    <MultiSelectCombobox options={registrationOptions.banks} selected={selectedBanks} onChange={setSelectedBanks} placeholder="Select banks..." />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>My Cards</Label>
-                                    <MultiSelectCombobox options={registrationOptions.cards} selected={selectedCards} onChange={setSelectedCards} placeholder="Select cards..." />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>My Programmes</Label>
-                                    <MultiSelectCombobox options={registrationOptions.programmes} selected={selectedProgrammes} onChange={setSelectedProgrammes} placeholder="Select programmes..." />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>My Favourites</Label>
-                                    <MultiSelectCombobox options={registrationOptions.favourites} selected={selectedFavourites} onChange={setSelectedFavourites} placeholder="Select stores..." />
-                                </div>
-                            </div>
-                            <div className="flex justify-end pt-4">
-                                <Button type="submit">Save Preferences</Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+
+            {/* Reading-friendly themes (dyslexia-supportive) */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                {t('settings.readingThemes')}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {t('settings.readingThemesDesc')}
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {READING_THEMES.map(({ id, labelKey, hintKey, swatch }) => (
+                  <ThemeSwatchButton
+                    key={id}
+                    id={id}
+                    label={t(labelKey)}
+                    swatch={swatch}
+                    hint={hintKey ? t(hintKey) : undefined}
+                    active={prefs.theme === id}
+                    onClick={() => updatePref({ theme: id })}
+                  />
+                ))}
+              </div>
             </div>
+
+            {/* Calm mode (autism-supportive) */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">{t('settings.calmMode')}</Label>
+              <p className="text-xs text-muted-foreground">
+                {t('settings.calmModeDesc')}
+              </p>
+              <div className="grid grid-cols-1 gap-2">
+                {CALM_THEMES.map(({ id, labelKey, hintKey, swatch }) => (
+                  <ThemeSwatchButton
+                    key={id}
+                    id={id}
+                    label={t(labelKey)}
+                    swatch={swatch}
+                    hint={hintKey ? t(hintKey) : undefined}
+                    active={prefs.theme === id}
+                    onClick={() => updatePref({ theme: id })}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Font size */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Type className="w-4 h-4" />
+                {t('settings.fontSize')}
+              </Label>
+              <div className="grid grid-cols-3 gap-2">
+                {FONT_SIZE_OPTIONS.map(({ id, labelKey }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => updatePref({ fontSize: id })}
+                    className={cn(
+                      'py-2 rounded-xl border-2 transition-colors font-medium',
+                      prefs.fontSize === id
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border hover:border-primary/50',
+                      id === 'sm' && 'text-xs',
+                      id === 'md' && 'text-sm',
+                      id === 'lg' && 'text-base'
+                    )}
+                    aria-pressed={prefs.fontSize === id}
+                  >
+                    {t(labelKey)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Font family */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">{t('settings.fontFamily')}</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {FONT_FAMILY_OPTIONS.map(({ id, labelKey, hintKey }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => updatePref({ fontFamily: id })}
+                    className={cn(
+                      'text-left p-3 rounded-xl border-2 transition-colors',
+                      prefs.fontFamily === id
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/50'
+                    )}
+                    aria-pressed={prefs.fontFamily === id}
+                    style={
+                      id === 'accessible'
+                        ? { fontFamily: "'Lexend', sans-serif" }
+                        : undefined
+                    }
+                  >
+                    <div className="text-sm font-semibold">{t(labelKey)}</div>
+                    {hintKey && (
+                      <div className="text-xs text-muted-foreground">
+                        {t(hintKey)}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Line spacing */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <AlignLeft className="w-4 h-4" />
+                {t('settings.lineSpacing')}
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {LINE_SPACING_OPTIONS.map(({ id, labelKey, hintKey }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => updatePref({ lineSpacing: id })}
+                    className={cn(
+                      'p-3 rounded-xl border-2 transition-colors text-left',
+                      prefs.lineSpacing === id
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/50'
+                    )}
+                    aria-pressed={prefs.lineSpacing === id}
+                  >
+                    <div className="text-sm font-semibold">{t(labelKey)}</div>
+                    {hintKey && (
+                      <div className="text-xs text-muted-foreground">
+                        {t(hintKey)}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ─── Accessibility ──────────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Eye className="w-5 h-5 text-primary" />
+              {t('settings.accessibility')}
+            </CardTitle>
+            <CardDescription>{t('settings.accessibilityDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <ToggleRow
+              id="reduce-motion"
+              label={t('settings.reduceAnimations')}
+              description={t('settings.reduceAnimationsDesc')}
+              checked={prefs.reduceMotion}
+              onChange={(v) => updatePref({ reduceMotion: v })}
+            />
+            <ToggleRow
+              id="high-contrast"
+              label={t('settings.highContrast')}
+              description={t('settings.highContrastDesc')}
+              checked={prefs.highContrast}
+              onChange={(v) => updatePref({ highContrast: v })}
+            />
+          </CardContent>
+        </Card>
+
+        {/* ─── Save Button (sticky-ish) ───────────────────────── */}
+        <div className="sticky bottom-4 z-10 pt-2">
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full h-12 text-base bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-lg"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {saving ? t('settings.saving') : t('settings.saveSettings')}
+          </Button>
         </div>
+
+        {/* ─── Need help? ────────────────────────────────────── */}
+        <p className="text-center text-xs text-muted-foreground pt-2">
+          {t('settings.needHelp')}{' '}
+          <Link to="/contact" className="text-primary hover:underline font-medium">
+            {t('settings.contactSupport')}
+          </Link>
+        </p>
       </div>
     </>
+  );
+}
+
+function ThemeSwatchButton({ id, label, swatch, hint, active, onClick }) {
+  const isGradient = swatch?.includes('gradient');
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-2.5 p-3 rounded-xl border-2 transition-colors text-left',
+        active
+          ? 'border-primary bg-primary/10'
+          : 'border-border hover:border-primary/50'
+      )}
+      aria-pressed={active}
+      aria-label={`${label}: ${hint || ''}`}
+    >
+      <span
+        className="w-8 h-8 rounded-lg border shrink-0"
+        style={
+          isGradient
+            ? { backgroundImage: swatch }
+            : { backgroundColor: swatch }
+        }
+        aria-hidden="true"
+      />
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold truncate">{label}</span>
+        {hint && (
+          <span className="block text-xs text-muted-foreground truncate">
+            {hint}
+          </span>
+        )}
+      </span>
+    </button>
+  );
+}
+
+function ToggleRow({ id, label, description, checked, onChange }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-1">
+      <div className="flex-1 min-w-0">
+        <Label htmlFor={id} className="text-sm font-medium cursor-pointer">
+          {label}
+        </Label>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+        )}
+      </div>
+      <Switch id={id} checked={checked} onCheckedChange={onChange} />
+    </div>
   );
 }
 

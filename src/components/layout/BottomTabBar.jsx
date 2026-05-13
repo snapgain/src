@@ -1,25 +1,26 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Plane, PiggyBank, Zap, Menu as MenuIcon } from 'lucide-react';
+import { LayoutDashboard, Scale, User, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
 
 const TABS = [
-  { to: '/home',      label: 'Home',     icon: Home },
-  { to: '/miles',     label: 'Miles',    icon: Plane },
-  { to: '/cashback',  label: 'Cashback', icon: PiggyBank },
-  { to: '/hot-deals', label: 'Hot',      icon: Zap },
-  { to: '/menu',      label: 'Menu',     icon: MenuIcon },
+  { to: '/home',     key: 'nav.dashboard', icon: LayoutDashboard },
+  { to: '/compare',  key: 'nav.compare',   icon: Scale },
+  { to: '/profile',  key: 'nav.profile',   icon: User },
+  { to: '/settings', key: 'nav.settings',  icon: Settings },
 ];
 
 /**
- * BottomTabBar — fixed five-tab navigation for mobile, hidden on desktop.
- * Only rendered when the user is authenticated; the marketing pages use
- * the regular Header on mobile too.
+ * BottomTabBar — fixed four-tab navigation for mobile, hidden on desktop.
+ * Mirrors the desktop header nav so users have a consistent map of the
+ * app regardless of screen size. Only rendered when authenticated.
  */
 export function BottomTabBar() {
   const { user } = useAuth();
   const location = useLocation();
+  const { t } = useTranslation();
 
   if (!user) return null;
   // Hide on auth pages so the user can sign in/out without the tab bar
@@ -30,11 +31,11 @@ export function BottomTabBar() {
       {/* Spacer so fixed bar doesn't cover content on mobile */}
       <div className="h-16 md:hidden" aria-hidden="true" />
       <nav
-        className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-white/95 backdrop-blur border-t shadow-[0_-2px_10px_rgba(0,0,0,0.04)]"
+        className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-background/95 backdrop-blur border-t shadow-[0_-2px_10px_rgba(0,0,0,0.04)]"
         aria-label="Primary"
       >
-        <ul className="grid grid-cols-5">
-          {TABS.map(({ to, label, icon: Icon }) => (
+        <ul className="grid grid-cols-4">
+          {TABS.map(({ to, key, icon: Icon }) => (
             <li key={to}>
               <NavLink
                 to={to}
@@ -55,7 +56,7 @@ export function BottomTabBar() {
                         isActive ? 'text-primary' : ''
                       )}
                     />
-                    <span>{label}</span>
+                    <span>{t(key)}</span>
                   </>
                 )}
               </NavLink>

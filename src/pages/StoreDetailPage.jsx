@@ -23,6 +23,7 @@ import {
   useStoreOffers,
   useMilesPrograms,
 } from '@/hooks/useCatalog';
+import { resolveOpenUrl } from '@/lib/affiliateLinks';
 import { useUserFavourites } from '@/hooks/useUserState';
 import { computeStrategies } from '@/lib/strategies';
 import { StoreLogo } from '@/components/StoreLogo';
@@ -70,16 +71,23 @@ function CashbackOfferCard({ offer }) {
             Verified {fmtTimeAgo(offer.last_verified_at)}
           </div>
         )}
-        {offer.affiliate_link && (
-          <a
-            href={offer.affiliate_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-primary inline-flex items-center hover:underline"
-          >
-            Open {offer.platform} <ExternalLink className="w-3.5 h-3.5 ml-1" />
-          </a>
-        )}
+        {(() => {
+          const href = resolveOpenUrl({
+            rowUrl: offer.affiliate_link,
+            platform: offer.platform,
+          });
+          if (!href) return null;
+          return (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-primary inline-flex items-center hover:underline"
+            >
+              Open {offer.platform} <ExternalLink className="w-3.5 h-3.5 ml-1" />
+            </a>
+          );
+        })()}
       </CardContent>
     </Card>
   );
@@ -200,7 +208,7 @@ function StoreDetailPage() {
         );
       case 'strategy':
         return bestStrategy ? (
-          <Card className="bg-gradient-to-br from-light-pink/40 to-white">
+          <Card className="bg-gradient-to-br from-light-pink/40 to-card">
             <CardHeader>
               <div className="flex items-center gap-2 text-primary">
                 <Trophy className="w-5 h-5" />

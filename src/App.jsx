@@ -13,6 +13,8 @@ import PricingPage from '@/pages/PricingPage';
 import AboutPage from '@/pages/AboutPage';
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import TermsOfServicePage from '@/pages/TermsOfServicePage';
+import CookiePolicyPage from '@/pages/CookiePolicyPage';
+import RefundPolicyPage from '@/pages/RefundPolicyPage';
 import HomePage from '@/pages/HomePage';
 import SearchPage from '@/pages/SearchPage';
 import StoreDetailPage from '@/pages/StoreDetailPage';
@@ -29,6 +31,11 @@ import HotDealsPage from '@/pages/HotDealsPage';
 import MenuPage from '@/pages/MenuPage';
 import SubscriptionSuccessPage from '@/pages/SubscriptionSuccessPage';
 import OnboardingPage from '@/pages/OnboardingPage';
+import ProfilePage from '@/pages/ProfilePage';
+import ContactPage from '@/pages/ContactPage';
+import AppsPage from '@/pages/AppsPage';
+import { DisplaySettingsBoot } from '@/components/DisplaySettingsBoot';
+import { I18nProvider } from '@/lib/i18n';
 
 function AppContent() {
   return (
@@ -39,8 +46,16 @@ function AppContent() {
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/apps" element={
+          <ProtectedRoute>
+            <AppsPage />
+          </ProtectedRoute>
+        } />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+        <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+        <Route path="/refund-policy" element={<RefundPolicyPage />} />
         <Route path="/home" element={
           <ProtectedRoute>
             <HomePage />
@@ -122,6 +137,11 @@ function AppContent() {
           </ProtectedRoute>
         } />
         <Route path="/dashboard" element={<Navigate to="/home" replace />} />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        } />
         <Route path="/settings" element={
           <ProtectedRoute>
             <SettingsPage />
@@ -135,12 +155,15 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <Helmet>
-        <title>SnapGain - Smart Comparison App</title>
-        <meta name="description" content="Compare cashback, points, and gift cards in real-time. Find the best way to pay and maximize your rewards on every purchase." />
-      </Helmet>
-      <Toaster />
-      <AppContent />
+      <I18nProvider>
+        <DisplaySettingsBoot />
+        <Helmet>
+          <title>SnapGain - Smart Comparison App</title>
+          <meta name="description" content="Compare cashback, points, and gift cards in real-time. Find the best way to pay and maximize your rewards on every purchase." />
+        </Helmet>
+        <Toaster />
+        <AppContent />
+      </I18nProvider>
     </AuthProvider>
   );
 }

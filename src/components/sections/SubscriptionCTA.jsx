@@ -7,7 +7,7 @@ import { Check } from 'lucide-react';
 const PlanCard = ({ title, price, description, features, bestValue, onSelect }) => (
     <motion.div 
         variants={{ hidden: { opacity: 0, scale: 0.9 }, visible: { opacity: 1, scale: 1 } }}
-        className={`rounded-xl p-8 border-2 ${bestValue ? 'border-primary shadow-2xl' : 'border-border'} relative card-hover bg-white`}
+        className={`rounded-xl p-8 border-2 ${bestValue ? 'border-primary shadow-2xl' : 'border-border'} relative card-hover bg-card`}
     >
         {bestValue && (
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">

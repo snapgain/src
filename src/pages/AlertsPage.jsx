@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/card';
 import { useAlerts } from '@/hooks/useAlerts';
 import { StoreLogo } from '@/components/StoreLogo';
+import { resolveOpenUrl } from '@/lib/affiliateLinks';
 
 function fmtTimeAgo(iso) {
   if (!iso) return null;
@@ -107,14 +108,16 @@ function AlertsPage() {
             {deals.map((deal) => {
               const createdMs = new Date(deal.created_at).getTime();
               const isUnread = createdMs > lastSeenMs;
-              const href =
-                deal.cta_url ||
-                (deal.store?.slug ? `/store/${deal.store.slug}` : null);
+              const href = resolveOpenUrl({
+                rowUrl: deal.cta_url,
+                platform: deal.platform,
+                fallback: deal.store?.slug ? `/store/${deal.store.slug}` : null,
+              });
               const inner = (
                 <Card
                   className={
                     isUnread
-                      ? 'card-hover border-primary/40 bg-gradient-to-br from-light-pink/20 to-white'
+                      ? 'card-hover border-primary/40 bg-gradient-to-br from-light-pink/20 to-card'
                       : 'card-hover'
                   }
                 >

@@ -53,11 +53,13 @@ const TEACHING = [
 
 function StepWelcome({ onNext, displayName }) {
   return (
-    <Card className="bg-gradient-to-br from-light-pink/40 via-white to-light-green/30 border-primary/30">
+    <Card className="bg-gradient-to-br from-light-pink/40 to-light-green/30 border-primary/30">
       <CardContent className="py-10 text-center space-y-5">
-        <div className="w-16 h-16 mx-auto bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center text-3xl text-white font-bold shadow-lg">
-          S
-        </div>
+        <img
+          src="/snapgain-mark.jpg"
+          alt="SnapGain"
+          className="w-32 mx-auto object-contain"
+        />
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
             Welcome, <span className="gradient-text">{displayName}</span>
@@ -137,17 +139,27 @@ function StepWallet({ onNext, onBack }) {
       return next;
     });
 
-  // Filter out anything already in the wallet
-  const ownedCashbackIds = new Set(wallet.cashbackPlatforms.map((c) => c.platform_id));
-  const ownedMilesIds = new Set(wallet.milesPrograms.map((m) => m.miles_program_id));
-  const availableCashback = cashbackPlatforms.filter((p) => !ownedCashbackIds.has(p.id));
-  const availableMiles = milesPrograms.filter((p) => !ownedMilesIds.has(p.id));
+  // Filter out anything already in the wallet (defensive: hooks may
+  // briefly return undefined arrays if a fetch failed).
+  const ownedCashbackIds = new Set(
+    (wallet.cashbackPlatforms || []).map((c) => c.platform_id)
+  );
+  const ownedMilesIds = new Set(
+    (wallet.milesPrograms || []).map((m) => m.miles_program_id)
+  );
+  const availableCashback = (cashbackPlatforms || []).filter(
+    (p) => !ownedCashbackIds.has(p.id)
+  );
+  const availableMiles = (milesPrograms || []).filter(
+    (p) => !ownedMilesIds.has(p.id)
+  );
 
   const handleSave = async () => {
     setBusy(true);
     try {
-      // Bulk-add selected items in parallel
-      await Promise.all([
+      // Bulk-add selected items in parallel — `allSettled` so a single
+      // failure (RLS, duplicate, etc.) doesn't abort onboarding.
+      await Promise.allSettled([
         ...Array.from(selectedCashback).map((id) =>
           wallet.addCashbackPlatform({ platformId: id })
         ),
@@ -155,6 +167,9 @@ function StepWallet({ onNext, onBack }) {
           wallet.addMilesProgram({ milesProgramId: id })
         ),
       ]);
+      onNext();
+    } catch (err) {
+      console.warn('[OnboardingPage] StepWallet save error:', err);
       onNext();
     } finally {
       setBusy(false);
@@ -289,10 +304,26 @@ function OnboardingPage() {
 
   const finish = async () => {
     if (user) {
-      await supabase
-        .from('user_profiles')
-        .update({ onboarding_done: true })
-        .eq('user_id', user.id);
+      try {
+        // Upsert so we still flip the flag even if the profile row
+        // wasn't pre-created by a trigger on signup.
+        const { error: upsertErr } = await supabase
+          .from('user_profiles')
+          .upsert(
+            { user_id: user.id, onboarding_done: true },
+            { onConflict: 'user_id' }
+          );
+        if (upsertErr) {
+          // Fall back to a plain update — older schemas may lack the
+          // unique constraint that upsert needs.
+          await supabase
+            .from('user_profiles')
+            .update({ onboarding_done: true })
+            .eq('user_id', user.id);
+        }
+      } catch (err) {
+        console.warn('[OnboardingPage] finish() error:', err);
+      }
     }
     navigate('/home', { replace: true });
   };

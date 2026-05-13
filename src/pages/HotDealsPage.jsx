@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card';
 import { useHotDeals } from '@/hooks/useCatalog';
 import { StoreLogo } from '@/components/StoreLogo';
+import { resolveOpenUrl } from '@/lib/affiliateLinks';
 
 function HotDealsPage() {
   const { deals, loading } = useHotDeals({ limit: 50 });
@@ -61,9 +62,11 @@ function HotDealsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {deals.map((deal) => {
-              const href =
-                deal.cta_url ||
-                (deal.store?.slug ? `/store/${deal.store.slug}` : null);
+              const href = resolveOpenUrl({
+                rowUrl: deal.cta_url,
+                platform: deal.platform,
+                fallback: deal.store?.slug ? `/store/${deal.store.slug}` : null,
+              });
               const inner = (
                 <Card className="card-hover h-full">
                   <CardHeader className="pb-2">

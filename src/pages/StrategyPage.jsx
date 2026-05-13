@@ -185,7 +185,7 @@ function StrategyPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <Card className="bg-gradient-to-br from-light-pink/40 to-white">
+          <Card className="bg-gradient-to-br from-light-pink/40 to-card">
             <CardHeader>
               <div className="flex items-center gap-2 text-primary">
                 <Trophy className="w-5 h-5" />

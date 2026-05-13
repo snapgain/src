@@ -11,6 +11,8 @@
  * common case and mirrors the original mock data shape.
  */
 
+import { getAffiliateLink } from '@/lib/affiliateLinks';
+
 const POINT_LABELS_BY_PROGRAM = [
   { match: /avios/i, unit: 'Avios' },
   { match: /virgin/i, unit: 'Virgin Points' },
@@ -65,7 +67,34 @@ export function computeStrategies({
   const out = [];
   const numAmount = safeNumber(amount, 0);
 
-  let cashbackToUse = cashbackOffers;
+  // Synthesise a 10% NX Rewards offer ONLY for stores that NX actually
+  // partners with (flagged via stores.in_nx_network). NX guarantees a
+  // minimum 10% rebate on every retailer in its network — but it doesn't
+  // cover every retailer in the world. Real DB rows take precedence over
+  // the synthetic.
+  const NX_PLATFORM_NAME = 'NX Rewards';
+  const NX_FLOOR_PCT = 10;
+  const storeIsNxPartner = Boolean(store?.in_nx_network);
+  const hasNxOffer = (cashbackOffers || []).some(
+    (o) => String(o.platform || '').toLowerCase().includes('nx')
+  );
+  const cashbackOffersWithNx =
+    storeIsNxPartner && !hasNxOffer
+      ? [
+          ...cashbackOffers,
+          {
+            id: store ? `synthetic-nx-${store.id}` : 'synthetic-nx',
+            store_id: store?.id,
+            platform: NX_PLATFORM_NAME,
+            rate: NX_FLOOR_PCT,
+            affiliate_link: null,
+            last_verified_at: null,
+            synthetic: true,
+          },
+        ]
+      : cashbackOffers;
+
+  let cashbackToUse = cashbackOffersWithNx;
   let pointsToUse = pointOffers;
   // Gift card platforms aren't user-scoped — anyone can use JamDoughnut etc.
 
@@ -73,22 +102,41 @@ export function computeStrategies({
     const cb = userWallet.cashbackPlatformNames;
     const mp = userWallet.milesProgramNames;
     if (cb instanceof Set) {
-      cashbackToUse = cashbackOffers.filter((o) => cb.has(o.platform));
+      // Filter on the NX-augmented list so the synthetic 10% offer is
+      // still visible when the user has NX in their wallet.
+      cashbackToUse = cashbackOffersWithNx.filter((o) => cb.has(o.platform));
     }
     if (mp instanceof Set) {
       pointsToUse = pointOffers.filter((o) => mp.has(o.airline));
     }
   }
 
+  // Platform-specific cashback floors. NX Rewards guarantees a minimum
+  // 10% rebate on every retailer, regardless of the listed base rate —
+  // so any NX offer must be lifted to at least 10% before ranking.
+  const CASHBACK_FLOOR_PCT = {
+    'nx rewards': 10,
+    'nxrewards': 10,
+    'nx': 10,
+  };
+  const cashbackFloor = (platform) => {
+    if (!platform) return 0;
+    return CASHBACK_FLOOR_PCT[String(platform).trim().toLowerCase()] || 0;
+  };
+
   // Helper: build the cashback layer object
   const cashbackLayer = (o) => {
-    const ratePct = safeNumber(o.rate, 0);
+    const raw = safeNumber(o.rate, 0);
+    const floor = cashbackFloor(o.platform);
+    const ratePct = Math.max(raw, floor);
     return {
       kind: 'cashback',
       platform: o.platform || 'Cashback',
       ratePct,
+      // Expose the floor so the UI can label "min 10% (NX Rewards)" if useful
+      flooredAt: floor && raw < floor ? floor : null,
       gbpReturn: numAmount * (ratePct / 100),
-      affiliateLink: o.affiliate_link,
+      affiliateLink: o.affiliate_link || getAffiliateLink(o.platform),
       lastVerifiedAt: o.last_verified_at,
       offerId: o.id,
     };
@@ -123,7 +171,7 @@ export function computeStrategies({
       platform: g.platform || 'Gift card',
       discountPct,
       gbpReturn: numAmount * (discountPct / 100),
-      affiliateLink: g.affiliate_link,
+      affiliateLink: g.affiliate_link || getAffiliateLink(g.platform),
       lastVerifiedAt: g.last_verified_at,
       offerId: g.id,
     };

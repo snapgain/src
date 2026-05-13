@@ -140,10 +140,16 @@ export function useUserFavourites() {
     let alive = true;
     supabase
       .from('user_favourites')
-      .select('store_id, store:stores(slug, name, logo_url)')
-      .then(({ data }) => {
+      .select('store_id, created_at, store:stores(slug, name, logo_url)')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
         if (!alive) return;
+        if (error) console.warn('[useUserFavourites] error:', error.message);
         setFavourites(data || []);
+        setLoading(false);
+      }, (err) => {
+        if (!alive) return;
+        console.warn('[useUserFavourites] unexpected error:', err);
         setLoading(false);
       });
     return () => {
@@ -162,9 +168,9 @@ export function useUserFavourites() {
         const { data } = await supabase
           .from('user_favourites')
           .insert({ user_id: user.id, store_id: storeId })
-          .select('store_id, store:stores(slug, name, logo_url)')
+          .select('store_id, created_at, store:stores(slug, name, logo_url)')
           .single();
-        if (data) setFavourites((prev) => [...prev, data]);
+        if (data) setFavourites((prev) => [data, ...prev]);
       }
     },
     [user, favourites]
@@ -195,31 +201,36 @@ export function useUserWallet() {
       return;
     }
     setLoading(true);
-    const [cardsRes, milesRes, cashbackRes] = await Promise.all([
-      supabase
-        .from('user_cards')
-        .select('id, card_provider, nickname, last_4, is_active, created_at')
-        .eq('is_active', true)
-        .order('created_at', { ascending: true }),
-      supabase
-        .from('user_miles_programs')
-        .select(
-          'id, miles_program_id, balance, account_number, is_active, created_at, miles_program:miles_programs(slug, name, conversion_rate)'
-        )
-        .eq('is_active', true)
-        .order('created_at', { ascending: true }),
-      supabase
-        .from('user_cashback_platforms')
-        .select(
-          'id, platform_id, balance, is_active, created_at, platform:platform(code, slug, name, type)'
-        )
-        .eq('is_active', true)
-        .order('created_at', { ascending: true }),
-    ]);
-    setCards(cardsRes.data || []);
-    setMilesPrograms(milesRes.data || []);
-    setCashbackPlatforms(cashbackRes.data || []);
-    setLoading(false);
+    try {
+      const [cardsRes, milesRes, cashbackRes] = await Promise.all([
+        supabase
+          .from('user_cards')
+          .select('id, card_provider, nickname, last_4, is_active, created_at')
+          .eq('is_active', true)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('user_miles_programs')
+          .select(
+            'id, miles_program_id, balance, account_number, is_active, created_at, miles_program:miles_programs(slug, name, conversion_rate)'
+          )
+          .eq('is_active', true)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('user_cashback_platforms')
+          .select(
+            'id, platform_id, balance, is_active, created_at, platform:platform(code, slug, name, type)'
+          )
+          .eq('is_active', true)
+          .order('created_at', { ascending: true }),
+      ]);
+      setCards(cardsRes.data || []);
+      setMilesPrograms(milesRes.data || []);
+      setCashbackPlatforms(cashbackRes.data || []);
+    } catch (err) {
+      console.warn('[useUserWallet] fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {
