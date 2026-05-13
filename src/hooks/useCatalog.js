@@ -13,11 +13,18 @@ export function useStores({ featuredOnly = false } = {}) {
   useEffect(() => {
     let alive = true;
     setLoading(true);
+    // The stores table has ~10k rows. Postgrest defaults to 1000 max per
+    // request, which silently truncates results alphabetically (so
+    // Tesco, Boots etc. were missing from search results). Explicit
+    // .range() pulls the full catalogue so client-side filtering works
+    // for any store name. TODO: replace with server-side ilike search
+    // for performance on lower-end mobile devices.
     let q = supabase
       .from('stores')
       .select('id, slug, name, category, is_featured, logo_url, domain, in_nx_network')
       .eq('is_active', true)
-      .order('name');
+      .order('name')
+      .range(0, 19999);
     if (featuredOnly) q = q.eq('is_featured', true);
     q.then(({ data, error }) => {
       if (!alive) return;

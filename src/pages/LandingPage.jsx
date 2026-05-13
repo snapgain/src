@@ -138,7 +138,7 @@ function SocialProofBar() {
 // ────────────────────────────────────────────────────────────────────
 // Section 3 — Origin Story (Tesco April 2017)
 // ────────────────────────────────────────────────────────────────────
-function OriginStory() {
+function OriginStory({ onPrimary }) {
   return (
     <section className="container mx-auto px-4 py-20 md:py-28">
       <div className="max-w-3xl mx-auto">
@@ -176,6 +176,13 @@ function OriginStory() {
             SnapGain is what we built so that nobody else has to live the
             same six years.
           </p>
+        </div>
+
+        <div className="text-center mt-10">
+          <Button onClick={onPrimary} size="lg" className="px-8 py-6 text-lg">
+            Stop missing yours
+            <ArrowRight className="ml-2 w-5 h-5" />
+          </Button>
         </div>
       </div>
     </section>
@@ -315,7 +322,7 @@ function TravelAngle() {
     },
     {
       route: 'London → São Paulo',
-      type: 'return',
+      type: 'one-way (off-peak)',
       price: '55,000 Avios + £330',
       spend: '~7 months of £500/mo routed',
     },
@@ -452,7 +459,7 @@ function HouseholdAccount() {
 // ────────────────────────────────────────────────────────────────────
 // Section 8 — Comparison Table (without vs with SnapGain)
 // ────────────────────────────────────────────────────────────────────
-function ComparisonTable() {
+function ComparisonTable({ onPrimary }) {
   const rows = [
     {
       metric: 'Annual cashback earned',
@@ -548,6 +555,17 @@ function ComparisonTable() {
             </tbody>
           </table>
         </div>
+
+        <div className="text-center mt-10">
+          <Button
+            onClick={onPrimary}
+            size="lg"
+            className="px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Pick your side
+            <ArrowRight className="ml-2 w-5 h-5" />
+          </Button>
+        </div>
       </div>
     </section>
   );
@@ -628,7 +646,7 @@ function Calculator({ onPrimary }) {
   const flights = [
     { name: 'Manchester → Dublin return', cost: 280, icon: '🇮🇪' },
     { name: 'London → Lisbon return', cost: 436, icon: '🇵🇹' },
-    { name: 'London → São Paulo return', cost: 836, icon: '🇧🇷' },
+    { name: 'London → São Paulo one-way', cost: 836, icon: '🇧🇷' },
   ];
 
   const monthsFor = (cost) =>
@@ -935,12 +953,12 @@ function LandingPage() {
 
       <Hero onPrimary={goPricing} onSecondary={goHowItWorks} />
       <SocialProofBar />
-      <OriginStory />
+      <OriginStory onPrimary={goPricing} />
       <PainSection />
       <HowItWorks onPrimary={goPricing} />
       <TravelAngle />
       <HouseholdAccount />
-      <ComparisonTable />
+      <ComparisonTable onPrimary={goPricing} />
       <RealNumbers />
       <Calculator onPrimary={goPricing} />
       <FAQ />

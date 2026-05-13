@@ -34,6 +34,7 @@ import OnboardingPage from '@/pages/OnboardingPage';
 import ProfilePage from '@/pages/ProfilePage';
 import ContactPage from '@/pages/ContactPage';
 import AppsPage from '@/pages/AppsPage';
+import StrategyLibraryPage from '@/pages/StrategyLibraryPage';
 import { DisplaySettingsBoot } from '@/components/DisplaySettingsBoot';
 import { I18nProvider } from '@/lib/i18n';
 
@@ -79,6 +80,11 @@ function AppContent() {
         <Route path="/strategy" element={
           <ProtectedRoute>
             <StrategyPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/strategies" element={
+          <ProtectedRoute>
+            <StrategyLibraryPage />
           </ProtectedRoute>
         } />
         <Route path="/saved-strategies" element={
