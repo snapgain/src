@@ -59,7 +59,7 @@ function MilesPage() {
         </motion.section>
 
         {wallet.milesPrograms.length > 0 && (
-          <Card className="bg-gradient-to-br from-light-pink/40 to-white">
+          <Card className="bg-gradient-to-br from-light-pink/40 to-card">
             <CardHeader>
               <CardDescription>Your portfolio</CardDescription>
               <CardTitle className="text-3xl gradient-text">

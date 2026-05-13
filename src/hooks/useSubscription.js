@@ -24,26 +24,40 @@ export function useSubscription() {
       setLoading(false);
       return;
     }
-    const { data } = await supabase
-      .from('user_profiles')
-      .select(
-        'id, role, plan, subscription_status, stripe_customer_id, stripe_subscription_id, current_period_end, trial_end, onboarding_done'
-      )
-      .eq('user_id', user.id)
-      .maybeSingle();
-    setProfile(data);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select(
+          'id, role, plan, subscription_status, stripe_customer_id, stripe_subscription_id, current_period_end, trial_end, onboarding_done'
+        )
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error) {
+        console.warn('[useSubscription] profile fetch error:', error.message);
+        setProfile(null);
+      } else {
+        setProfile(data);
+      }
+    } catch (err) {
+      console.warn('[useSubscription] unexpected error:', err);
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  // Realtime: webhook updates flow back here without refresh
+  // Realtime: webhook updates flow back here without refresh. Suffix
+  // the channel name with a random token so re-mounts (StrictMode,
+  // navigation back-and-forth) don't collide with an already-subscribed
+  // channel — which would throw "cannot add postgres_changes after subscribe()".
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel(`user_profile:${user.id}`)
+      .channel(`user_profile:${user.id}:${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         {

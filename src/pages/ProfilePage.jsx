@@ -1,529 +1,585 @@
-import React, { useState } from 'react';
-import { Header } from '@/components/layout/Header';   // ✅ ADICIONAR
-import { Footer } from '@/components/layout/Footer';   // ✅ ADICIONAR
+import React, { useEffect, useMemo, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  User,
+  Building,
+  CreditCard,
+  Plane,
+  Heart,
+  Edit3,
+  Save,
+  Globe,
+  Info,
+  CheckCircle2,
+  X,
+} from 'lucide-react';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthContext';
-import { useProfile } from '@/contexts/ProfileContext';
-import { 
-  User, 
-  CreditCard, 
-  Building, 
-  Plane, 
-  Heart, 
-  Plus, 
-  X, 
-  Edit3,
-  Save,
-  Star
-} from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { PillMultiSelect } from '@/components/PillMultiSelect';
+import { useStores, useMilesPrograms, usePlatforms } from '@/hooks/useCatalog';
+import { useUserWallet, useUserFavourites } from '@/hooks/useUserState';
+import {
+  loadUserPrefs,
+  saveUserPrefs,
+  UK_BANKS,
+  LANGUAGES,
+  COUNTRIES,
+  PRONOUN_PRESETS,
+} from '@/lib/userPrefs';
+import { useTranslation } from '@/lib/i18n';
 
 function ProfilePage() {
-  const { toast } = useToast();
   const { user } = useAuth();
-  const { 
-    profileData, 
-    updateProfileData,
-    banks, 
-    addBank, 
-    removeBank,
-    cards, 
-    addCard, 
-    removeCard,
-    programs, 
-    addProgram, 
-    removeProgram,
-    favoriteStores, 
-    addFavoriteStore, 
-    removeFavoriteStore
-  } = useProfile();
+  const { toast } = useToast();
+  const { t, setLanguage } = useTranslation();
 
-  const [editMode, setEditMode] = useState(false);
-  const [localProfileData, setLocalProfileData] = useState({
-    name: profileData.name || user?.name || '',
-    email: profileData.email || user?.email || '',
-    phone: profileData.phone || '',
-    location: profileData.location || ''
-  });
+  // ─── Catalogs ───────────────────────────────────────────────────
+  const { stores } = useStores();
+  const { programs: milesPrograms } = useMilesPrograms();
+  const { platforms: cardPlatforms } = usePlatforms({ type: 'card' });
+  const { platforms: cashbackPlatforms } = usePlatforms({ type: 'cashback' });
+  const { platforms: giftCardPlatforms } = usePlatforms({ type: 'gift_card' });
 
-  // Estados para adicionar novos itens
-  const [newBank, setNewBank] = useState('');
-  const [newCard, setNewCard] = useState('');
-  const [newProgram, setNewProgram] = useState('');
-  const [newStore, setNewStore] = useState('');
+  // ─── Wallet (cards + miles + cashback) and favourites ───────────
+  const wallet = useUserWallet();
+  const favourites = useUserFavourites();
 
-  // Listas para seleção
-  const availableBanks = [
-    'Chase', 'Santander', 'Barclays', 'HSBC', 'Lloyds Banking Group', 
-    'NatWest', 'TSB', 'Nationwide', 'Halifax', 'Monzo', 'Starling Bank'
-  ];
+  // ─── Personal preferences (localStorage + Supabase) ─────────────
+  const [prefs, setPrefs] = useState(null);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  const [editingInfo, setEditingInfo] = useState(false);
 
-  const availableCards = [
-    'American Express Gold', 'American Express Platinum', 'Visa Cashback',
-    'Mastercard Cashback', 'Chase Sapphire', 'Santander 123 Credit Card',
-    'Barclaycard Rewards', 'HSBC Cashback Credit Card', 'Tesco Bank Credit Card'
-  ];
-
-  const availablePrograms = [
-    'British Airways Executive Club', 'Virgin Atlantic Flying Club', 'Avios',
-    'Tesco Clubcard', 'Sainsbury\'s Nectar', 'ASDA Rewards', 'Boots Advantage Card',
-    'Costa Coffee Club', 'Starbucks Rewards', 'M&S Sparks'
-  ];
-
-  const availableStores = [
-    'Amazon', 'ASDA', 'Tesco', 'Sainsbury\'s', 'John Lewis', 'ASOS', 
-    'Next', 'M&S', 'Boots', 'Currys PC World', 'Argos', 'B&Q',
-    'Waitrose', 'Morrison\'s', 'Costa Coffee', 'Starbucks'
-  ];
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
+  useEffect(() => {
+    let alive = true;
+    if (!user) {
+      setPrefs(null);
+      return;
     }
-  };
+    loadUserPrefs(user.id).then((p) => {
+      if (alive) setPrefs(p);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [user]);
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 }
-    }
-  };
-
-  const handleSaveProfile = () => {
+  const handleSaveInfo = async () => {
+    if (!user || !prefs) return;
+    setSavingPrefs(true);
     try {
-      updateProfileData(localProfileData);
-      
-      // SALVAR TAMBÉM NO LOCAL STORAGE COMO BACKUP
-      localStorage.setItem('snapgain_profile', JSON.stringify(localProfileData));
-      
+      await saveUserPrefs(user.id, prefs);
       toast({
-        title: "Profile Updated",
-        description: "Your profile has been saved successfully.",
-        variant: "default"
+        title: t('profile.updated'),
+        description: t('profile.updatedDesc'),
       });
-      
-      console.log('Saving profile:', localProfileData);
-      setEditMode(false);
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save profile. Please try again.",
-        variant: "destructive"
-      });
+      setEditingInfo(false);
+    } finally {
+      setSavingPrefs(false);
     }
   };
 
-  const handleAddBank = () => {
-    if (newBank) {
-      try {
-        addBank(newBank);
-        setNewBank('');
-        toast({
-          title: "Bank Added",
-          description: `${newBank} has been added to your banks.`,
-          variant: "default"
-        });
-      } catch (error) {
-        console.error('Error adding bank:', error);
-        toast({
-          title: "Error",
-          description: "Failed to add bank. Please try again.",
-          variant: "destructive"
-        });
-      }
+  // ─── Selected ID sets for each multi-select ─────────────────────
+  const selectedBankIds = useMemo(
+    () => new Set(prefs?.bankIds || []),
+    [prefs]
+  );
+  const selectedCardIds = useMemo(
+    () => new Set(wallet.cards.map((c) => c.card_provider).filter(Boolean)),
+    [wallet.cards]
+  );
+  const selectedProgramIds = useMemo(() => {
+    const s = new Set();
+    wallet.milesPrograms.forEach((m) => s.add(`miles:${m.miles_program_id}`));
+    wallet.cashbackPlatforms.forEach((c) => s.add(`platform:${c.platform_id}`));
+    return s;
+  }, [wallet]);
+  const selectedStoreIds = useMemo(
+    () => new Set(favourites.favourites.map((f) => f.store_id)),
+    [favourites.favourites]
+  );
+
+  // ─── Options for each multi-select ──────────────────────────────
+  const bankOptions = UK_BANKS;
+
+  const cardOptions = useMemo(() => {
+    const fromPlatforms = (cardPlatforms || []).map((p) => ({
+      id: p.code || p.slug || p.name,
+      label: p.name,
+      sublabel: p.base_rate_display || undefined,
+    }));
+    // If the catalog is empty (no rows), inline a small starter list so
+    // the user can at least express common UK cards.
+    if (fromPlatforms.length > 0) return fromPlatforms;
+    return [
+      { id: 'amex_gold', label: 'American Express Gold' },
+      { id: 'amex_platinum', label: 'American Express Platinum' },
+      { id: 'visa_cashback', label: 'Visa Cashback' },
+      { id: 'mastercard_world', label: 'Mastercard World' },
+      { id: 'barclaycard_rewards', label: 'Barclaycard Rewards' },
+      { id: 'natwest_reward', label: 'NatWest Reward' },
+      { id: 'amazon_barclaycard', label: 'Amazon Barclaycard' },
+      { id: 'chase_credit', label: 'Chase (debit cashback)' },
+    ];
+  }, [cardPlatforms]);
+
+  const programOptions = useMemo(() => {
+    const miles = (milesPrograms || []).map((m) => ({
+      id: `miles:${m.id}`,
+      label: m.name,
+      sublabel: 'Miles & points',
+    }));
+    const cashback = (cashbackPlatforms || []).map((p) => ({
+      id: `platform:${p.id}`,
+      label: p.name,
+      sublabel: 'Cashback',
+    }));
+    const giftCards = (giftCardPlatforms || []).map((p) => ({
+      id: `platform:${p.id}`,
+      label: p.name,
+      sublabel: 'Gift cards',
+    }));
+    return [...miles, ...cashback, ...giftCards];
+  }, [milesPrograms, cashbackPlatforms, giftCardPlatforms]);
+
+  const storeOptions = useMemo(
+    () =>
+      (stores || []).map((s) => ({
+        id: s.id,
+        label: s.name,
+        sublabel: s.category || undefined,
+      })),
+    [stores]
+  );
+
+  // ─── Handlers for each multi-select ─────────────────────────────
+  const handleAddBank = async (id) => {
+    if (!prefs) return;
+    const next = { ...prefs, bankIds: [...(prefs.bankIds || []), id] };
+    setPrefs(next);
+    await saveUserPrefs(user.id, next);
+  };
+  const handleRemoveBank = async (id) => {
+    if (!prefs) return;
+    const next = {
+      ...prefs,
+      bankIds: (prefs.bankIds || []).filter((x) => x !== id),
+    };
+    setPrefs(next);
+    await saveUserPrefs(user.id, next);
+  };
+
+  const handleAddCard = async (providerCode) => {
+    const opt = cardOptions.find((c) => c.id === providerCode);
+    if (!opt) return;
+    await wallet.addCard({ cardProvider: providerCode, nickname: opt.label });
+  };
+  const handleRemoveCard = async (providerCode) => {
+    const row = wallet.cards.find((c) => c.card_provider === providerCode);
+    if (row) await wallet.removeCard(row.id);
+  };
+
+  const handleAddProgram = async (id) => {
+    if (id.startsWith('miles:')) {
+      await wallet.addMilesProgram({ milesProgramId: id.slice(6) });
+    } else if (id.startsWith('platform:')) {
+      await wallet.addCashbackPlatform({ platformId: id.slice(9) });
+    }
+  };
+  const handleRemoveProgram = async (id) => {
+    if (id.startsWith('miles:')) {
+      const row = wallet.milesPrograms.find(
+        (m) => m.miles_program_id === id.slice(6)
+      );
+      if (row) await wallet.removeMilesProgram(row.id);
+    } else if (id.startsWith('platform:')) {
+      const row = wallet.cashbackPlatforms.find(
+        (c) => c.platform_id === id.slice(9)
+      );
+      if (row) await wallet.removeCashbackPlatform(row.id);
     }
   };
 
-  const handleAddCard = () => {
-    if (newCard) {
-      try {
-        addCard(newCard);
-        setNewCard('');
-        toast({
-          title: "Card Added",
-          description: `${newCard} has been added to your cards.`,
-          variant: "default"
-        });
-      } catch (error) {
-        console.error('Error adding card:', error);
-        toast({
-          title: "Error",
-          description: "Failed to add card. Please try again.",
-          variant: "destructive"
-        });
-      }
-    }
+  const handleToggleStore = async (id) => {
+    await favourites.toggle(id);
   };
 
-  const handleAddProgram = () => {
-    if (newProgram) {
-      try {
-        addProgram(newProgram);
-        setNewProgram('');
-        toast({
-          title: "Program Added",
-          description: `${newProgram} has been added to your programs.`,
-          variant: "default"
-        });
-      } catch (error) {
-        console.error('Error adding program:', error);
-        toast({
-          title: "Error",
-          description: "Failed to add program. Please try again.",
-          variant: "destructive"
-        });
-      }
-    }
-  };
+  // ─── Profile completion ─────────────────────────────────────────
+  const completion = useMemo(() => {
+    const checks = [
+      selectedBankIds.size > 0,
+      selectedCardIds.size > 0,
+      selectedProgramIds.size > 0,
+      selectedStoreIds.size > 0,
+      Boolean(prefs?.preferredName || user?.user_metadata?.name),
+    ];
+    const filled = checks.filter(Boolean).length;
+    return Math.round((filled / checks.length) * 100);
+  }, [
+    selectedBankIds.size,
+    selectedCardIds.size,
+    selectedProgramIds.size,
+    selectedStoreIds.size,
+    prefs?.preferredName,
+    user?.user_metadata?.name,
+  ]);
 
-  const handleAddStore = () => {
-    if (newStore) {
-      try {
-        addFavoriteStore(newStore);
-        setNewStore('');
-        toast({
-          title: "Store Added",
-          description: `${newStore} has been added to your favorites.`,
-          variant: "default"
-        });
-      } catch (error) {
-        console.error('Error adding store:', error);
-        toast({
-          title: "Error",
-          description: "Failed to add store. Please try again.",
-          variant: "destructive"
-        });
-      }
-    }
+  if (!prefs) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            {t('profile.loading')}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const updatePref = (patch) => {
+    setPrefs((p) => ({ ...p, ...patch }));
+    // Apply language live so the user can immediately see the effect.
+    if (patch.language) setLanguage(patch.language);
   };
 
   return (
-    <DashboardLayout
-      title="👤 Profile Settings"
-      subtitle="Configure your preferences for personalized cashback comparisons"
-      icon={{
-        element: <User className="h-8 w-8 text-white" />,
-        bgColor: "bg-gradient-to-r from-blue-500 to-purple-600"
-      }}
-    >
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="space-y-8"
-      >
-        {/* Personal Information */}
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
-                <span>Personal Information</span>
-              </CardTitle>
-              <Button
-                variant="outline"
-                onClick={() => editMode ? handleSaveProfile() : setEditMode(true)}
-                className="flex items-center space-x-2"
-              >
-                {editMode ? <Save className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
-                <span>{editMode ? 'Save' : 'Edit'}</span>
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    value={localProfileData.name}
-                    onChange={(e) => setLocalProfileData({...localProfileData, name: e.target.value})}
-                    disabled={!editMode}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={localProfileData.email}
-                    onChange={(e) => setLocalProfileData({...localProfileData, email: e.target.value})}
-                    disabled={!editMode}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    value={localProfileData.phone}
-                    onChange={(e) => setLocalProfileData({...localProfileData, phone: e.target.value})}
-                    disabled={!editMode}
-                    placeholder="+44 7XXX XXXXXX"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={localProfileData.location}
-                    onChange={(e) => setLocalProfileData({...localProfileData, location: e.target.value})}
-                    disabled={!editMode}
-                    placeholder="London, UK"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    <>
+      <Helmet>
+        <title>Profile — SnapGain</title>
+      </Helmet>
+
+      <div className="container mx-auto px-4 py-8 max-w-3xl space-y-5">
+        {/* ─── Title ─────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="text-center space-y-2"
+        >
+          <div className="w-14 h-14 mx-auto bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center text-white shadow-md">
+            <User className="w-7 h-7" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold">{t('profile.title')}</h1>
+          <p className="text-muted-foreground text-sm">
+            {t('profile.subtitle')}
+          </p>
         </motion.div>
 
-        {/* Banks Configuration */}
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Building className="h-5 w-5 text-blue-600" />
-                <span>My Banks</span>
-                <Badge variant="outline">{banks.length}</Badge>
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Add your banks to get personalized cashback recommendations
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Current Banks */}
-                <div className="flex flex-wrap gap-2">
-                  {banks.map((bank) => (
-                    <Badge key={bank} variant="secondary" className="flex items-center space-x-2">
-                      <span>{bank}</span>
-                      <X 
-                        className="h-3 w-3 cursor-pointer hover:text-red-500" 
-                        onClick={() => removeBank(bank)}
-                      />
-                    </Badge>
+        {/* ─── Personal Information ──────────────────────────────── */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" />
+              {t('profile.personalInformation')}
+            </CardTitle>
+            <Button
+              size="sm"
+              variant={editingInfo ? 'default' : 'ghost'}
+              onClick={() => (editingInfo ? handleSaveInfo() : setEditingInfo(true))}
+              disabled={savingPrefs}
+            >
+              {editingInfo ? (
+                <>
+                  <Save className="w-3.5 h-3.5 mr-1.5" />
+                  {t('profile.save')}
+                </>
+              ) : (
+                <>
+                  <Edit3 className="w-3.5 h-3.5 mr-1.5" />
+                  {t('profile.edit')}
+                </>
+              )}
+            </Button>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label={t('profile.fullName')}>
+              <ReadOnly value={user?.user_metadata?.name || '—'} />
+            </Field>
+
+            <Field
+              label={t('profile.preferredName')}
+              hint={t('profile.preferredNameHint')}
+            >
+              {editingInfo ? (
+                <Input
+                  value={prefs.preferredName}
+                  onChange={(e) => updatePref({ preferredName: e.target.value })}
+                  placeholder={t('profile.preferredNamePlaceholder')}
+                />
+              ) : (
+                <ReadOnly value={prefs.preferredName || '—'} />
+              )}
+            </Field>
+
+            <Field label={t('profile.email')}>
+              <ReadOnly value={user?.email || '—'} />
+            </Field>
+
+            <Field label={t('profile.phone')} hint={t('profile.phoneHint')}>
+              {editingInfo ? (
+                <Input
+                  type="tel"
+                  value={prefs.phone}
+                  onChange={(e) => updatePref({ phone: e.target.value })}
+                  placeholder="+44 7XXX XXXXXX"
+                />
+              ) : (
+                <ReadOnly value={prefs.phone || '—'} />
+              )}
+            </Field>
+
+            <Field
+              label={t('profile.pronouns')}
+              hint={t('profile.pronounsHint')}
+            >
+              {editingInfo ? (
+                <select
+                  value={prefs.pronouns}
+                  onChange={(e) => updatePref({ pronouns: e.target.value })}
+                  className="w-full h-10 px-3 rounded-md border bg-background text-sm"
+                >
+                  {PRONOUN_PRESETS.map((p) => (
+                    <option key={p || 'blank'} value={p}>
+                      {p || '—'}
+                    </option>
                   ))}
-                </div>
+                </select>
+              ) : (
+                <ReadOnly value={prefs.pronouns || '—'} />
+              )}
+            </Field>
 
-                {/* Add New Bank */}
-                <div className="flex space-x-2">
-                  <select
-                    value={newBank}
-                    onChange={(e) => setNewBank(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-md"
-                  >
-                    <option value="">Select a bank...</option>
-                    {availableBanks.filter(bank => !banks.includes(bank)).map((bank) => (
-                      <option key={bank} value={bank}>{bank}</option>
-                    ))}
-                  </select>
-                  <Button
-                    onClick={handleAddBank}
-                    disabled={!newBank}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+            <Field
+              label={t('profile.location')}
+              hint={t('profile.locationHint')}
+            >
+              {editingInfo ? (
+                <Input
+                  value={prefs.location}
+                  onChange={(e) => updatePref({ location: e.target.value })}
+                  placeholder={t('profile.locationPlaceholder')}
+                />
+              ) : (
+                <ReadOnly value={prefs.location || '—'} />
+              )}
+            </Field>
 
-        {/* Credit Cards Configuration */}
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <CreditCard className="h-5 w-5 text-green-600" />
-                <span>My Credit Cards</span>
-                <Badge variant="outline">{cards.length}</Badge>
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Track your credit cards for better cashback optimization
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Current Cards */}
-                <div className="flex flex-wrap gap-2">
-                  {cards.map((card) => (
-                    <Badge key={card} variant="secondary" className="flex items-center space-x-2">
-                      <span>{card}</span>
-                      <X 
-                        className="h-3 w-3 cursor-pointer hover:text-red-500" 
-                        onClick={() => removeCard(card)}
-                      />
-                    </Badge>
+            <Field label={t('profile.language')} hint={t('profile.languageHint')}>
+              {editingInfo ? (
+                <select
+                  value={prefs.language}
+                  onChange={(e) => updatePref({ language: e.target.value })}
+                  className="w-full h-10 px-3 rounded-md border bg-background text-sm"
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.label}
+                    </option>
                   ))}
-                </div>
+                </select>
+              ) : (
+                <ReadOnly
+                  value={
+                    LANGUAGES.find((l) => l.id === prefs.language)?.label || '—'
+                  }
+                />
+              )}
+            </Field>
 
-                {/* Add New Card */}
-                <div className="flex space-x-2">
-                  <select
-                    value={newCard}
-                    onChange={(e) => setNewCard(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-md"
-                  >
-                    <option value="">Select a credit card...</option>
-                    {availableCards.filter(card => !cards.includes(card)).map((card) => (
-                      <option key={card} value={card}>{card}</option>
-                    ))}
-                  </select>
-                  <Button
-                    onClick={handleAddCard}
-                    disabled={!newCard}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Rewards Programs */}
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Plane className="h-5 w-5 text-purple-600" />
-                <span>Rewards Programs</span>
-                <Badge variant="outline">{programs.length}</Badge>
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Add loyalty programs, airline miles, and store rewards
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Current Programs */}
-                <div className="flex flex-wrap gap-2">
-                  {programs.map((program) => (
-                    <Badge key={program} variant="secondary" className="flex items-center space-x-2">
-                      <span>{program}</span>
-                      <X 
-                        className="h-3 w-3 cursor-pointer hover:text-red-500" 
-                        onClick={() => removeProgram(program)}
-                      />
-                    </Badge>
+            <Field
+              label={t('profile.homeCountry')}
+              hint={t('profile.homeCountryHint')}
+            >
+              {editingInfo ? (
+                <select
+                  value={prefs.homeCountry}
+                  onChange={(e) => {
+                    const c = COUNTRIES.find((x) => x.id === e.target.value);
+                    updatePref({
+                      homeCountry: e.target.value,
+                      displayCurrency: c?.currency || 'GBP',
+                    });
+                  }}
+                  className="w-full h-10 px-3 rounded-md border bg-background text-sm"
+                >
+                  {COUNTRIES.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label} ({c.currency})
+                    </option>
                   ))}
-                </div>
+                </select>
+              ) : (
+                <ReadOnly
+                  value={
+                    COUNTRIES.find((c) => c.id === prefs.homeCountry)?.label ||
+                    '—'
+                  }
+                />
+              )}
+            </Field>
+          </CardContent>
+        </Card>
 
-                {/* Add New Program */}
-                <div className="flex space-x-2">
-                  <select
-                    value={newProgram}
-                    onChange={(e) => setNewProgram(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-md"
-                  >
-                    <option value="">Select a rewards program...</option>
-                    {availablePrograms.filter(program => !programs.includes(program)).map((program) => (
-                      <option key={program} value={program}>{program}</option>
-                    ))}
-                  </select>
-                  <Button
-                    onClick={handleAddProgram}
-                    disabled={!newProgram}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
+        {/* ─── My Banks ──────────────────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Building className="w-5 h-5 text-primary" />
+              {t('profile.myBanks')}
+              <CountBadge n={selectedBankIds.size} />
+            </CardTitle>
+            <CardDescription>{t('profile.myBanksDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PillMultiSelect
+              options={bankOptions}
+              selectedIds={selectedBankIds}
+              onAdd={handleAddBank}
+              onRemove={handleRemoveBank}
+              placeholder={t('profile.selectBank')}
+            />
+          </CardContent>
+        </Card>
+
+        {/* ─── My Credit Cards ───────────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-primary" />
+              {t('profile.myCards')}
+              <CountBadge n={selectedCardIds.size} />
+            </CardTitle>
+            <CardDescription>{t('profile.myCardsDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PillMultiSelect
+              options={cardOptions}
+              selectedIds={selectedCardIds}
+              onAdd={handleAddCard}
+              onRemove={handleRemoveCard}
+              placeholder={t('profile.selectCard')}
+              busy={wallet.loading}
+            />
+          </CardContent>
+        </Card>
+
+        {/* ─── Rewards Programs ──────────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Plane className="w-5 h-5 text-primary" />
+              {t('profile.rewardsPrograms')}
+              <CountBadge n={selectedProgramIds.size} />
+            </CardTitle>
+            <CardDescription>{t('profile.rewardsProgramsDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PillMultiSelect
+              options={programOptions}
+              selectedIds={selectedProgramIds}
+              onAdd={handleAddProgram}
+              onRemove={handleRemoveProgram}
+              placeholder={t('profile.selectProgram')}
+              busy={wallet.loading}
+            />
+          </CardContent>
+        </Card>
+
+        {/* ─── Favorite Stores ───────────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Heart className="w-5 h-5 text-primary" />
+              {t('profile.favoriteStores')}
+              <CountBadge n={selectedStoreIds.size} />
+            </CardTitle>
+            <CardDescription>{t('profile.favoriteStoresDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PillMultiSelect
+              options={storeOptions}
+              selectedIds={selectedStoreIds}
+              onAdd={handleToggleStore}
+              onRemove={handleToggleStore}
+              placeholder={t('profile.selectStore')}
+              busy={favourites.loading}
+            />
+          </CardContent>
+        </Card>
+
+        {/* ─── Profile Completion ────────────────────────────────── */}
+        <Card className="bg-gradient-to-br from-light-pink/30 to-light-green/30 border-primary/30">
+          <CardContent className="py-5 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5" />
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Favorite Stores */}
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Heart className="h-5 w-5 text-red-600" />
-                <span>Favorite Stores</span>
-                <Badge variant="outline">{favoriteStores.length}</Badge>
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Get priority deals from your most shopped stores
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Current Stores */}
-                <div className="flex flex-wrap gap-2">
-                  {favoriteStores.map((store) => (
-                    <Badge key={store} variant="secondary" className="flex items-center space-x-2">
-                      <span>{store}</span>
-                      <X 
-                        className="h-3 w-3 cursor-pointer hover:text-red-500" 
-                        onClick={() => removeFavoriteStore(store)}
-                      />
-                    </Badge>
-                  ))}
-                </div>
-
-                {/* Add New Store */}
-                <div className="flex space-x-2">
-                  <select
-                    value={newStore}
-                    onChange={(e) => setNewStore(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-md"
-                  >
-                    <option value="">Select a store...</option>
-                    {availableStores.filter(store => !favoriteStores.includes(store)).map((store) => (
-                      <option key={store} value={store}>{store}</option>
-                    ))}
-                  </select>
-                  <Button
-                    onClick={handleAddStore}
-                    disabled={!newStore}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
+              <div>
+                <p className="font-semibold text-foreground">
+                  {t('profile.profileCompletion')}: {completion}%
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t('profile.completionHint')}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Profile Completion Status */}
-        <motion.div variants={itemVariants}>
-          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <Star className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-green-800">
-                      Profile Completion: {profileData.completionPercentage}%
-                    </h3>
-                    <p className="text-green-700">
-                      Complete your profile to get the most accurate cashback comparisons
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-green-600">
-                    {(banks.length + cards.length + programs.length + favoriteStores.length)}
-                  </div>
-                  <div className="text-sm text-green-600">Items configured</div>
-                </div>
+            </div>
+            <div className="flex-1 min-w-[120px] max-w-xs">
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-primary to-secondary transition-all"
+                  style={{ width: `${completion}%` }}
+                />
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
-    </DashboardLayout>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+}
+
+function Field({ label, hint, children }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5">
+        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          {label}
+        </Label>
+        {hint && (
+          <span title={hint} className="text-muted-foreground cursor-help">
+            <Info className="w-3 h-3" />
+          </span>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ReadOnly({ value }) {
+  return (
+    <div className="h-10 px-3 rounded-md bg-muted/40 flex items-center text-sm">
+      {value}
+    </div>
+  );
+}
+
+function CountBadge({ n }) {
+  if (!n) return null;
+  return (
+    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-light-green text-accent-foreground">
+      {n}
+    </span>
   );
 }
 

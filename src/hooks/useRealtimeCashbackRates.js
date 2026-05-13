@@ -39,7 +39,7 @@ export function useRealtimeCashbackRates() {
 
     // Configurar listener de tempo real
     const subscription = supabase
-      .channel('cashback-rates-changes')
+      .channel(`cashback-rates-changes:${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         {
@@ -188,7 +188,7 @@ export function useRateNotifications() {
 
   useEffect(() => {
     const subscription = supabase
-      .channel('rate-notifications')
+      .channel(`rate-notifications:${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         {

@@ -15,7 +15,7 @@ export function useStores({ featuredOnly = false } = {}) {
     setLoading(true);
     let q = supabase
       .from('stores')
-      .select('id, slug, name, category, is_featured, logo_url')
+      .select('id, slug, name, category, is_featured, logo_url, domain, in_nx_network')
       .eq('is_active', true)
       .order('name');
     if (featuredOnly) q = q.eq('is_featured', true);
@@ -23,6 +23,11 @@ export function useStores({ featuredOnly = false } = {}) {
       if (!alive) return;
       if (error) setError(error);
       else setStores(data || []);
+      setLoading(false);
+    }, (err) => {
+      if (!alive) return;
+      console.warn('[useStores] unexpected error:', err);
+      setError(err);
       setLoading(false);
     });
     return () => {
@@ -51,7 +56,7 @@ export function useStoreBySlug(slug) {
     setLoading(true);
     supabase
       .from('stores')
-      .select('id, slug, name, category, is_featured, logo_url')
+      .select('id, slug, name, category, is_featured, logo_url, domain, in_nx_network')
       .eq('slug', slug)
       .eq('is_active', true)
       .maybeSingle()
@@ -129,7 +134,7 @@ export function useStoreOffers(storeId) {
     // Realtime: refetch on any change to this store's rows on any of the three offer tables
     const refresh = () => fetchAll().then(apply);
     const channel = supabase
-      .channel(`store_offers:${storeId}`)
+      .channel(`store_offers:${storeId}:${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cashback_offers',  filter: `store_id=eq.${storeId}` }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'point_offers',     filter: `store_id=eq.${storeId}` }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gift_card_offers', filter: `store_id=eq.${storeId}` }, refresh)
@@ -158,9 +163,14 @@ export function useMilesPrograms() {
       .select('id, slug, name, conversion_rate, booster_url, is_active')
       .eq('is_active', true)
       .order('name')
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (!alive) return;
+        if (error) console.warn('[useMilesPrograms] error:', error.message);
         setPrograms(data || []);
+        setLoading(false);
+      }, (err) => {
+        if (!alive) return;
+        console.warn('[useMilesPrograms] unexpected error:', err);
         setLoading(false);
       });
     return () => {
@@ -199,7 +209,7 @@ export function useHotDeals({ limit = 8 } = {}) {
 
     // Realtime: refetch on any change to hot_deals
     const channel = supabase
-      .channel('hot_deals')
+      .channel(`hot_deals:${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'hot_deals' }, () => {
         fetchAll().then(({ data }) => {
           if (!alive) return;
@@ -292,9 +302,14 @@ export function usePlatforms({ type } = {}) {
       .eq('is_active', true)
       .order('name');
     if (type) q = q.eq('type', type);
-    q.then(({ data }) => {
+    q.then(({ data, error }) => {
       if (!alive) return;
+      if (error) console.warn('[usePlatforms] error:', error.message);
       setPlatforms(data || []);
+      setLoading(false);
+    }, (err) => {
+      if (!alive) return;
+      console.warn('[usePlatforms] unexpected error:', err);
       setLoading(false);
     });
     return () => {
