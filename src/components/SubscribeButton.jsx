@@ -8,13 +8,18 @@ import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 /**
  * SubscribeButton — calls the `create-checkout-session` Edge Function and
- * redirects the browser to the Stripe-hosted checkout. On error, surfaces a
- * toast with the message.
+ * redirects the browser to the Stripe-hosted checkout.
+ *
+ * Trial-first flow (Alt A — 2026-05-17):
+ *   - Visitor signs up (free, 7-day trial starts)
+ *   - During trial they have access to Comparison Engine, Calculator,
+ *     and the One4all+NX Strategy card
+ *   - Other 8 strategies, Wallet, Alerts, Saved Strategies stay locked
+ *   - Clicking Subscribe triggers Stripe Checkout (auth required)
+ *   - On post-trial expiry, ProtectedRoute bounces them to /pricing
  *
  * Props:
  *   plan: 'monthly' | 'yearly' (default 'monthly')
- *   children: button label (default depends on plan)
- *   any other Button props are forwarded.
  */
 export function SubscribeButton({ plan = 'monthly', children, ...buttonProps }) {
   const { user } = useAuth();
@@ -24,19 +29,16 @@ export function SubscribeButton({ plan = 'monthly', children, ...buttonProps }) 
 
   const handleClick = async () => {
     if (busy) return;
+    // Not signed in? Send them to signup (free trial starts), keep the
+    // intent so they come back here after auth and can pay.
     if (!user) {
-      // Store the checkout intent so the OAuth round-trip (or email
-      // signup flow) can pick it up after auth resolves, and send
-      // the user straight back into Stripe Checkout. Without this
-      // the user signs up, lands on /home, and never pays.
       try {
         localStorage.setItem(
           'pendingCheckout',
           JSON.stringify({ plan, timestamp: Date.now() })
         );
       } catch {
-        // localStorage can be unavailable in some private modes;
-        // not a blocker, the user can click subscribe again post-auth.
+        // localStorage unavailable in some private modes; non-blocking
       }
       navigate('/auth/signup', { state: { from: location } });
       return;

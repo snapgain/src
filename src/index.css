@@ -53,7 +53,10 @@
 
 /* ─── Reading-friendly themes (dyslexia-supportive) ────────────────
    Soft pastel backgrounds + softened text colour reduce the "shimmer"
-   pure-black-on-pure-white can cause for many readers. */
+   pure-black-on-pure-white can cause for many readers.
+   2026-05-19: each theme now overrides --primary/--secondary/--accent
+   too so buttons + accents stay coherent with the palette (matches
+   how the Calm theme already worked). */
 .theme-cream {
   --background: 56 100% 92%;          /* ≈ #FFFDD0 cream */
   --foreground: 0 0% 20%;               /* graphite */
@@ -65,6 +68,13 @@
   --input: 56 35% 88%;
   --muted: 56 50% 88%;
   --muted-foreground: 0 0% 33%;
+  /* Warm earthy palette for buttons — terracotta + sage + dusty rose */
+  --primary: 25 55% 42%;                /* terracotta */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 95 28% 42%;              /* sage green */
+  --secondary-foreground: 0 0% 100%;
+  --accent: 350 45% 55%;                /* dusty rose */
+  --accent-foreground: 0 0% 100%;
   --light-pink: 56 60% 88%;
   --light-green: 90 30% 80%;
 }
@@ -80,6 +90,13 @@
   --input: 60 35% 88%;
   --muted: 60 50% 88%;
   --muted-foreground: 220 30% 30%;
+  /* Navy / teal / coral — matches the navy text and pops on pale yellow */
+  --primary: 220 55% 35%;               /* deep navy */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 185 50% 38%;             /* deep teal */
+  --secondary-foreground: 0 0% 100%;
+  --accent: 14 68% 50%;                 /* warm coral */
+  --accent-foreground: 0 0% 100%;
   --light-pink: 60 55% 87%;
   --light-green: 110 30% 80%;
 }
@@ -95,6 +112,13 @@
   --input: 28 45% 85%;
   --muted: 28 60% 86%;
   --muted-foreground: 20 40% 30%;
+  /* Coral / olive / plum — picks up the warm peach background */
+  --primary: 14 70% 48%;                /* deep coral */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 80 32% 42%;              /* olive green */
+  --secondary-foreground: 0 0% 100%;
+  --accent: 300 30% 48%;                /* muted plum */
+  --accent-foreground: 0 0% 100%;
   --light-pink: 28 80% 88%;
   --light-green: 90 35% 80%;
 }

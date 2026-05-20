@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Confirm your SnapGain account</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#f5f3ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;color:#1f2937;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#f5f3ff;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:560px;background-color:#ffffff;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);overflow:hidden;">
+            <!-- Brand header — pale lavender→blush so the logo pops
+                 and contrast stays WCAG-friendly. Slim gradient bar
+                 at the very top keeps the brand identity visible. -->
+            <tr>
+              <td style="background:linear-gradient(135deg,#7c3aed 0%,#ec4899 100%);height:6px;line-height:6px;font-size:0;mso-line-height-rule:exactly;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="center" style="background:linear-gradient(135deg,#f5f3ff 0%,#fdf2f8 100%);padding:36px 24px 28px 24px;">
+                <img src="https://snapgain.uk/snapgain-logo.png" alt="SnapGain" width="200" style="display:block;margin:0 auto;max-width:200px;height:auto;" />
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding:40px 32px 24px 32px;">
+                <h1 style="margin:0 0 16px 0;font-size:24px;font-weight:700;color:#111827;">Welcome to SnapGain 👋</h1>
+                <p style="margin:0 0 16px 0;font-size:16px;line-height:1.6;color:#374151;">
+                  Your <strong>7-day free trial</strong> is ready to go. Confirm
+                  your email below and you can start unlocking smarter UK
+                  cashback and Avios strategies right away.
+                </p>
+                <p style="margin:0 0 28px 0;font-size:16px;line-height:1.6;color:#374151;">
+                  Click the button below to confirm your email and finish setting up your account.
+                </p>
+
+                <!-- CTA button -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                  <tr>
+                    <td align="center">
+                      <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#ec4899 100%);color:#ffffff;text-decoration:none;font-weight:600;font-size:16px;padding:14px 36px;border-radius:12px;">
+                        Confirm my email
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:28px 0 0 0;font-size:13px;line-height:1.6;color:#6b7280;">
+                  Or copy and paste this link into your browser:<br />
+                  <a href="{{ .ConfirmationURL }}" style="color:#7c3aed;word-break:break-all;">{{ .ConfirmationURL }}</a>
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:24px 32px 32px 32px;border-top:1px solid #e5e7eb;">
+                <p style="margin:0 0 8px 0;font-size:12px;line-height:1.5;color:#9ca3af;">
+                  You received this email because someone signed up to SnapGain
+                  with this address. If that was not you, ignore this email —
+                  no account will be created.
+                </p>
+                <p style="margin:0;font-size:12px;line-height:1.5;color:#9ca3af;">
+                  We never share or sell your data. Questions?
+                  <a href="mailto:support@snapgain.uk" style="color:#7c3aed;text-decoration:none;">support@snapgain.uk</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+
+          <p style="margin:16px 0 0 0;font-size:12px;color:#9ca3af;">© SnapGain · UK</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

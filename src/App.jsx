@@ -6,6 +6,8 @@ import { AuthProvider } from '@/contexts/SupabaseAuthContext';
 import LandingPage from '@/pages/LandingPage';
 import AuthPage from '@/pages/AuthPage';
 import AuthCallbackPage from '@/pages/AuthCallbackPage';
+import ResetPassword from '@/pages/Reset-password';
+import RequestReset from '@/pages/RequestReset';
 import SettingsPage from '@/pages/SettingsPage';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Layout } from '@/components/layout/Layout';
@@ -36,6 +38,13 @@ import ProfilePage from '@/pages/ProfilePage';
 import ContactPage from '@/pages/ContactPage';
 import AppsPage from '@/pages/AppsPage';
 import StrategyLibraryPage from '@/pages/StrategyLibraryPage';
+import CalculatorPage from '@/pages/CalculatorPage';
+import BanksPage from '@/pages/BanksPage';
+import CardsPage from '@/pages/CardsPage';
+import SupermarketDealsPage from '@/pages/SupermarketDealsPage';
+import GiftCardDealsPage from '@/pages/GiftCardDealsPage';
+import PlaybookPage from '@/pages/PlaybookPage';
+import PlatformsLearnPage from '@/pages/PlatformsLearnPage';
 import Maintenance from '@/pages/Maintenance';
 import { DisplaySettingsBoot } from '@/components/DisplaySettingsBoot';
 import { I18nProvider } from '@/lib/i18n';
@@ -47,6 +56,9 @@ function AppContent() {
         <Route path="/" element={<LandingPage />} />
         {/* OAuth callback — Supabase redirects here after Google login */}
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        {/* Password reset flow */}
+        <Route path="/auth/request-reset" element={<RequestReset />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/:mode" element={<AuthPage />} />
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/pricing" element={<PricingPage />} />
@@ -91,18 +103,35 @@ function AppContent() {
             <StrategyLibraryPage />
           </ProtectedRoute>
         } />
-        <Route path="/saved-strategies" element={
+        <Route path="/calculator" element={
           <ProtectedRoute>
+            <CalculatorPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/banks" element={
+          <ProtectedRoute>
+            <BanksPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/cards" element={
+          <ProtectedRoute>
+            <CardsPage />
+          </ProtectedRoute>
+        } />
+        {/* requirePremiumStrict: not available during free trial,
+            paid-only features that define the upgrade pitch. */}
+        <Route path="/saved-strategies" element={
+          <ProtectedRoute requirePremiumStrict>
             <SavedStrategiesPage />
           </ProtectedRoute>
         } />
         <Route path="/wallet" element={
-          <ProtectedRoute>
+          <ProtectedRoute requirePremiumStrict>
             <WalletPage />
           </ProtectedRoute>
         } />
         <Route path="/alerts" element={
-          <ProtectedRoute>
+          <ProtectedRoute requirePremiumStrict>
             <AlertsPage />
           </ProtectedRoute>
         } />
@@ -131,16 +160,34 @@ function AppContent() {
             <HotDealsPage />
           </ProtectedRoute>
         } />
+        <Route path="/playbook" element={
+          <ProtectedRoute>
+            <PlaybookPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/learn/platforms" element={
+          <ProtectedRoute requirePremium={false}>
+            <PlatformsLearnPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/deals/supermarket" element={
+          <ProtectedRoute>
+            <SupermarketDealsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/deals/gift-cards" element={
+          <ProtectedRoute>
+            <GiftCardDealsPage />
+          </ProtectedRoute>
+        } />
         <Route path="/menu" element={
           <ProtectedRoute requirePremium={false}>
             <MenuPage />
           </ProtectedRoute>
         } />
-        <Route path="/subscription/success" element={
-          <ProtectedRoute requirePremium={false}>
-            <SubscriptionSuccessPage />
-          </ProtectedRoute>
-        } />
+        {/* /subscription/success is PUBLIC: pay-first visitors hit it
+            after Stripe Checkout before their Supabase account exists. */}
+        <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
         <Route path="/onboarding" element={
           <ProtectedRoute requireOnboarding={false} requirePremium={false}>
             <OnboardingPage />
@@ -170,7 +217,7 @@ function AppContent() {
 // │  Maintenance page. Auth providers + routing are skipped entirely │
 // │  so no analytics fire and no Supabase calls happen for visitors. │
 // └──────────────────────────────────────────────────────────────────┘
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = true; // ⚠️ LOCAL DEV ONLY — não commitar como false
 
 function App() {
   if (MAINTENANCE_MODE) {

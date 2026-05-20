@@ -14,6 +14,11 @@ import {
   Star,
   ArrowRight,
   Check,
+  Calculator as CalcIcon,
+  Building2,
+  CreditCard,
+  Clock,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import {
@@ -49,34 +54,63 @@ function fmtAgo(iso) {
   return `${months} month${months === 1 ? '' : 's'} ago`;
 }
 
+// Quick Actions row (top of dashboard, 4 cards). 2026-05-17: replaced
+// "Favourite Stores" with Calculator per Bárbara's review — favourites
+// live in /profile already, calculator is a higher-leverage entry.
 const QUICK_ACTIONS = [
   {
-    labelKey: 'dashboard.hotDeals',
-    subKey: 'dashboard.hotDealsSub',
+    label: 'Hot Deals',
+    sub: 'Today’s top offers with the platform that powers each',
     to: '/hot-deals',
     Icon: Flame,
     gradient: 'from-orange-400 to-red-500',
   },
   {
-    labelKey: 'dashboard.highestSupermarket',
-    subKey: 'dashboard.highestSupermarketSub',
-    to: '/compare?category=grocery',
+    label: 'Highest Supermarket Deal',
+    sub: 'Best cashback at every UK grocery chain',
+    to: '/deals/supermarket',
     Icon: ShoppingCart,
     gradient: 'from-green-400 to-emerald-600',
   },
   {
-    labelKey: 'dashboard.topGiftcards',
-    subKey: 'dashboard.topGiftcardsSub',
-    to: '/compare?type=gift_card',
+    label: 'Top Gift Cards',
+    sub: 'Discounted gift cards across all platforms',
+    to: '/deals/gift-cards',
     Icon: Gift,
     gradient: 'from-primary to-secondary',
   },
   {
-    labelKey: 'dashboard.favouriteStores',
-    subKey: 'dashboard.favouriteStoresSub',
-    to: '/profile#favourites',
-    Icon: Heart,
-    gradient: 'from-pink-400 to-secondary',
+    label: 'Calculator',
+    sub: 'See how much your spending turns into',
+    to: '/calculator',
+    Icon: CalcIcon,
+    gradient: 'from-violet-500 to-fuchsia-500',
+  },
+];
+
+// Second row (below Quick Actions): comparison + the curated Playbook
+// (the 17 multi-step strategies seeded from Bárbara's ebook).
+const COMPARE_LINKS = [
+  {
+    label: 'The Playbook',
+    sub: 'Every curated multi-step strategy — 35% Sainsbury\'s chain, 25% Deliveroo, more',
+    to: '/playbook',
+    Icon: BookOpen,
+    gradient: 'from-primary to-secondary',
+  },
+  {
+    label: 'Compare Banks',
+    sub: 'What each UK bank offers in rewards and switch bonuses',
+    to: '/banks',
+    Icon: Building2,
+    gradient: 'from-blue-500 to-indigo-500',
+  },
+  {
+    label: 'Compare Cards',
+    sub: 'Side-by-side credit and reward cards (Amex, Barclays, etc.)',
+    to: '/cards',
+    Icon: CreditCard,
+    gradient: 'from-cyan-500 to-teal-500',
   },
 ];
 
@@ -182,10 +216,10 @@ function HomePage() {
 
         {/* ─── Quick Actions ──────────────────────────────────────── */}
         <section className="space-y-3">
-          <h2 className="text-lg font-bold">{t('dashboard.quickActions')}</h2>
+          <h2 className="text-lg font-bold">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            {QUICK_ACTIONS.map(({ labelKey, subKey, to, Icon, gradient }) => (
-              <Link key={labelKey} to={to}>
+            {QUICK_ACTIONS.map(({ label, sub, to, Icon, gradient }) => (
+              <Link key={label} to={to}>
                 <Card className="card-hover h-full">
                   <CardContent className="p-4 md:p-5 space-y-2.5">
                     <div
@@ -193,11 +227,9 @@ function HomePage() {
                     >
                       <Icon className="w-5 h-5" />
                     </div>
-                    <div className="font-semibold leading-tight">
-                      {t(labelKey)}
-                    </div>
+                    <div className="font-semibold leading-tight">{label}</div>
                     <p className="text-xs text-muted-foreground leading-snug">
-                      {t(subKey)}
+                      {sub}
                     </p>
                     <div className="flex items-center text-xs font-medium text-primary pt-1">
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -209,45 +241,82 @@ function HomePage() {
           </div>
         </section>
 
-        {/* ─── Two-column: Recent Activities + Your Setup ─────────── */}
+        {/* ─── Compare (Banks / Cards) ────────────────────────────── */}
+        <section className="space-y-3">
+          <h2 className="text-lg font-bold">Compare</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            {COMPARE_LINKS.map(({ label, sub, to, Icon, gradient }) => (
+              <Link key={label} to={to}>
+                <Card className="card-hover h-full">
+                  <CardContent className="p-4 md:p-5 flex items-start gap-4">
+                    <div
+                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${gradient} text-white flex items-center justify-center shadow-sm shrink-0`}
+                    >
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold leading-tight">
+                        {label}
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-snug mt-1">
+                        {sub}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-primary shrink-0 mt-1" />
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* ─── Two-column: Recent Searches + Your Setup ───────────── */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Recent Activities */}
+          {/* Recent Searches — cap 4 (Bárbara, 17/05/2026). Was a
+              merged "Recent Activities" feed; simplified to focus on
+              what users actually want to revisit: stores they looked
+              up recently. */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-primary" />
-                {t('dashboard.recentActivities')}
+                <Clock className="w-5 h-5 text-primary" />
+                Recent searches
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2.5">
-              {activities.length === 0 ? (
+              {(searches || []).length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">
-                  {t('dashboard.noActivityYet')}
+                  Searches you make will show up here.
                 </p>
               ) : (
-                activities.map((a) => (
-                  <div
-                    key={a.id}
-                    className="flex items-start gap-3 py-2 border-b last:border-b-0"
+                (searches || []).slice(0, 4).map((s) => (
+                  <Link
+                    key={s.id}
+                    to={`/compare?q=${encodeURIComponent(s.query || '')}`}
+                    className="flex items-start gap-3 py-2 border-b last:border-b-0 hover:bg-muted/40 -mx-2 px-2 rounded-md transition-colors"
                   >
-                    <ActivityIcon kind={a.kind} />
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-light-pink/60 text-secondary">
+                      <Search className="w-4 h-4" />
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{a.title}</p>
+                      <p className="text-sm font-medium truncate">
+                        “{s.query}”
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {fmtAgo(a.at)}
+                        {fmtAgo(s.searched_at)}
                       </p>
                     </div>
-                  </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-muted-foreground mt-2" />
+                  </Link>
                 ))
               )}
-              {activities.length > 0 && (
+              {(searches || []).length > 4 && (
                 <div className="pt-2">
                   <Link
                     to="/compare"
                     className="text-xs font-medium text-primary hover:underline inline-flex items-center"
                   >
-                    {t('dashboard.viewAllActivities')}{' '}
-                    <ArrowRight className="w-3 h-3 ml-1" />
+                    View all searches <ArrowRight className="w-3 h-3 ml-1" />
                   </Link>
                 </div>
               )}

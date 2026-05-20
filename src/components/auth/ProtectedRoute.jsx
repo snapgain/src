@@ -7,27 +7,27 @@ import { SplashScreen } from '@/components/SplashScreen';
 const PROFILE_TIMEOUT_MS = 4000;
 
 /**
- * ProtectedRoute — gates a route on three checks (in order):
+ * ProtectedRoute — gates a route on the following checks (in order):
  *
  *   1. Authenticated session (otherwise → /auth/login).
  *   2. Onboarding completed (otherwise → /onboarding) unless the
  *      route opts out via requireOnboarding={false}.
- *   3. Premium subscription active or in trial (otherwise → /pricing)
- *      unless the route opts out via requirePremium={false}.
+ *   3a. requirePremium  — active subscription OR in-trial users pass.
+ *       Non-premium logged-in users → /pricing.
+ *   3b. requirePremiumStrict — only active subscriptions pass.
+ *       Trial users are NOT enough. Used for routes/features that we
+ *       reveal only post-purchase (Strategy Library full playbooks,
+ *       Saved Strategies, Alerts, Wallet, etc.).
  *
- * While auth or profile is loading, renders the branded SplashScreen
- * instead of the bare spinner. If the profile lookup hangs (Supabase
- * down, RLS blocking, etc.) we fall through after PROFILE_TIMEOUT_MS
- * so the app stays usable instead of stuck on the splash.
+ * Both premium checks default to TRUE — opt out per route as needed.
  *
- * SnapGain is premium-only (no free tier), so requirePremium defaults
- * to true. Routes that must work without an active subscription
- * (onboarding, post-checkout success, account settings) opt out.
+ * If both requirePremium and requirePremiumStrict are set, strict wins.
  */
 function ProtectedRoute({
   children,
   requireOnboarding = true,
   requirePremium = true,
+  requirePremiumStrict = false,
 }) {
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: subLoading } = useSubscription();
@@ -49,10 +49,8 @@ function ProtectedRoute({
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
-  // Wait for the profile to resolve so we don't bounce them around —
-  // but cap it so a hung query doesn't trap the user on the splash.
-  const stillWaitingForProfile =
-    (requireOnboarding || requirePremium) && subLoading && !profileTimedOut;
+  const needsProfile = requireOnboarding || requirePremium || requirePremiumStrict;
+  const stillWaitingForProfile = needsProfile && subLoading && !profileTimedOut;
   if (stillWaitingForProfile) {
     return <SplashScreen />;
   }
@@ -66,19 +64,21 @@ function ProtectedRoute({
     return <Navigate to="/onboarding" replace />;
   }
 
-  if (requirePremium) {
-    // Active or trialing Stripe subscription counts as premium.
-    // Local 7-day trial_end (set on signup elsewhere) is also honoured.
-    const stripeActive =
-      profile?.subscription_status === 'active' ||
-      profile?.subscription_status === 'trialing';
-    const trialEnd = profile?.trial_end ? new Date(profile.trial_end) : null;
-    const inLocalTrial = trialEnd && trialEnd.getTime() > Date.now();
-    const isPremium = stripeActive || inLocalTrial;
+  // Derive premium flags once
+  const stripeActive =
+    profile?.subscription_status === 'active' ||
+    profile?.subscription_status === 'trialing';
+  const trialEnd = profile?.trial_end ? new Date(profile.trial_end) : null;
+  const inLocalTrial = trialEnd && trialEnd.getTime() > Date.now();
 
-    if (!isPremium && location.pathname !== '/pricing') {
-      return <Navigate to="/pricing?subscribe=required" replace />;
-    }
+  // STRICT: only paying customers (trial does NOT count)
+  if (requirePremiumStrict && !stripeActive && location.pathname !== '/pricing') {
+    return <Navigate to="/pricing?subscribe=required" replace />;
+  }
+
+  // PREMIUM: paying customers OR users still in their 7-day trial
+  if (requirePremium && !stripeActive && !inLocalTrial && location.pathname !== '/pricing') {
+    return <Navigate to="/pricing?subscribe=required" replace />;
   }
 
   return children;

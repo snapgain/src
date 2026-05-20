@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, ArrowRight } from 'lucide-react';
+import { Star, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,21 +11,27 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useStores } from '@/hooks/useCatalog';
 import { useRecentSearches, useUserFavourites } from '@/hooks/useUserState';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import { StoreLogo } from '@/components/StoreLogo';
 
-const FILTERS = [
-  { id: 'cashback',   label: 'Cashback',       icon: '💰' },
-  { id: 'points',     label: 'Points & Miles', icon: '✈️' },
-  { id: 'gift-cards', label: 'Gift Cards',     icon: '🎁' },
-];
-
 function SearchPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
-  const [activeFilters, setActiveFilters] = React.useState([]);
+  // 2026-05-19: ComparePage's "Browse retailers" sends `?cat=<slug>`
+  // links so users can drill into a category. We filter the existing
+  // store list client-side by matching against the category text[].
+  const initialCat = (searchParams.get('cat') || '').trim().toLowerCase();
+  // 2026-05-19 (afternoon): amount carried over from /compare so the
+  // user can pick a store here and land back on /compare with the
+  // amount already filled. Defaults to 100 if not provided.
+  const initialAmount = searchParams.get('amount') || '100.00';
+  const [amountInput, setAmountInput] = React.useState(initialAmount);
+  const cameFromCompare = Boolean(initialCat);
 
   const { stores, loading } = useStores();
   const { push: pushRecent } = useRecentSearches();
@@ -39,9 +45,18 @@ function SearchPage() {
 
   const results = useMemo(() => {
     const q = initialQuery.trim().toLowerCase();
-    if (!q) return stores;
-    return stores.filter((s) => s.name.toLowerCase().includes(q));
-  }, [initialQuery, stores]);
+    let out = stores;
+    if (q) {
+      out = out.filter((s) => s.name.toLowerCase().includes(q));
+    }
+    if (initialCat) {
+      out = out.filter((s) =>
+        Array.isArray(s.category) &&
+        s.category.some((c) => String(c).toLowerCase() === initialCat)
+      );
+    }
+    return out;
+  }, [initialQuery, initialCat, stores]);
 
   const handleSubmit = (query) => {
     const next = new URLSearchParams(searchParams);
@@ -50,13 +65,21 @@ function SearchPage() {
     setSearchParams(next, { replace: true });
   };
 
-  const toggleFilter = (filter) => {
-    setActiveFilters((prev) =>
-      prev.find((f) => f.id === filter.id)
-        ? prev.filter((f) => f.id !== filter.id)
-        : [...prev, filter]
-    );
-  };
+  // Validate the amount the same way ComparePage does — positive, >=1.
+  // We keep it forgiving (default 100) so the user can still browse
+  // without typing anything; the Compare flow will use whatever's there.
+  const parsedAmount = (() => {
+    const n = Number(String(amountInput || '').trim());
+    if (!Number.isFinite(n) || n < 1) return 100;
+    return Math.round(n * 100) / 100;
+  })();
+
+  // Where each store card sends the user. The whole point of landing
+  // here from /compare is to continue the comparison flow — so click
+  // → /compare?store=slug&amount=X, NOT /store/slug. The Compare page
+  // bootstraps from those params and auto-loads the routes.
+  const compareLinkFor = (store) =>
+    `/compare?store=${encodeURIComponent(store.slug)}&amount=${parsedAmount}`;
 
   return (
     <>
@@ -69,6 +92,18 @@ function SearchPage() {
       </Helmet>
 
       <div className="container mx-auto px-4 py-10 space-y-8">
+        {/* Back to /compare (or /home if the user didn't come from a
+            category drill-down). Always present so the user has a
+            visible escape hatch — they shouldn't have to use the
+            browser back button. */}
+        <Link
+          to={cameFromCompare ? '/compare' : '/home'}
+          className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          {cameFromCompare ? 'Back to Compare' : 'Home'}
+        </Link>
+
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -76,8 +111,32 @@ function SearchPage() {
           className="space-y-4"
         >
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-            Search stores
+            {initialCat
+              ? `${String(initialCat).replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())} stores`
+              : 'Search stores'}
           </h1>
+
+          {initialCat && (
+            <div className="flex items-center justify-between gap-3 flex-wrap text-sm bg-light-pink/30 border border-primary/30 rounded-lg px-3 py-2">
+              <span>
+                Showing stores in category:{' '}
+                <span className="font-semibold capitalize">
+                  {initialCat.replace(/[-_]/g, ' ')}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams);
+                  next.delete('cat');
+                  setSearchParams(next, { replace: true });
+                }}
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                Clear category
+              </button>
+            </div>
+          )}
 
           <SearchAutocomplete
             initialValue={initialQuery}
@@ -86,27 +145,35 @@ function SearchPage() {
             autoFocus
           />
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            {FILTERS.map((filter) => {
-              const active = !!activeFilters.find((f) => f.id === filter.id);
-              return (
-                <button
-                  key={filter.id}
-                  onClick={() => toggleFilter(filter)}
-                  className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-colors ${
-                    active
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-background hover:border-primary/50'
-                  }`}
-                  type="button"
-                >
-                  <span className="mr-1.5" aria-hidden="true">
-                    {filter.icon}
-                  </span>
-                  {filter.label}
-                </button>
-              );
-            })}
+          {/* Amount field — carried over to /compare when a card is
+              clicked. Sitting right under the search keeps the two
+              "inputs you need to compare" colocated, just like the
+              hero form on /compare. The filter chips that used to be
+              here (Cashback / Points / Gift Cards) were never wired up
+              and only added noise — removed 2026-05-19. */}
+          <div className="space-y-1.5 max-w-sm">
+            <Label htmlFor="amount" className="text-sm font-semibold">
+              Purchase amount (£)
+            </Label>
+            <Input
+              id="amount"
+              type="number"
+              inputMode="decimal"
+              min="1"
+              step="0.01"
+              placeholder="100.00"
+              value={amountInput}
+              onChange={(e) => setAmountInput(e.target.value)}
+              onBlur={(e) => {
+                const n = Number(e.target.value);
+                if (Number.isFinite(n) && n >= 1) {
+                  setAmountInput(n.toFixed(2));
+                }
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              We&rsquo;ll carry this amount over to the comparison.
+            </p>
           </div>
         </motion.section>
 
@@ -137,7 +204,7 @@ function SearchPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {results.map((store) => (
-                <Link key={store.id} to={`/store/${store.slug}`}>
+                <Link key={store.id} to={compareLinkFor(store)}>
                   <Card className="card-hover h-full">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">

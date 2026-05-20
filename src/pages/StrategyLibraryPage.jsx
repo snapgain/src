@@ -1,10 +1,10 @@
 // StrategyLibraryPage — the 9 stacking strategies from the SnapGain
 // ebook, presented as an interactive library inside the app.
 //
-// This page is GATED behind a paid subscription. Platform names are
-// shown here freely because the user is already a customer (vs the
-// public landing page which keeps platform names hidden to protect
-// affiliate referrals).
+// Trial-first model (Alt A): trial users see all 9 cards but only
+// "One4all + NX" is fully expandable (the unlocked teaser stack).
+// The other 8 show their title + return + tier badge with a "lock"
+// overlay that links to /pricing. Paying users see everything.
 
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
@@ -24,9 +24,17 @@ import {
   ChevronDown,
   CheckCircle2,
   Trophy,
+  Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useSubscription } from '@/hooks/useSubscription';
+
+// Which strategy ID is unlocked during the free trial.
+// Chosen for: instant savings, point-of-sale usable, 150+ UK retailers,
+// 5-min setup, the entry-level stack that builds trust without giving
+// away the advanced playbooks.
+const TRIAL_UNLOCKED_ID = 'one4all-nx';
 
 // ────────────────────────────────────────────────────────────────────
 // Strategy catalogue — sourced from the SnapGain ebook
@@ -189,15 +197,16 @@ const STRATEGIES = [
     tierColor: 'bg-amber-100 text-amber-800',
     return: '1% to 1.5%',
     returnDetail: 'on your biggest monthly bill',
-    teaser: 'The most under-used hack in the UK. Earn cashback on rent itself.',
+    teaser: 'The most under-used hack in the UK. Earn cashback on rent itself — now from just 1,000 points (Nov 2025 update).',
     timeToSetup: '15 min',
     steps: [
       'Sign up to Ribbon Rewards (free).',
       'Add your landlord or letting agent as a recipient.',
       'Pay rent through Ribbon. They forward the full amount to your landlord, then credit you 1.0 percent (any property) or 1.5 percent (partner properties).',
+      'NEW (Nov 2025): cash out from 1,000 points = £10 voucher. Vouchers range from £10 up to £150. Previously the minimum was 2,500 points = £25, so you can redeem 2.5x faster now.',
       'Cashback can be redeemed as bank transfer or partner gift cards.',
     ],
-    bestFor: '£1,200/month rent = up to £216/year cashback. £2,000/month = up to £360/year.',
+    bestFor: '£1,000/month rent = £120/year. £1,500 = £180/year. £2,000 = £240/year. £2,500 = £300/year.',
   },
 ];
 
@@ -215,14 +224,65 @@ function Badge({ tier, tierColor }) {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Strategy card with expandable details
+// Strategy card with expandable details (or lock overlay during trial)
 // ────────────────────────────────────────────────────────────────────
-function StrategyCard({ strategy }) {
+function StrategyCard({ strategy, locked }) {
   const [open, setOpen] = useState(false);
   const Icon = strategy.icon;
 
+  if (locked) {
+    // Locked card during trial — show meta, hide playbook, link upgrade.
+    return (
+      <Card className="border-2 overflow-hidden relative card-hover">
+        <Link to="/pricing?subscribe=required" className="block">
+          <CardContent className="p-6 opacity-70">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex items-start gap-3">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <Icon className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg md:text-xl font-bold leading-tight">
+                    {strategy.name}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge tier={strategy.tier} tierColor={strategy.tierColor} />
+                  </div>
+                </div>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-foreground/80 text-background flex items-center justify-center shrink-0">
+                <Lock className="w-4 h-4" />
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <div className="text-3xl font-extrabold gradient-text">
+                {strategy.return}
+              </div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                {strategy.returnDetail}
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              {strategy.teaser}
+            </p>
+          </CardContent>
+
+          <div className="border-t bg-foreground/5 px-6 py-3 text-center">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary inline-flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5" />
+              Unlock with Premium
+            </span>
+          </div>
+        </Link>
+      </Card>
+    );
+  }
+
+  // Unlocked card — full expandable playbook.
   return (
-    <Card className="border-2 overflow-hidden card-hover">
+    <Card className="border-2 border-primary/40 overflow-hidden card-hover ring-1 ring-primary/20">
       <button
         onClick={() => setOpen(!open)}
         className="w-full text-left"
@@ -303,9 +363,20 @@ function StrategyCard({ strategy }) {
 function StrategyLibraryPage() {
   const tiers = ['Beginner', 'Intermediate', 'Advanced', 'Specialist (Transport)', 'Specialist (Food)', 'Specialist (Fuel)', 'Specialist', 'Specialist (Housing)'];
 
-  // Group by tier preference (Beginner first, then Intermediate, Advanced, Specialists)
+  // Detect trial vs paid: only paying subscribers see all 9 playbooks.
+  // Trial users get exactly one unlocked card (TRIAL_UNLOCKED_ID).
+  const { isActive } = useSubscription();
+  const isPaying = !!isActive;
+
+  // Group: keep the unlocked strategy at the top during trial so it
+  // is the first thing the user sees. For paying users, default tier
+  // sort applies (Beginner → Intermediate → Advanced → Specialist).
   const tierOrder = { Beginner: 1, Intermediate: 2, Advanced: 3 };
   const sorted = [...STRATEGIES].sort((a, b) => {
+    if (!isPaying) {
+      if (a.id === TRIAL_UNLOCKED_ID) return -1;
+      if (b.id === TRIAL_UNLOCKED_ID) return 1;
+    }
     const aOrder = tierOrder[a.tier] || 4;
     const bOrder = tierOrder[b.tier] || 4;
     return aOrder - bOrder;
@@ -335,6 +406,12 @@ function StrategyLibraryPage() {
             return to the advanced 34 percent plus Avios. Click any card
             to see the step-by-step.
           </p>
+          {!isPaying && (
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm text-primary">
+              <Sparkles className="w-4 h-4" />
+              Free trial: 1 strategy unlocked. Upgrade to unlock the other 8.
+            </div>
+          )}
         </div>
 
         {/* Quick legend */}
@@ -345,10 +422,15 @@ function StrategyLibraryPage() {
           <Badge tier="Specialist" tierColor="bg-amber-100 text-amber-800" />
         </div>
 
-        {/* Strategy grid */}
+        {/* Strategy grid — paying users see all unlocked; trial users
+            see TRIAL_UNLOCKED_ID unlocked and the other 8 locked. */}
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           {sorted.map((strategy) => (
-            <StrategyCard key={strategy.id} strategy={strategy} />
+            <StrategyCard
+              key={strategy.id}
+              strategy={strategy}
+              locked={!isPaying && strategy.id !== TRIAL_UNLOCKED_ID}
+            />
           ))}
         </div>
 
@@ -360,7 +442,7 @@ function StrategyLibraryPage() {
               Pick one. Just one.
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-              You don\'t need to run all 9 to see results. Start with the
+              You don&rsquo;t need to run all 9 to see results. Start with the
               Beginner stack today, master it in a week, then layer in the
               next one. The Triple Stack alone returns about £400 over a
               year of normal grocery spending.

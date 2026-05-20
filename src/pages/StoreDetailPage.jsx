@@ -11,6 +11,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { RateBreakdown } from '@/components/RateBreakdown';
 import {
   Card,
   CardContent,
@@ -22,17 +23,26 @@ import {
   useStoreBySlug,
   useStoreOffers,
   useMilesPrograms,
+  useCuratedStrategies,
 } from '@/hooks/useCatalog';
+import { CuratedStrategyCard } from '@/components/CuratedStrategyCard';
+import { AutoStrategyCard } from '@/components/AutoStrategyCard';
+import { Sparkles } from 'lucide-react';
 import { resolveOpenUrl } from '@/lib/affiliateLinks';
-import { useUserFavourites } from '@/hooks/useUserState';
-import { computeStrategies } from '@/lib/strategies';
+import { useUserFavourites, useUserWallet } from '@/hooks/useUserState';
+import { useWalletOnlyPref } from '@/hooks/useUserPrefs';
+import { computeStrategies, withSyntheticNxOffer } from '@/lib/strategies';
+import { buildWalletFilter } from '@/lib/walletFilter';
 import { StoreLogo } from '@/components/StoreLogo';
 
+// 2026-05-18: collapsed from 5 tabs to 2 per Bárbara's UX feedback —
+// "as pessoas não gostam de pensar, querem a resposta pronta". The
+// Strategies tab now shows curated Pro routes FIRST (marked SnapGain
+// Choice) with the auto-generated alternatives directly below, each
+// with a descriptive one-word label ("Easier", "Avios only", etc.).
 const TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'cashback', label: 'Cashback' },
-  { id: 'points',   label: 'Points & Miles' },
-  { id: 'strategy', label: 'Best strategy' },
+  { id: 'strategies', label: 'Strategies' },
+  { id: 'offers',     label: 'All offers' },
 ];
 
 const DEFAULT_AMOUNT = 100;
@@ -50,7 +60,13 @@ function fmtTimeAgo(iso) {
   return `${days}d ago`;
 }
 
+// "Up to" appears when the platform exposes a multi-tier rate (the
+// rate column holds the MAX). We show it explicitly so the headline
+// doesn't lie: "Up to 56%" sets the expectation that the breakdown
+// below may include lower tiers (e.g. SHEIN: 16.8% new customer vs
+// 2.4% existing customer — wildly different from the headline).
 function CashbackOfferCard({ offer }) {
+  const isUpTo = offer.conditions === 'Up to';
   return (
     <Card className="card-hover">
       <CardHeader className="pb-2">
@@ -61,10 +77,18 @@ function CashbackOfferCard({ offer }) {
           </span>
         </div>
         <CardTitle className="text-lg pt-2">{offer.platform}</CardTitle>
-        <CardDescription>{offer.rate}% cashback</CardDescription>
+        <CardDescription>
+          {isUpTo ? `Up to ${offer.rate}% cashback` : `${offer.rate}% cashback`}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="text-2xl font-bold gradient-text">{offer.rate}%</div>
+        <div className="text-2xl font-bold gradient-text">
+          {isUpTo && <span className="text-base font-medium opacity-70">Up to </span>}
+          {offer.rate}%
+        </div>
+
+        <RateBreakdown breakdown={offer.rate_breakdown} />
+
         {offer.last_verified_at && (
           <div className="text-xs text-muted-foreground inline-flex items-center gap-1">
             <Clock className="w-3 h-3" />
@@ -129,12 +153,35 @@ function PointOfferCard({ offer }) {
 function StoreDetailPage() {
   const { storeId: slug } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(null);
 
   const { store, loading: storeLoading } = useStoreBySlug(slug);
-  const { cashbackOffers, pointOffers, giftCardOffers, loading: offersLoading } = useStoreOffers(store?.id);
+  const { cashbackOffers: rawCashbackOffers, pointOffers, giftCardOffers, loading: offersLoading } = useStoreOffers(store?.id);
+  const { strategies: curatedStrategies, loading: curatedLoading } = useCuratedStrategies(
+    store?.id,
+    store?.category || null
+  );
+
+  const tabs = TABS;
+  // Strategies tab is always the default — it unifies curated Pro
+  // routes + auto-generated alternatives in one ranked list.
+  const resolvedTab = activeTab ?? 'strategies';
+  // Inject synthetic NX 10% offer if the store is flagged in_nx_network
+  // but doesn't already have a real NX row in cashback_offers. Keeps
+  // the Cashback / Overview tabs consistent with what the strategy
+  // engine shows.
+  const cashbackOffers = useMemo(
+    () => withSyntheticNxOffer(rawCashbackOffers, store),
+    [rawCashbackOffers, store]
+  );
   const { programs: milesPrograms } = useMilesPrograms();
   const { isFavourite, toggle: toggleFav } = useUserFavourites();
+  const wallet = useUserWallet();
+  const { walletOnly } = useWalletOnlyPref();
+  const userWalletForStrategy = useMemo(
+    () => buildWalletFilter({ walletOnly, wallet }),
+    [walletOnly, wallet]
+  );
 
   const strategies = useMemo(
     () =>
@@ -145,11 +192,13 @@ function StoreDetailPage() {
         pointOffers,
         giftCardOffers,
         milesPrograms,
+        userWallet: userWalletForStrategy,
       }),
-    [store, cashbackOffers, pointOffers, giftCardOffers, milesPrograms]
+    [store, cashbackOffers, pointOffers, giftCardOffers, milesPrograms, userWalletForStrategy]
   );
 
-  const bestStrategy = strategies[0] || null;
+  // (bestStrategy was previously used by the standalone "Best strategy"
+  // tab; that tab was folded into Strategies in 2026-05-18 refactor.)
 
   if (storeLoading) {
     return (
@@ -174,147 +223,171 @@ function StoreDetailPage() {
   }
 
   const renderTabBody = () => {
-    if (offersLoading) {
+    if (offersLoading || curatedLoading) {
       return <p className="text-muted-foreground">Loading offers…</p>;
     }
-    switch (activeTab) {
-      case 'cashback':
-        return cashbackOffers.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cashbackOffers.map((o) => (
-              <CashbackOfferCard key={o.id} offer={o} />
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              No cashback offers tracked for this store yet.
-            </CardContent>
-          </Card>
-        );
-      case 'points':
-        return pointOffers.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {pointOffers.map((o) => (
-              <PointOfferCard key={o.id} offer={o} />
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              No points/miles offers tracked for this store yet.
-            </CardContent>
-          </Card>
-        );
-      case 'strategy':
-        return bestStrategy ? (
-          <Card className="bg-gradient-to-br from-light-pink/40 to-card">
-            <CardHeader>
-              <div className="flex items-center gap-2 text-primary">
-                <Trophy className="w-5 h-5" />
-                <span className="text-sm font-semibold uppercase tracking-wide">
-                  Recommended route (on £{DEFAULT_AMOUNT})
-                </span>
-              </div>
-              <CardTitle className="text-2xl pt-2">{bestStrategy.title}</CardTitle>
-              <CardDescription>{bestStrategy.subtitle}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-3xl font-bold gradient-text">
-                {bestStrategy.gbpReturnDisplay}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Highest expected return among the {strategies.length} routes we
-                track for {store.name} on a £{DEFAULT_AMOUNT} purchase. Run a
-                full comparison to plug in your own amount and wallet.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  onClick={() =>
-                    navigate(
-                      `/strategy?store=${encodeURIComponent(
-                        store.slug
-                      )}&amount=${DEFAULT_AMOUNT}`
-                    )
-                  }
-                >
-                  See step-by-step strategy
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  onClick={() =>
-                    navigate(
-                      `/compare?store=${encodeURIComponent(store.slug)}`
-                    )
-                  }
-                >
-                  <span>
-                    <Calculator className="w-4 h-4 mr-2" />
-                    Run full comparison
-                  </span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              No strategies computed yet — we don&rsquo;t have enough offer data
-              for this store.
-            </CardContent>
-          </Card>
-        );
-      case 'overview':
-      default: {
-        const allOffers = [...cashbackOffers, ...pointOffers];
+    switch (resolvedTab) {
+      // ── STRATEGIES TAB (default) ─────────────────────────────────
+      // Curated Pro routes first (SnapGain Choice), then auto-generated
+      // alternatives each with a descriptive label. One single ranked
+      // list — no need to bounce between tabs.
+      case 'strategies': {
+        const haveAnything = curatedStrategies.length > 0 || strategies.length > 0;
+        if (!haveAnything) {
+          return (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                We don&rsquo;t have any reward routes for {store.name} yet.
+                Check back soon.
+              </CardContent>
+            </Card>
+          );
+        }
+
         return (
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-lg font-semibold mb-3">
-                Available routes ({allOffers.length})
-              </h3>
-              {allOffers.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {cashbackOffers.map((o) => (
-                    <CashbackOfferCard key={`cb-${o.id}`} offer={o} />
-                  ))}
-                  {pointOffers.map((o) => (
-                    <PointOfferCard key={`pt-${o.id}`} offer={o} />
+          <div className="space-y-5">
+            {/* Top curated strategy = SnapGain Choice. Stays collapsed
+                by default so the page doesn't feel overwhelming; the
+                user taps "Show steps" when they're ready to execute. */}
+            {curatedStrategies[0] && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  SnapGain Choice — best return
+                </div>
+                <CuratedStrategyCard
+                  strategy={curatedStrategies[0]}
+                  defaultOpen={false}
+                />
+              </div>
+            )}
+
+            {/* Other curated strategies (if any) — collapsed, compact. */}
+            {curatedStrategies.length > 1 && (
+              <div className="space-y-2">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Other curated strategies
+                </div>
+                {curatedStrategies.slice(1).map((s) => (
+                  <CuratedStrategyCard
+                    key={s.id}
+                    strategy={s}
+                    defaultOpen={false}
+                    compact
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Auto-generated single-platform alternatives. Each gets
+                a one-word label ("Easier", "Avios only", etc.) so the
+                user can scan without thinking. Hidden when curated
+                cover everything reasonable. */}
+            {strategies.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Single-platform alternatives (on £{DEFAULT_AMOUNT})
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {strategies.slice(0, 6).map((s, i) => (
+                    <AutoStrategyCard
+                      key={s.id || i}
+                      strategy={s}
+                      rank={i + 1}
+                      storeSlug={store.slug}
+                      amount={DEFAULT_AMOUNT}
+                      highlight={i === 0 && curatedStrategies.length === 0}
+                    />
                   ))}
                 </div>
-              ) : (
-                <Card>
-                  <CardContent className="py-8 text-center text-muted-foreground">
-                    No offers tracked for {store.name} yet. Check back soon — or
-                    suggest one from the admin panel.
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-            <Card className="bg-light-green/30 border-accent/30">
-              <CardContent className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold">
-                    Want the best route for {store.name}?
+                {strategies.length > 6 && (
+                  <p className="text-xs text-muted-foreground text-center pt-1">
+                    {strategies.length - 6} more routes available —{' '}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          `/compare?store=${encodeURIComponent(store.slug)}`
+                        )
+                      }
+                      className="text-primary font-semibold hover:underline"
+                    >
+                      run full comparison
+                    </button>
+                    {' '}with your own amount.
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    Plug in your purchase amount and we&rsquo;ll rank every
-                    route by £ return.
+                )}
+              </div>
+            )}
+
+            <Card className="bg-light-green/30 border-accent/30">
+              <CardContent className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-sm">
+                    Got a specific basket in mind?
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Run the comparison with your real purchase amount.
                   </p>
                 </div>
                 <Button
                   onClick={() =>
-                    navigate(
-                      `/compare?store=${encodeURIComponent(store.slug)}`
-                    )
+                    navigate(`/compare?store=${encodeURIComponent(store.slug)}`)
                   }
+                  size="sm"
                 >
                   <Calculator className="w-4 h-4 mr-2" />
-                  Compare
+                  Compare with your amount
                 </Button>
               </CardContent>
             </Card>
+          </div>
+        );
+      }
+
+      // ── ALL OFFERS TAB ───────────────────────────────────────────
+      // Cashback + points + gift cards in one flat list. Used by power
+      // users who want to inspect raw data. Default users live entirely
+      // in the Strategies tab.
+      case 'offers':
+      default: {
+        const totalOffers =
+          cashbackOffers.length + pointOffers.length;
+        if (totalOffers === 0) {
+          return (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                No offers tracked for {store.name} yet.
+              </CardContent>
+            </Card>
+          );
+        }
+        return (
+          <div className="space-y-6">
+            {cashbackOffers.length > 0 && (
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Cashback ({cashbackOffers.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {cashbackOffers.map((o) => (
+                    <CashbackOfferCard key={o.id} offer={o} />
+                  ))}
+                </div>
+              </div>
+            )}
+            {pointOffers.length > 0 && (
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Points & Miles ({pointOffers.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {pointOffers.map((o) => (
+                    <PointOfferCard key={o.id} offer={o} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       }
@@ -384,8 +457,8 @@ function StoreDetailPage() {
             role="tablist"
             aria-label="Store reward categories"
           >
-            {TABS.map((tab) => {
-              const active = activeTab === tab.id;
+            {tabs.map((tab) => {
+              const active = resolvedTab === tab.id;
               return (
                 <button
                   key={tab.id}

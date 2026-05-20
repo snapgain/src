@@ -86,12 +86,13 @@ export function useSubscription() {
   const isPremium = isActive || inTrial;
   const isAdmin = (profile?.role || user?.user_metadata?.role) === 'admin';
 
-  // Days remaining (rounded down) on whichever clock applies
+  // Days remaining (rounded UP so the day of signup counts — matches
+  // what users expect from "Trial: 7 days" right after sign-up).
   const trialDaysLeft = inTrial
-    ? Math.max(0, Math.floor((trialEndMs - now) / (1000 * 60 * 60 * 24)))
+    ? Math.max(0, Math.ceil((trialEndMs - now) / (1000 * 60 * 60 * 24)))
     : 0;
   const periodDaysLeft = isActive && periodEndMs
-    ? Math.max(0, Math.floor((periodEndMs - now) / (1000 * 60 * 60 * 24)))
+    ? Math.max(0, Math.ceil((periodEndMs - now) / (1000 * 60 * 60 * 24)))
     : 0;
 
   return {

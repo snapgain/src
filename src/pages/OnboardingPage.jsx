@@ -3,15 +3,12 @@ import { Helmet } from 'react-helmet';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Sparkles,
-  PiggyBank,
-  Plane,
-  Gift,
-  CreditCard,
   ArrowRight,
   ArrowLeft,
   Check,
+  X,
   Wallet,
+  Building2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,92 +25,110 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useUserWallet } from '@/hooks/useUserState';
 import { usePlatforms, useMilesPrograms } from '@/hooks/useCatalog';
 
-const TEACHING = [
-  {
-    icon: PiggyBank,
-    title: 'Cashback',
-    body: 'Earn money back on what you already buy via TopCashback, Quidco, Cheddar and more.',
-  },
-  {
-    icon: Plane,
-    title: 'Miles & points',
-    body: 'Avios, Virgin Points, Flying Blue and other programs convert your spend into flights.',
-  },
-  {
-    icon: Gift,
-    title: 'Gift card discounts',
-    body: 'JamDoughnut, NX Rewards and HyperJar give you upfront % off retailer gift cards.',
-  },
-  {
-    icon: CreditCard,
-    title: 'Stacking',
-    body: 'The killer move: gift card + cashback portal + rewards card. SnapGain ranks every combo.',
-  },
+// UK banks list — aligned with /banks comparison page (May 2026).
+// Free-text in user_cards.card_provider (no master table yet).
+const UK_BANKS = [
+  { id: 'barclays', name: 'Barclays' },
+  { id: 'chase-uk', name: 'Chase UK' },
+  { id: 'curve', name: 'Curve' },
+  { id: 'halifax', name: 'Halifax' },
+  { id: 'hsbc', name: 'HSBC UK' },
+  { id: 'lloyds', name: 'Lloyds Bank' },
+  { id: 'metro-bank', name: 'Metro Bank' },
+  { id: 'monese', name: 'Monese' },
+  { id: 'monzo', name: 'Monzo' },
+  { id: 'natwest', name: 'NatWest' },
+  { id: 'revolut', name: 'Revolut' },
+  { id: 'santander', name: 'Santander UK' },
+  { id: 'starling', name: 'Starling Bank' },
+  { id: 'tsb', name: 'TSB' },
+  { id: 'wise', name: 'Wise' },
 ];
 
-function StepWelcome({ onNext, displayName }) {
+function StepWelcome({ onNext, displayName, trialDaysLeft }) {
   return (
     <Card className="bg-gradient-to-br from-light-pink/40 to-light-green/30 border-primary/30">
       <CardContent className="py-10 text-center space-y-5">
         <img
-          src="/snapgain-mark.jpg"
+          src="/snapgain-logo.png"
           alt="SnapGain"
-          className="w-32 mx-auto object-contain"
+          className="w-40 mx-auto object-contain"
         />
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
             Welcome, <span className="gradient-text">{displayName}</span>
           </h2>
           <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-            SnapGain finds the smartest way to pay for everything you buy
-            online. Two minutes of setup and we&rsquo;ll personalise every
-            comparison to your cards and programs.
+            {trialDaysLeft > 0
+              ? `Your ${trialDaysLeft}-day free trial is live.`
+              : 'Your account is ready.'}{' '}
+            We&rsquo;ll show every UK cashback platform and loyalty
+            programme by default. You can personalise the view any
+            time from{' '}
+            <span className="font-medium text-foreground">
+              Settings → My wallet
+            </span>
+            .
           </p>
         </div>
         <Button size="lg" onClick={onNext}>
-          Get started <ArrowRight className="w-4 h-4 ml-2" />
+          Open the app <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </CardContent>
     </Card>
   );
 }
 
-function StepTeach({ onNext, onBack }) {
+// StepTeach removed (Bárbara, 17/05/2026): the "What we compare for
+// you" explanation step felt like filler — the user can intuit it from
+// the actual app on first use. Cuts onboarding from 4 → 3 steps.
+
+// ─── MultiSelectDropdown ────────────────────────────────────────────
+// Native <select> + chips above. Selecting an option from the dropdown
+// adds it to the chips; clicking the X on a chip removes it. Cleaner
+// than 20+ pill buttons when the master list is long.
+function MultiSelectDropdown({ options, selected, onAdd, onRemove, placeholder }) {
+  const selectedSet = new Set(selected.map((s) => s.id));
+  const available = options.filter((o) => !selectedSet.has(o.id));
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          What we&rsquo;ll compare for you
-        </CardTitle>
-        <CardDescription>
-          Four reward types — SnapGain ranks every combination by £ return.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {TEACHING.map(({ icon: Icon, title, body }) => (
-            <div key={title} className="border rounded-xl p-4 bg-background">
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                  <Icon className="w-4 h-4" />
-                </div>
-                <h3 className="font-semibold">{title}</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">{body}</p>
-            </div>
+    <div className="space-y-2">
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selected.map((item) => (
+            <span
+              key={item.id}
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 text-sm font-medium"
+            >
+              {item.name}
+              <button
+                type="button"
+                onClick={() => onRemove(item.id)}
+                aria-label={`Remove ${item.name}`}
+                className="hover:bg-primary/20 rounded-full p-0.5 -mr-1"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
           ))}
         </div>
-        <div className="flex justify-between pt-3">
-          <Button variant="ghost" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back
-          </Button>
-          <Button onClick={onNext}>
-            Next <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      )}
+      <select
+        value=""
+        onChange={(e) => {
+          const id = e.target.value;
+          if (id) onAdd(id);
+        }}
+        className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+      >
+        <option value="">{placeholder}</option>
+        {available.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.name}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
@@ -121,50 +136,54 @@ function StepWallet({ onNext, onBack }) {
   const wallet = useUserWallet();
   const { platforms: cashbackPlatforms } = usePlatforms({ type: 'cashback' });
   const { programs: milesPrograms } = useMilesPrograms();
-  const [selectedCashback, setSelectedCashback] = useState(new Set());
-  const [selectedMiles, setSelectedMiles] = useState(new Set());
+
+  // Track full {id,name} objects so chips above the dropdown can render
+  // the label without doing a second lookup.
+  const [selectedCashback, setSelectedCashback] = useState([]);
+  const [selectedMiles, setSelectedMiles] = useState([]);
+  const [selectedBanks, setSelectedBanks] = useState([]);
   const [busy, setBusy] = useState(false);
 
-  const toggleCashback = (id) =>
-    setSelectedCashback((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-
-  const toggleMiles = (id) =>
-    setSelectedMiles((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-
-  // Filter out anything already in the wallet (defensive: hooks may
-  // briefly return undefined arrays if a fetch failed).
+  // Filter out anything already in the wallet so onboarding only shows
+  // new items the user has not added before.
   const ownedCashbackIds = new Set(
     (wallet.cashbackPlatforms || []).map((c) => c.platform_id)
   );
   const ownedMilesIds = new Set(
     (wallet.milesPrograms || []).map((m) => m.miles_program_id)
   );
-  const availableCashback = (cashbackPlatforms || []).filter(
-    (p) => !ownedCashbackIds.has(p.id)
-  );
-  const availableMiles = (milesPrograms || []).filter(
-    (p) => !ownedMilesIds.has(p.id)
-  );
+  const cashbackOptions = (cashbackPlatforms || [])
+    .filter((p) => !ownedCashbackIds.has(p.id))
+    .map((p) => ({ id: p.id, name: p.name }));
+  const milesOptions = (milesPrograms || [])
+    .filter((p) => !ownedMilesIds.has(p.id))
+    .map((p) => ({ id: p.id, name: p.name }));
+
+  const addBy = (list, setter, options) => (id) => {
+    const opt = options.find((o) => String(o.id) === String(id));
+    if (opt && !list.find((s) => String(s.id) === String(opt.id))) {
+      setter([...list, opt]);
+    }
+  };
+  const removeBy = (list, setter) => (id) =>
+    setter(list.filter((s) => String(s.id) !== String(id)));
 
   const handleSave = async () => {
     setBusy(true);
     try {
-      // Bulk-add selected items in parallel — `allSettled` so a single
-      // failure (RLS, duplicate, etc.) doesn't abort onboarding.
       await Promise.allSettled([
-        ...Array.from(selectedCashback).map((id) =>
-          wallet.addCashbackPlatform({ platformId: id })
+        ...selectedCashback.map((item) =>
+          wallet.addCashbackPlatform({ platformId: item.id })
         ),
-        ...Array.from(selectedMiles).map((id) =>
-          wallet.addMilesProgram({ milesProgramId: id })
+        ...selectedMiles.map((item) =>
+          wallet.addMilesProgram({ milesProgramId: item.id })
+        ),
+        // Banks save into user_cards with card_provider = bank name.
+        // No master table → we store the human label directly.
+        ...selectedBanks.map((bank) =>
+          wallet.addCard
+            ? wallet.addCard({ cardProvider: bank.name, nickname: bank.name })
+            : Promise.resolve()
         ),
       ]);
       onNext();
@@ -176,73 +195,63 @@ function StepWallet({ onNext, onBack }) {
     }
   };
 
-  const totalSelected = selectedCashback.size + selectedMiles.size;
+  const totalSelected =
+    selectedCashback.length + selectedMiles.length + selectedBanks.length;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Wallet className="w-5 h-5 text-primary" />
-          Set up your wallet
+          Set up your wallet (optional)
         </CardTitle>
         <CardDescription>
-          Tick the platforms and programs you already use. We&rsquo;ll filter
-          comparisons to routes you can actually act on.
+          Add only what you already use, or skip and we&rsquo;ll show every
+          platform by default. You can personalise this any time in
+          <span className="font-medium"> Settings → My wallet</span>.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="space-y-2">
-          <Label className="text-sm font-semibold">Cashback platforms</Label>
-          <div className="flex flex-wrap gap-2">
-            {availableCashback.map((p) => {
-              const active = selectedCashback.has(p.id);
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => toggleCashback(p.id)}
-                  className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
-                    active
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-background hover:border-primary/50'
-                  }`}
-                >
-                  {active && <Check className="w-3.5 h-3.5 mr-1.5 inline" />}
-                  {p.name}
-                </button>
-              );
-            })}
-          </div>
+          <Label className="text-sm font-semibold flex items-center gap-2">
+            <Wallet className="w-4 h-4 text-primary" /> Cashback platforms
+          </Label>
+          <MultiSelectDropdown
+            options={cashbackOptions}
+            selected={selectedCashback}
+            onAdd={addBy(selectedCashback, setSelectedCashback, cashbackOptions)}
+            onRemove={removeBy(selectedCashback, setSelectedCashback)}
+            placeholder="Add a cashback platform…"
+          />
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-semibold">Miles & loyalty programs</Label>
-          <div className="flex flex-wrap gap-2">
-            {availableMiles.map((p) => {
-              const active = selectedMiles.has(p.id);
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => toggleMiles(p.id)}
-                  className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
-                    active
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-background hover:border-primary/50'
-                  }`}
-                >
-                  {active && <Check className="w-3.5 h-3.5 mr-1.5 inline" />}
-                  {p.name}
-                </button>
-              );
-            })}
-          </div>
+          <Label className="text-sm font-semibold flex items-center gap-2">
+            <Wallet className="w-4 h-4 text-primary" /> Miles &amp; loyalty
+            programmes
+          </Label>
+          <MultiSelectDropdown
+            options={milesOptions}
+            selected={selectedMiles}
+            onAdd={addBy(selectedMiles, setSelectedMiles, milesOptions)}
+            onRemove={removeBy(selectedMiles, setSelectedMiles)}
+            placeholder="Add a miles or loyalty programme…"
+          />
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          You can add more (cards, gift card apps, balances) any time from{' '}
-          <span className="font-medium">Settings → My wallet</span>.
-        </p>
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-primary" /> Banks &amp; card
+            issuers
+          </Label>
+          <MultiSelectDropdown
+            options={UK_BANKS}
+            selected={selectedBanks}
+            onAdd={addBy(selectedBanks, setSelectedBanks, UK_BANKS)}
+            onRemove={removeBy(selectedBanks, setSelectedBanks)}
+            placeholder="Add a bank or card issuer…"
+          />
+        </div>
 
         <div className="flex justify-between pt-1">
           <Button variant="ghost" onClick={onBack} disabled={busy}>
@@ -251,7 +260,7 @@ function StepWallet({ onNext, onBack }) {
           <Button onClick={handleSave} disabled={busy}>
             {totalSelected > 0
               ? `Add ${totalSelected} & continue`
-              : 'Skip for now'}
+              : 'Skip — show all'}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
@@ -328,11 +337,18 @@ function OnboardingPage() {
     navigate('/home', { replace: true });
   };
 
+  // Onboarding shrunk from 4 → 1 step on 2026-05-17. Default is now
+  // "show every platform" — personalisation happens later in
+  // Settings, not in onboarding (per Bárbara's review). StepWallet
+  // and StepDone are kept defined below for future reuse / a path
+  // back to multi-step if we change our mind.
   const stepNodes = [
-    <StepWelcome key="w" onNext={() => setStep(1)} displayName={displayName} />,
-    <StepTeach key="t" onNext={() => setStep(2)} onBack={() => setStep(0)} />,
-    <StepWallet key="wl" onNext={() => setStep(3)} onBack={() => setStep(1)} />,
-    <StepDone key="d" onFinish={finish} trialDaysLeft={sub.trialDaysLeft} />,
+    <StepWelcome
+      key="w"
+      onNext={finish}
+      displayName={displayName}
+      trialDaysLeft={sub.trialDaysLeft}
+    />,
   ];
 
   return (

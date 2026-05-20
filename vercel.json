@@ -10,7 +10,8 @@
   ],
   "env": {
     "VITE_SUPABASE_URL": "https://ffowgyjdbgkphsflxybk.supabase.co",
-    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmb3dneWpkYmdrcGhzZmx4eWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwMjkwNzIsImV4cCI6MjA2ODYwNTA3Mn0.nhHxBCIloaci-emq6svbD2XT3kaR85Jl-SJTW3s9eiQ",
+    "_comment_anon_key": "2026-05-20: rotated to new publishable key (legacy anon was disabled — see Supabase dashboard).",
+    "VITE_SUPABASE_ANON_KEY": "sb_publishable_fG0AhiV3dznAp7DcHm5jPA_jepTG5-W",
     "VITE_EDGE_FUNCTIONS_URL": "https://ffowgyjdbgkphsflxybk.supabase.co/functions/v1",
     "VITE_APP_ENV": "production",
     "VITE_APP_URL": "https://snapgain.uk",

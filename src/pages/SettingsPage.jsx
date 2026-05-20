@@ -19,6 +19,8 @@ import {
   Save,
   BookOpen,
   AlignLeft,
+  RotateCcw,
+  Wallet,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -35,6 +37,7 @@ import {
 import { useSubscription } from '@/hooks/useSubscription';
 import { ManageBillingButton } from '@/components/ManageBillingButton';
 import { loadUserPrefs, saveUserPrefs } from '@/lib/userPrefs';
+import { notifyPrefsChanged } from '@/hooks/useUserPrefs';
 import { applyDisplaySettings } from '@/lib/displaySettings';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
@@ -106,6 +109,9 @@ function SettingsPage() {
     setSaving(true);
     try {
       await saveUserPrefs(user.id, prefs);
+      // Tell any open ComparePage/StoreDetailPage/StrategyPage that
+      // depends on prefs (walletOnly, etc) to re-read them now.
+      notifyPrefsChanged();
       toast({
         title: t('settings.saved'),
         description: t('settings.savedDesc'),
@@ -242,6 +248,32 @@ function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* ─── Comparison ─────────────────────────────────────────
+            Lets the user opt into wallet-scoped Compare results.
+            Default is OFF so a new user sees the full catalogue and
+            isn't surprised by an empty page after enabling it. */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Wallet className="w-5 h-5 text-primary" />
+              Comparison
+            </CardTitle>
+            <CardDescription>
+              Tune what shows up in Compare, Store details and the
+              Best-strategy view.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ToggleRow
+              id="wallet-only"
+              label="Only show routes from my wallet"
+              description="Hide cashback platforms and miles programs you haven't added on your Profile. If your wallet is empty we still show all routes so you can browse."
+              checked={prefs.walletOnly}
+              onChange={(v) => updatePref({ walletOnly: v })}
+            />
+          </CardContent>
+        </Card>
+
         {/* ─── Notifications ────────────────────────────────────── */}
         <Card>
           <CardHeader className="pb-3">
@@ -328,7 +360,22 @@ function SettingsPage() {
           <CardContent className="space-y-6">
             {/* Standard themes */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">{t('settings.theme')}</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-sm font-medium">{t('settings.theme')}</Label>
+                {/* Reset to default — only shows when current theme is
+                    not the standard "light" (no need to reset what is
+                    already the default). */}
+                {prefs.theme !== 'light' && (
+                  <button
+                    type="button"
+                    onClick={() => updatePref({ theme: 'light' })}
+                    className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Reset to default
+                  </button>
+                )}
+              </div>
               <div className="grid grid-cols-3 gap-2">
                 {STANDARD_THEMES.map(({ id, labelKey, Icon }) => (
                   <button
@@ -352,10 +399,26 @@ function SettingsPage() {
 
             {/* Reading-friendly themes (dyslexia-supportive) */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
-                {t('settings.readingThemes')}
-              </Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <BookOpen className="w-4 h-4" />
+                  {t('settings.readingThemes')}
+                </Label>
+                {/* Quick escape when a reading theme is currently active:
+                    selecting "Use standard colours" reverts to the
+                    default light theme without making the user scroll
+                    back to the Standard Themes block above. */}
+                {READING_THEMES.some((rt) => rt.id === prefs.theme) && (
+                  <button
+                    type="button"
+                    onClick={() => updatePref({ theme: 'light' })}
+                    className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Use standard colours
+                  </button>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {t('settings.readingThemesDesc')}
               </p>
@@ -376,7 +439,19 @@ function SettingsPage() {
 
             {/* Calm mode (autism-supportive) */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">{t('settings.calmMode')}</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-sm font-medium">{t('settings.calmMode')}</Label>
+                {CALM_THEMES.some((ct) => ct.id === prefs.theme) && (
+                  <button
+                    type="button"
+                    onClick={() => updatePref({ theme: 'light' })}
+                    className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Use standard colours
+                  </button>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {t('settings.calmModeDesc')}
               </p>

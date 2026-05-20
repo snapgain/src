@@ -60,45 +60,41 @@ function Hero({ onPrimary, onSecondary }) {
         {/* Eyebrow */}
         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
           <Sparkles className="w-4 h-4" />
-          Used by 100+ UK families to fly home
+          Trusted by 100+ UK families
         </div>
 
-        {/* Headline */}
+        {/* Headline — Option B: outcome promise (grounded range) */}
         <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tighter leading-[1.05] mb-6">
-          Spend smart in the UK.
-          <span className="block gradient-text">Fly your family home.</span>
+          2 to 4 free flights a year.
+          <span className="block gradient-text">From spending you'd do anyway.</span>
         </h1>
 
-        {/* Subheadline */}
+        {/* Subheadline — concrete proof using real beta data.
+            Time frames are precise on purpose: £900 is cumulative
+            (Aug 2025 → May 2026 = 9 months, multiple platforms).
+            5,500+ Avios/month comes from one verified BA Executive
+            Club statement (Apr → May 2026). Both still climbing. */}
         <p className="text-lg md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-10">
-          Every pound you spend on groceries, fuel, bills and treats can come
-          back as cashback or Avios. SnapGain shows you the exact stack that
-          turns your normal life into 2 to 4 flights a year. No frequent flyer
-          status needed.
+          SnapGain ranks every cashback platform, gift-card discount,
+          and miles programme into one stack. You shop normally. We
+          compute the route. Real beta data: <strong>£900 cashback in
+          9 months</strong> and <strong>5,500+ Avios per month</strong>.
         </p>
 
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-6">
+        {/* Single CTA — focused funnel, no secondary distractor */}
+        <div className="flex justify-center items-center mb-6">
           <Button
             onClick={onPrimary}
             size="lg"
             className="px-8 py-6 text-lg font-semibold"
           >
-            Unlock Premium Access
+            Start your 7-day trial
             <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
-          <Button
-            onClick={onSecondary}
-            variant="ghost"
-            size="lg"
-            className="px-6 py-6 text-lg"
-          >
-            See how it works
           </Button>
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Single plan · 9,742 UK stores tracked · Updated daily · Cancel anytime
+          Free 7-day trial · No card needed · 9,742 UK stores tracked · Cancel anytime
         </p>
       </div>
     </section>
@@ -289,7 +285,7 @@ function HowItWorks({ onPrimary }) {
 
       <div className="text-center">
         <Button onClick={onPrimary} size="lg" className="px-8 py-6 text-lg">
-          Unlock Premium Access
+          Start your 7-day trial
           <ArrowRight className="ml-2 w-5 h-5" />
         </Button>
       </div>
@@ -438,9 +434,10 @@ function HouseholdAccount() {
               </div>
               <h3 className="text-lg font-bold mb-2">Fly together, faster</h3>
               <p className="text-sm text-muted-foreground">
-                A family of 4 routing groceries and bills hits flight
-                thresholds 4x faster than going solo. SnapGain shows each
-                member's contribution.
+                Four people routing groceries, bills and shopping fill
+                the shared balance 4x faster than one person alone.
+                SnapGain shows the strategies that work for every type
+                of UK spending.
               </p>
             </CardContent>
           </Card>
@@ -626,31 +623,60 @@ function RealNumbers() {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Section 10 — Interactive Calculator (spend to flights)
+// Section 10 — Interactive Calculator (real-spend based, no flights)
 //
-// Uses the verified ebook formula:
-//   Avios = Cashback £ / 0.0092  (1 Avios = £0.0092 at Avios Booster)
+// Calibrated against the SnapGain beta profile (Denys & Bárbara, May 2026):
+//   £3,064/month total spend → £129/month cashback + 724 Avios/month
+//   That's 4.2% effective cashback rate and 0.24 Avios/£.
 //
-// Flight costs (total £ value of Avios + cash co-pay):
-//   Dublin return    = 16k × 0.0092 + £133 = £280
-//   Lisbon return    = 42k × 0.0092 + £50  = £436
-//   São Paulo return = 55k × 0.0092 + £330 = £836 (verified Nov 2026)
+// Three tiers reflect the realistic spread (full breakdown lives in
+// the Obsidian note "Família UK - cálculo base"). Tier descriptions
+// MUST NOT name partner platforms — see top of STRATEGY_TIERS object.
+//
+// Flight examples removed per internal review (2026-05-14): the
+// methodology leak made readers think SnapGain sells flights inside
+// the app.
 // ────────────────────────────────────────────────────────────────────
+// Strategy tiers calibrated against the SnapGain beta profile:
+//   £3,064/month spend → £129 cashback + 724 Avios/month
+//   = 4.2% cashback + 0.24 Avios/£
+// "Smart" sits at that baseline. Beginner is rough-stack only; Advanced
+// adds full stacking, promos, welcome bonuses, Nectar boosts, etc.
+// IMPORTANT — never name partner platforms here (NX, Amex, Nectar,
+// Ribbon, One4all, etc.). The landing is public and naming platforms
+// lets visitors bypass our affiliate flow by Googling the names.
+// Descriptions must stay generic. Names are revealed only INSIDE the
+// app, after signup, in the Strategy Library cards.
+// No tier descriptions in the public Calculator — users learn what's
+// inside each tier only after signing up (Strategy Library). Keeps the
+// landing intriguing without giving the playbook away.
+const STRATEGY_TIERS = {
+  beginner: {
+    label: 'Beginner',
+    cashbackPct: 2,
+    aviosPerPound: 0.1,
+  },
+  smart: {
+    label: 'Smart',
+    cashbackPct: 5,
+    aviosPerPound: 0.25,
+  },
+  advanced: {
+    label: 'Advanced',
+    cashbackPct: 10,
+    aviosPerPound: 0.5,
+  },
+};
+
 function Calculator({ onPrimary }) {
-  const [spend, setSpend] = useState(500);
-  const [stackYield, setStackYield] = useState(25);
+  const [spend, setSpend] = useState(3000);
+  const [tier, setTier] = useState('smart');
 
-  const monthlyCashback = (spend * stackYield) / 100;
-  const monthlyAvios = Math.round(monthlyCashback / 0.0092);
-
-  const flights = [
-    { name: 'Manchester → Dublin return', cost: 280, icon: '🇮🇪' },
-    { name: 'London → Lisbon return', cost: 436, icon: '🇵🇹' },
-    { name: 'London → São Paulo one-way', cost: 836, icon: '🇧🇷' },
-  ];
-
-  const monthsFor = (cost) =>
-    monthlyCashback > 0 ? Math.ceil(cost / monthlyCashback) : '-';
+  const { cashbackPct, aviosPerPound } = STRATEGY_TIERS[tier];
+  const monthlyCashback = (spend * cashbackPct) / 100;
+  const monthlyAvios = Math.round(spend * aviosPerPound);
+  const annualCashback = monthlyCashback * 12;
+  const annualAvios = monthlyAvios * 12;
 
   return (
     <section
@@ -666,8 +692,8 @@ function Calculator({ onPrimary }) {
             Run your numbers
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground">
-            Tell us what you spend in a typical month. We will show you how
-            fast you can fly.
+            Tell us what your household spends. We will show you the
+            cashback and Avios you are leaving on the table.
           </p>
         </div>
 
@@ -678,7 +704,7 @@ function Calculator({ onPrimary }) {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                    Monthly spend you can route
+                    Monthly household spend
                   </label>
                   <div className="text-3xl font-extrabold text-primary">
                     £{spend.toLocaleString()}
@@ -686,89 +712,92 @@ function Calculator({ onPrimary }) {
                 </div>
                 <input
                   type="range"
-                  min="200"
-                  max="3000"
-                  step="50"
+                  min="500"
+                  max="8000"
+                  step="100"
                   value={spend}
                   onChange={(e) => setSpend(Number(e.target.value))}
                   className="w-full h-2 bg-primary/20 rounded-full appearance-none cursor-pointer accent-primary"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                  <span>£200</span>
-                  <span>£3,000</span>
+                  <span>£500</span>
+                  <span>single</span>
+                  <span>family of 4</span>
+                  <span>£8,000</span>
                 </div>
               </div>
 
-              {/* Yield slider */}
+              {/* Strategy tier selector (3 radio cards) */}
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                    Stack yield (cashback %)
-                  </label>
-                  <div className="text-3xl font-extrabold text-primary">
-                    {stackYield}%
-                  </div>
-                </div>
-                <input
-                  type="range"
-                  min="15"
-                  max="35"
-                  step="1"
-                  value={stackYield}
-                  onChange={(e) => setStackYield(Number(e.target.value))}
-                  className="w-full h-2 bg-primary/20 rounded-full appearance-none cursor-pointer accent-primary"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                  <span>15% (beginner)</span>
-                  <span>25% (mid)</span>
-                  <span>35% (advanced)</span>
+                <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground block mb-3">
+                  Strategy level
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.entries(STRATEGY_TIERS).map(([key, val]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setTier(key)}
+                      className={`rounded-lg border-2 px-4 py-4 text-center font-bold transition-all ${
+                        tier === key
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border hover:border-primary/40'
+                      }`}
+                    >
+                      {val.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Live output */}
-              <div className="bg-primary/5 rounded-xl p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4 pb-4 border-b border-primary/10">
-                  <div>
-                    <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                      Cashback per month
-                    </div>
-                    <div className="text-2xl md:text-3xl font-extrabold">
-                      £{monthlyCashback.toFixed(2)}
-                    </div>
+              {/* Live output — monthly + annual, no flight examples */}
+              <div className="bg-primary/5 rounded-xl p-6 space-y-5">
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
+                    Monthly return
                   </div>
-                  <div>
-                    <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                      Avios per month
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Cashback
+                      </div>
+                      <div className="text-2xl md:text-3xl font-extrabold">
+                        £{monthlyCashback.toFixed(0)}
+                      </div>
                     </div>
-                    <div className="text-2xl md:text-3xl font-extrabold text-primary">
-                      {monthlyAvios.toLocaleString()}
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Avios accumulated
+                      </div>
+                      <div className="text-2xl md:text-3xl font-extrabold text-primary">
+                        {monthlyAvios.toLocaleString()}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                    Time to your next flight
+                <div className="pt-4 border-t border-primary/10">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
+                    Year-end stack (12 months)
                   </div>
-                  {flights.map((f) => (
-                    <div
-                      key={f.name}
-                      className="flex items-center justify-between py-2 border-b border-primary/5 last:border-0"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">{f.icon}</span>
-                        <span className="text-sm font-medium">{f.name}</span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Annual cashback
                       </div>
-                      <div className="text-right">
-                        <span className="font-bold text-primary">
-                          ~{monthsFor(f.cost)}
-                        </span>
-                        <span className="text-xs text-muted-foreground ml-1">
-                          months
-                        </span>
+                      <div className="text-3xl md:text-4xl font-extrabold gradient-text">
+                        £{annualCashback.toLocaleString()}
                       </div>
                     </div>
-                  ))}
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Annual Avios
+                      </div>
+                      <div className="text-3xl md:text-4xl font-extrabold gradient-text">
+                        {annualAvios.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -781,8 +810,9 @@ function Calculator({ onPrimary }) {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <p className="text-xs text-center text-muted-foreground">
-                Based on the SnapGain stacking formula. Cash co-pay
-                included. Actual results vary by retailer mix and dates.
+                Calibrated against real SnapGain beta data. Actual
+                returns vary by retailer mix, payment cards, and
+                participation in promos / welcome bonuses (not included).
               </p>
             </CardContent>
           </Card>
@@ -889,7 +919,7 @@ function PricingCTA({ onSubscribe }) {
           Stop guessing. Start flying.
         </h2>
         <p className="text-lg md:text-xl text-muted-foreground mb-8">
-          One plan. Everything unlocked. £14.99/month or £120/year (save £60).
+          Free 7 days. Then £14.99/month or £120/year (save £60). Cancel anytime.
         </p>
 
         <ul className="text-left max-w-md mx-auto space-y-3 mb-10">
@@ -906,7 +936,7 @@ function PricingCTA({ onSubscribe }) {
           size="lg"
           className="px-10 py-6 text-lg font-semibold"
         >
-          Unlock Premium Access Now
+          Start your free trial
           <ArrowRight className="ml-2 w-5 h-5" />
         </Button>
         <p className="text-sm text-muted-foreground mt-4">
@@ -925,7 +955,7 @@ function LandingPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // All "Unlock Premium Access" CTAs go straight to /pricing.
+  // All "Start your 7-day trial" CTAs go straight to /pricing.
   const goPricing = () => navigate('/pricing');
 
   // Handle anchor scroll if the URL carries a hash on mount.
@@ -956,7 +986,10 @@ function LandingPage() {
       <OriginStory onPrimary={goPricing} />
       <PainSection />
       <HowItWorks onPrimary={goPricing} />
-      <TravelAngle />
+      {/* TravelAngle removed per internal review (2026-05-14):
+          (1) exposes our calculation methodology, (2) made Denys
+          assume SnapGain sells flights inside the app. Function
+          kept defined below so it's easy to re-enable. */}
       <HouseholdAccount />
       <ComparisonTable onPrimary={goPricing} />
       <RealNumbers />

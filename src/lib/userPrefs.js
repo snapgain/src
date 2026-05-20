@@ -38,6 +38,14 @@ const DEFAULTS = {
   lineSpacing: 'normal', // 'normal' | 'wide'
   reduceMotion: false,
   highContrast: false,
+  // ─── Comparison behaviour ────────────────────────────────────────
+  // When true, ComparePage / StoreDetailPage / StrategyPage filter
+  // the routes to only those payable via platforms the user has
+  // added to their Wallet (cashback platforms + miles programs).
+  // Gift-card platforms aren't gated — anyone can use JamDoughnut etc.
+  // Falls back to "show all" gracefully if the wallet is empty so a
+  // new user doesn't see an empty Compare page after enabling this.
+  walletOnly: false,
 };
 
 /** UK banks catalog — small enough to inline. */

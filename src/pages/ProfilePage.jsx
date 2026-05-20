@@ -154,11 +154,23 @@ function ProfilePage() {
 
   const storeOptions = useMemo(
     () =>
-      (stores || []).map((s) => ({
-        id: s.id,
-        label: s.name,
-        sublabel: s.category || undefined,
-      })),
+      (stores || []).map((s) => {
+        // s.category is text[] (array). PillMultiSelect expects a
+        // string for `sublabel` (it calls .toLowerCase() on it for
+        // the search filter). Join the array OR fall back to undefined
+        // when empty — passing an array silently broke the search.
+        let sublabel;
+        if (Array.isArray(s.category) && s.category.length > 0) {
+          sublabel = s.category
+            .map((c) => String(c).replace(/[-_]/g, ' '))
+            .join(' · ');
+        }
+        return {
+          id: s.id,
+          label: s.name,
+          sublabel,
+        };
+      }),
     [stores]
   );
 
