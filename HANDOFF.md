@@ -414,6 +414,40 @@ Cross-check ebook + sites oficiais (verificados 2026-05-19):
 
 ## 8. Pendências (em ordem de prioridade)
 
+## 7.12. Session 3.9 (2026-05-21 madrugada) — Ship + marketing infra
+
+Bárbara liberou modo autônomo: "vamos colocar pra rodar". Tudo deployado, marketing folder completa, lead capture vivo.
+
+### Deploys
+- **snapgain-shop** ✅ deployado (foi necessário fixar vercel.json: removido `installCommand="npm install --strict-ssl=false"` que quebrava CI). Deploy `dpl_3jnyTqJPnHynrVVfCoeyyV5DAoPT` READY.
+- **snapgainuk (main app)** ⚠️ push feito (commit `acc14a0`) mas **Vercel project está PAUSADO** (`live: false`). Bárbara precisa re-enable no Vercel dashboard pra deploy disparar. Quando re-enable, vai pegar TODO o trabalho das sessões 3-3.8.
+- Convention: `MAINTENANCE_MODE = true` ficou commitado (regra da Bárbara). Pra ir live, flip pra `false` em commit separado depois do re-enable.
+
+### Lead capture funnel
+- Nova tabela `email_signups` (RLS public-insert via anon, service-only read)
+- View `email_capture_funnel_v` pra dashboard
+- snapgain.shop CalculatorLandingPage agora tem **form inline pós-calc** que captura email + UTMs + metadata (calc result) direto pro Supabase
+- Success state mostra CTA pro trial com UTM `utm_content=post-calc-capture`
+
+### Marketing folder completa
+`C:\Users\babif\OneDrive\SnapGain\Marketing\`:
+- `_shared/STRATEGY.md` — north star + audiência
+- `_shared/AUTOMATION_RESEARCH.md` — Buffer vs Later vs IG/TikTok APIs
+- `_shared/AI_INFLUENCER_SETUP.md` — guia completo da persona IA (HeyGen + ElevenLabs + brand rules)
+- `_shared/LEAD_MAGNET_CALCULATOR_PRO_PACK.md` — 10-page PDF content pronto pra Canva
+- `Instagram/` — CAPTIONS (30 bilingual posts) + REELS_SCRIPTS (12 Reels) + HASHTAG_KIT
+- `TikTok/` — SCRIPTS (20 TikToks) + HOOKS_LIBRARY (35+ tested templates)
+- `Email/` — DRIP_30_DAYS (15 emails: welcome → drip → trial → conversion → re-engagement)
+
+### Pending — Bárbara precisa
+1. **Re-enable snapgainuk no Vercel** (vercel.com/denys-projects-58b82b39/snapgainuk/settings)
+2. Quando deploy passar, flip MAINTENANCE_MODE=false + push pra ir live
+3. Influencer IA quando estiver pronta — seguir guia em `_shared/AI_INFLUENCER_SETUP.md`
+4. Lead magnet PDF — design no Canva (~3h) usando content em `_shared/LEAD_MAGNET_CALCULATOR_PRO_PACK.md`
+5. Adicionar 6 secrets no GH Actions Settings (lista em `snapgain-scraper/.github/SETUP.md`)
+
+---
+
 ## 7.11. Session 3.8 (2026-05-20 tarde) — automation + booster alerts
 
 ### GitHub Actions cron criado
