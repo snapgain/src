@@ -44,11 +44,12 @@ function SignupPage() {
   const [showProfileModal, setShowProfileModal] = useState(false); // (mantido, mas não usado no novo fluxo)
 
   useEffect(() => {
-    console.log('🔍 Supabase config check:', {
-      url: supabase.supabaseUrl,
-      hasKey: !!supabase.supabaseKey,
-      authUrl: `${supabase.supabaseUrl}/auth/v1`
-    });
+    if (import.meta.env.DEV) {
+      console.log('[signup] supabase config', {
+        hasUrl: !!supabase.supabaseUrl,
+        hasKey: !!supabase.supabaseKey,
+      });
+    }
   }, []);
 
   const validateForm = () => {
@@ -91,21 +92,11 @@ function SignupPage() {
       const attemptSignup = async (retryCount = 0) => {
         const maxRetries = 3;
         try {
-          console.log('⏳ Starting signup process...');
-          console.log('📝 Form data:', {
-            name: formData.name,
-            email: formData.email,
-            passwordLength: formData.password.length,
-            confirmPasswordLength: formData.confirmPassword.length
-          });
-
           if (retryCount > 0) {
             const waitMs = 3000 + jitterBase * retryCount;
-            console.log(`⏱️ Retry ${retryCount}/${maxRetries} - Waiting ${waitMs}ms...`);
+            if (import.meta.env.DEV) console.log(`[signup] retry ${retryCount}/${maxRetries} after ${waitMs}ms`);
             await new Promise(r => setTimeout(r, waitMs));
           }
-
-          console.log('🚀 Calling Supabase signUp...');
 
           const signUpData = {
             email: formData.email.trim(),
@@ -117,30 +108,13 @@ function SignupPage() {
             }
           };
 
-          console.log('📋 Signup payload:', {
-            email: signUpData.email,
-            passwordProvided: !!signUpData.password,
-            hasName: !!signUpData.options.data.name,
-            redirectTo: signUpData.options.emailRedirectTo
-          });
-
           const { data, error } = await supabase.auth.signUp(signUpData);
 
-          console.log('📊 Raw Supabase response:');
-          console.log('✅ Data:', data);
-
           if (error) {
-            console.log('❌ Error:', error);
-            console.log('🚨 Supabase signup error details:', {
-              message: error.message,
-              status: error.status,
-              statusCode: error.statusCode,
-              name: error.name,
-              details: error.__isSupabaseError ? 'Supabase Error' : 'Generic Error'
-            });
-
+            if (import.meta.env.DEV) {
+              console.warn('[signup] error', { message: error.message, status: error.status, name: error.name });
+            }
             if ((error.status === 504 || error.name === 'AuthRetryableFetchError') && retryCount < maxRetries) {
-              console.log(`🔄 Server timeout, retrying... (${retryCount + 1}/${maxRetries})`);
               return attemptSignup(retryCount + 1);
             }
 
