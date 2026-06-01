@@ -414,6 +414,50 @@ Cross-check ebook + sites oficiais (verificados 2026-05-19):
 
 ## 8. Pendências (em ordem de prioridade)
 
+## 7.14. Session 5.0 (2026-06-01) — Mac migration debug + pre-launch hardening
+
+Continuação dos consertos pós-migração + sessão grande de pre-launch autônomo enquanto Bárbara estava no trabalho.
+
+### Infra fixada (PR-by-PR)
+
+Repo `snapgain/src`:
+- **PR #68** — `.gitattributes` LF eol (parou o ruído fantasma de "235 modificados" do OneDrive sync)
+- **PR #69** — Migração da chave Supabase legacy JWT (revogada há 15d) → `sb_publishable_*`. Sem isso, todo cliente browser→Supabase 401a
+- **PR #70** — Remover Apple sign-in (não vamos pagar $99/yr no Apple Developer Program agora)
+- **PR #71** — Resolver merge conflict residual em `ComparisonTool.jsx` (estava impedindo o build de parsear)
+- **PR #72** — Scrub PII de `console.log` em AuthContext (email, payload, etc.) — DEV-only agora
+- **PR #73** — Async fix em `EdgeFunctionsService.getRequestConfig` — `await getSession()` faltando, Authorization header NUNCA estava sendo anexado, todas as chamadas authed 401-avam
+- **PR — chore/disable-bank-card-mocks** — Stub dos handlers de "Conectar banco/cartão" que chamavam `https://api.mockbank.com` (não existe) → mensagem "Coming soon"
+
+Repo `Denysmelo2/snapgain-scraper`:
+- **PR #1** — Bump Node 20 → 22 nos workflows. **Todos os 6 scrapers diários estavam crashando silenciosamente** com `Node.js 20 detected without native WebSocket support` desde a bump do supabase-js. O `|| echo "❌ failed"` no run-step engolia o crash e reportava "success" sem escrever nada.
+- **PR #2** — Adicionar `cheddar` ao default do daily-scrape (existia em `scrapers/cheddar.js` mas não rodava)
+- **PR #3** — Adicionar `everup` ao default
+- **PR — fix/upsertstore-canonical-lookup** — Conserto definitivo do **root cause** das 650 lojas duplicadas: `upsertStore` buscava só por slug; agora cai pra busca por nome (case-insensitive exact) e domain antes de inserir
+
+### Banco — operações executadas
+
+- **Vault**: secret `service_role_key` adicionado (formato novo `sb_secret_*`)
+- **Edge function `platforms-meta-sync` v3** — desativado `verify_jwt` no gateway (gateway novo não aceita `sb_secret_*` como Bearer), auth movido pra dentro do código. Funciona via cron + via "Run sync now" da UI
+- **SQL function `invoke_platforms_meta_sync()`** — corrigido tipo de retorno `uuid → bigint` (pg_net mudou de retorno)
+- **pg_cron `nx-sync-daily` removido** — Bárbara decidiu fazer NX manual
+- **Dedup massivo 2026-06-01** — **650 grupos de lojas duplicadas** mergeados num passe único. Estratégia: canônica = linha mais antiga c/ domain; ofertas (cashback/giftcard/point/etc.) repointadas; favs e simulações migradas; duplicatas marcadas `is_active=false` (não deletadas, p/ preservar `in_nx_network` per Rule 9). Migration: `dedupe_duplicate_stores_2026_06_01` + `_pass2_2026_06_01`
+- **Categorias normalizadas** — Consolidação de variantes (`food`→`food-and-drink`, `crafts`→`craft`, `supermarket`→`groceries`, etc.). 5329 stores sem categoria foram marcadas `['other']` p/ pelo menos aparecerem em alguma busca. Migration: `normalize_store_categories_2026_06_01`
+- **Pending changes da Session 4.0 rejeitados em massa** (13 rows) — todos eram ruído de extração do scraper homepage-only
+
+### Plataformas que rodam diário (decisão da Bárbara 2026-06-01)
+
+Só 8: **TopCashback, Quidco, Avios, Picodi, Cheddar, Rakuten, JamDoughnut, EverUp**. As outras (Airtime, Monzo, NX Rewards, Revolut, Ribbon) ficaram com `is_active = false` na `platforms_explained` — taxa atual fica como última versão até alteração manual. Bárbara faz NX manualmente quando muda algo.
+
+### Pendências que ficaram (pra próxima)
+
+- **5329 lojas em categoria `other`** — backfill com heuristics de domain ou LLM-classify
+- **Backfill homepage_url** das plataformas inativas se decidir reativá-las (`avios`, `quidco`, `revolut` falhavam por Cloudflare)
+- **Investigar "pump up e tops do dia"** — Bárbara mencionou; verificar tabelas + queries
+- **Stripe webhook + flow de subscription** — não testado nesta sessão
+- **`MAINTENANCE_MODE` flag** — atual em `true` em main; precisa flipar pra `false` qd subir live (não commitar como false!)
+- **Tech debt: dois clientes Supabase** (`lib/supabase` vs `lib/customSupabaseClient`) — consolidar pra evitar bug idêntico ao da Session 4
+
 ## 7.13. Session 4.0 (2026-05-23) — Platform rate audit + auto-detection + admin UI + access fix
 
 Bárbara voltou pra atualizar todas as plataformas no app + automatizar. Também subiu a infra de revisão de rates, fixou acesso da própria conta, e começou migração Windows → MacBook.
