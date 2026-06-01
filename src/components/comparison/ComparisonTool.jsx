@@ -15,14 +15,10 @@ import { usePlatformComparison } from '@/hooks/useEdgeFunctions';
 import { usePriceComparison } from '@/hooks/usePriceComparison';
 
 export function ComparisonTool() {
-<<<<<<<< HEAD:src/components/comparison/ComparisonTool.jsx
-  const { user } = useAuth();
-========
   const { user, isTrialExpired } = useAuth();
   const { comparePlatforms, loading: edgeLoading, results: edgeResults } = usePlatformComparison();
   const { loading: priceLoading, error: priceError, resultados: priceResults, compararPrecos } = usePriceComparison();
-  
->>>>>>>> 6c70c49fb6aada2cec871bdeecbebd2474a097b3:components/comparison/ComparisonTool.jsx
+
   const [selectedStore, setSelectedStore] = useState([]);
   const [purchaseAmount, setPurchaseAmount] = useState('100');
   const [productSearch, setProductSearch] = useState('');
