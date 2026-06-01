@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
         }
         
         if (session?.user) {
-          console.log('Session found for user:', session.user.email);
+          if (import.meta.env.DEV) console.log('[auth] session found');
           const trialStart = new Date().toISOString();
           const userData = {
             id: session.user.id,
@@ -102,7 +102,7 @@ export function AuthProvider({ children }) {
       async (event, session) => {
         if (!mounted) return;
 
-        console.log('Auth state changed:', event, session?.user?.email);
+        if (import.meta.env.DEV) console.log('[auth] state change:', event);
         
         try {
           if (event === 'SIGNED_IN' && session?.user) {
@@ -139,7 +139,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      console.log('Attempting login for:', email);
+      if (import.meta.env.DEV) console.log('[auth] login attempt');
       
       if (!email || !password || !email.includes('@') || password.length < 6) {
         throw new Error('Please provide valid email and password');
@@ -174,7 +174,7 @@ export function AuthProvider({ children }) {
       }
       
       if (data.user) {
-        console.log('Login successful for user:', data.user.email);
+        if (import.meta.env.DEV) console.log('[auth] login successful');
         const trialStart = new Date().toISOString();
         const userData = { 
           id: data.user.id,
@@ -214,11 +214,14 @@ export function AuthProvider({ children }) {
   const signup = async (name, email, password, captchaToken = null) => {
     setLoading(true);
     try {
-      console.log('🔵 Starting signup process...');
-      console.log('📧 Email (raw):', email);
-      console.log('👤 Name (raw):', name);
-      console.log('🔒 Password length:', password?.length);  // ✅ SÓ LENGTH POR SEGURANÇA
-      console.log('🤖 Captcha token:', captchaToken ? 'Present' : 'Missing');
+      if (import.meta.env.DEV) {
+        console.log('[auth] signup attempt', {
+          hasEmail: !!email,
+          hasName: !!name,
+          hasPassword: !!password,
+          hasCaptcha: !!captchaToken,
+        });
+      }
       
       // DETECTAR PARÂMETROS TROCADOS
       if (email && !email.includes('@') && name && name.includes('@')) {
@@ -258,17 +261,7 @@ export function AuthProvider({ children }) {
         console.log('🤖 Added captcha token to options');
       }
 
-      console.log('📋 Signup payload:', {
-        email: signUpOptions.email,
-        passwordLength: signUpOptions.password.length,
-        hasName: !!signUpOptions.options.data.name,
-        redirectTo: `${window.location.origin}/dashboard`
-      });
-
       const { data, error } = await supabase.auth.signUp(signUpOptions);
-
-      console.log('📊 Raw Supabase response:');
-      console.log('✅ Data:', data);
       
       if (error) {
         console.log('❌ Error:', error);
@@ -288,12 +281,11 @@ export function AuthProvider({ children }) {
       }
 
       if (data?.user) {
-        console.log('🎉 Signup successful!');
-        console.log('👤 User created:', {
-          id: data.user.id,
-          email: data.user.email,
-          confirmed: data.user.email_confirmed_at ? 'Yes' : 'No'
-        });
+        if (import.meta.env.DEV) {
+          console.log('[auth] signup ok', {
+            confirmed: !!data.user.email_confirmed_at,
+          });
+        }
         
         // ✅ CRIAR USUÁRIO TEMPORÁRIO PARA PROFILE SETUP
         const trialStart = new Date().toISOString();
