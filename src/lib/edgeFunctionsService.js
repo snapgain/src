@@ -5,15 +5,18 @@ const EDGE_FUNCTIONS_BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/
 
 class EdgeFunctionsService {
   // Configuração base para requisições
-  getRequestConfig(authRequired = false) {
+  async getRequestConfig(authRequired = false) {
     const headers = {
       'Content-Type': 'application/json',
     };
 
     if (authRequired) {
-      const session = supabase.auth.getSession();
-      if (session?.data?.session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.data.session.access_token}`;
+      // getSession returns a Promise — the previous sync access silently
+      // returned undefined, so Authorization was never being attached and
+      // every authed edge-function call 401'd.
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) {
+        headers['Authorization'] = `Bearer ${data.session.access_token}`;
       }
     }
 
@@ -23,9 +26,10 @@ class EdgeFunctionsService {
   // Auth Callback
   async handleAuthCallback(params) {
     try {
+      const cfg = await this.getRequestConfig(true);
       const response = await fetch(`${EDGE_FUNCTIONS_BASE_URL}/auth-callback`, {
         method: 'POST',
-        ...this.getRequestConfig(true),
+        ...cfg,
         body: JSON.stringify(params),
       });
 
@@ -43,9 +47,10 @@ class EdgeFunctionsService {
   // Registro de usuário
   async registerUser(email, userData) {
     try {
+      const cfg = await this.getRequestConfig(true);
       const response = await fetch(`${EDGE_FUNCTIONS_BASE_URL}/user-registration`, {
         method: 'POST',
-        ...this.getRequestConfig(true),
+        ...cfg,
         body: JSON.stringify({ email, userData }),
       });
 
@@ -63,9 +68,10 @@ class EdgeFunctionsService {
   // Comparação de plataformas
   async comparePlatforms(platforms, criteria) {
     try {
+      const cfg = await this.getRequestConfig(false);
       const response = await fetch(`${EDGE_FUNCTIONS_BASE_URL}/platform-comparison`, {
         method: 'POST',
-        ...this.getRequestConfig(false),
+        ...cfg,
         body: JSON.stringify({
           platformData: { platforms, criteria }
         }),
@@ -85,9 +91,10 @@ class EdgeFunctionsService {
   // Gerenciamento de assinatura
   async handleSubscription(userId, subscriptionType, paymentData) {
     try {
+      const cfg = await this.getRequestConfig(true);
       const response = await fetch(`${EDGE_FUNCTIONS_BASE_URL}/subscription-handler`, {
         method: 'POST',
-        ...this.getRequestConfig(true),
+        ...cfg,
         body: JSON.stringify({
           userId,
           subscriptionType,
@@ -109,9 +116,10 @@ class EdgeFunctionsService {
   // TopCashback UK integration
   async getTopCashbackOffers(produto, limite = 10) {
     try {
+      const cfg = await this.getRequestConfig(false);
       const response = await fetch(`${EDGE_FUNCTIONS_BASE_URL}/topcashback-uk`, {
         method: 'POST',
-        ...this.getRequestConfig(false),
+        ...cfg,
         body: JSON.stringify({ produto, limite }),
       });
 
@@ -129,9 +137,10 @@ class EdgeFunctionsService {
   // JamDoughnut UK integration
   async getJamDoughnutOffers(produto, limite = 10) {
     try {
+      const cfg = await this.getRequestConfig(false);
       const response = await fetch(`${EDGE_FUNCTIONS_BASE_URL}/jamdoughnut-uk`, {
         method: 'POST',
-        ...this.getRequestConfig(false),
+        ...cfg,
         body: JSON.stringify({ produto, limite }),
       });
 
@@ -149,9 +158,10 @@ class EdgeFunctionsService {
   // Amazon UK integration
   async getAmazonUKOffers(produto, limite = 10) {
     try {
+      const cfg = await this.getRequestConfig(false);
       const response = await fetch(`${EDGE_FUNCTIONS_BASE_URL}/amazon-uk`, {
         method: 'POST',
-        ...this.getRequestConfig(false),
+        ...cfg,
         body: JSON.stringify({ produto, limite }),
       });
 
@@ -249,9 +259,10 @@ class EdgeFunctionsService {
   // Função genérica para chamar qualquer Edge Function
   async callEdgeFunction(functionName, data, authRequired = false) {
     try {
+      const cfg = await this.getRequestConfig(authRequired);
       const response = await fetch(`${EDGE_FUNCTIONS_BASE_URL}/${functionName}`, {
         method: 'POST',
-        ...this.getRequestConfig(authRequired),
+        ...cfg,
         body: JSON.stringify(data),
       });
 
