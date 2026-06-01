@@ -144,7 +144,8 @@ export const AuthProvider = ({ children }) => {
 
   /**
    * signInWithProvider — OAuth via Supabase. The provider must be enabled
-   * in Supabase Dashboard → Authentication → Providers (Google, Apple).
+   * in Supabase Dashboard → Authentication → Providers (Google only —
+   * Apple removed 2026-06-01 pending $99/yr Developer membership).
    * The user is redirected away to the provider's consent screen and back
    * to /auth/callback (handled by Supabase). Set the redirectTo if you
    * want to send them somewhere specific after.
