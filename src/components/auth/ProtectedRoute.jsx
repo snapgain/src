@@ -64,6 +64,12 @@ function ProtectedRoute({
     return <Navigate to="/onboarding" replace />;
   }
 
+  // Admins bypass ALL premium gates (founder + support access). Source of
+  // truth is profile.role; fallback to JWT user_metadata.role in case the
+  // sync trigger hasn't propagated yet for a brand-new admin.
+  const isAdmin =
+    profile?.role === 'admin' || user?.user_metadata?.role === 'admin';
+
   // Derive premium flags once
   const stripeActive =
     profile?.subscription_status === 'active' ||
@@ -71,13 +77,24 @@ function ProtectedRoute({
   const trialEnd = profile?.trial_end ? new Date(profile.trial_end) : null;
   const inLocalTrial = trialEnd && trialEnd.getTime() > Date.now();
 
-  // STRICT: only paying customers (trial does NOT count)
-  if (requirePremiumStrict && !stripeActive && location.pathname !== '/pricing') {
+  // STRICT: only paying customers (trial does NOT count) — admins bypass
+  if (
+    requirePremiumStrict &&
+    !stripeActive &&
+    !isAdmin &&
+    location.pathname !== '/pricing'
+  ) {
     return <Navigate to="/pricing?subscribe=required" replace />;
   }
 
-  // PREMIUM: paying customers OR users still in their 7-day trial
-  if (requirePremium && !stripeActive && !inLocalTrial && location.pathname !== '/pricing') {
+  // PREMIUM: paying customers OR trial users — admins bypass
+  if (
+    requirePremium &&
+    !stripeActive &&
+    !inLocalTrial &&
+    !isAdmin &&
+    location.pathname !== '/pricing'
+  ) {
     return <Navigate to="/pricing?subscribe=required" replace />;
   }
 

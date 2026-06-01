@@ -28,6 +28,7 @@ import WalletPage from '@/pages/WalletPage';
 import AlertsPage from '@/pages/AlertsPage';
 import LibraryPage from '@/pages/LibraryPage';
 import AdminHotDealsPage from '@/pages/AdminHotDealsPage';
+import AdminPlatformChangesPage from '@/pages/AdminPlatformChangesPage';
 import MilesPage from '@/pages/MilesPage';
 import CashbackPage from '@/pages/CashbackPage';
 import HotDealsPage from '@/pages/HotDealsPage';
@@ -143,6 +144,11 @@ function AppContent() {
         <Route path="/admin/hot-deals" element={
           <ProtectedRoute>
             <AdminHotDealsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/platform-changes" element={
+          <ProtectedRoute>
+            <AdminPlatformChangesPage />
           </ProtectedRoute>
         } />
         <Route path="/miles" element={

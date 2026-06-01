@@ -414,6 +414,63 @@ Cross-check ebook + sites oficiais (verificados 2026-05-19):
 
 ## 8. Pendências (em ordem de prioridade)
 
+## 7.13. Session 4.0 (2026-05-23) — Platform rate audit + auto-detection + admin UI + access fix
+
+Bárbara voltou pra atualizar todas as plataformas no app + automatizar. Também subiu a infra de revisão de rates, fixou acesso da própria conta, e começou migração Windows → MacBook.
+
+### Rate audit (13 platforms in `platforms_explained`)
+WebFetch nos 13 sites oficiais (2026-05-23). Aprovado por Bárbara:
+- **NX Rewards** → One4all reduzido `20% → 6%` (confirmado direto por ela)
+- **Rakuten** → `1-15%` → `1-60% (£1 flat on Amazon · TEMU up to 60%)`
+- **Ribbon** → `1.0-1.5%` → `1% on any UK rent · 3% on partner properties (coming soon)`
+- **Cheddar** → enriquecido com breakdown por categoria
+- **Quidco** → notes documentam Premium = £1/mês só nos meses que compra
+- **5 não verificadas** (Avios eStore, Revolut, EverUp, Airtime per-brand, JD per-brand) → `source = needs-manual-review-2026-05-23` — bloqueadas por Cloudflare/SPA
+- Migration: `platforms_explained_verification_2026_05_23`
+
+### Auto-detection stack
+- **Tabela `platforms_meta_changes`** (queue) — id, platform_slug, field_name, current_value, detected_value, source_url, fetched_at, status (pending/approved/rejected/superseded), reviewed_by, reviewer_note, diff_score, raw_extract. RLS admin-only. Unique partial index em pending por (slug, field).
+- **Edge function `platforms-meta-sync` v2** (ATIVA) — loop nos 13 sites, regex extract (%, Avios/£, £/mo), filtro de ruído (cookies/copyright/anos), diff_score heurístico, enfileira se ≥0.34. Skip lógica: 3+ failures consecutivas → dorme. UA rotation entre 3 user agents. Jitter 400-1200ms entre fetches.
+- **pg_cron `platforms-meta-sync-daily`** — todo dia 04:00 UTC. Função `public.invoke_platforms_meta_sync()` lê service_role key do `vault.secrets` (Bárbara precisa rodar 1× INSERT pra popular o vault, ver setup pendente abaixo).
+- **Coluna `platforms_explained.fetch_failures_in_a_row`** + `last_fetch_at` + `last_fetch_status` pra log.
+- **`/admin/platform-changes`** (`AdminPlatformChangesPage.jsx`) — filter (pending/approved/rejected/superseded/all), botão "Run sync now", botão Approve & apply (escreve em platforms_explained + marca queue approved), Reject com note. Raw extract collapsable, source URL clicável, diff_score visível.
+- Rule 8.5 respeitada: edge function **nunca** auto-aplica em platforms_explained — só enfileira.
+
+### Access fix — Bárbara não conseguia usar o app
+- **Bug 1 — dados malformados**: `user_profiles` dela tinha `subscription_status='true'` (literal string), `stripe_subscription_id='si_UZPz5gYfvXbczt'` (prefix wrong — Stripe usa `sub_`), `plan=NULL`, `stripe_customer_id=NULL`. Set manualmente em algum momento, não pelo webhook.
+- **Bug 2 — ProtectedRoute ignorava admin role**: gates `requirePremium` e `requirePremiumStrict` não tinham bypass pra admins.
+- **Fix código** (`src/components/auth/ProtectedRoute.jsx`): adicionado `const isAdmin = profile?.role === 'admin' || user?.user_metadata?.role === 'admin'`. Ambos gates agora têm `&& !isAdmin`.
+- **Fix dados**: `UPDATE user_profiles SET subscription_status='active', plan='yearly', stripe_subscription_id=NULL, trial_end=NULL WHERE email='babiferreir@gmail.com'`. `stripe_subscription_id` ficou NULL pra webhook real popular quando ela completar checkout legit (ela paga com cupom 100% off de qualquer jeito).
+
+### Role sync trigger
+- **`sync_role_on_auth_update` + `sync_role_on_auth_insert`** triggers em `auth.users` propagam `raw_user_meta_data.role` → `public.user_profiles.role`. Resolve o desencontro entre 2 sources of truth (JWT vs RLS table).
+- Migration: `sync_user_role_metadata_to_profile`. Função `sync_user_role_to_profile()` SECURITY DEFINER.
+
+### MacBook migration
+- Bárbara mudando de Windows → MacBook (Claude já instalado no Mac novo).
+- **`src-1/SETUP_MACBOOK.md`** criado — guia self-contained com 11 passos: OneDrive sync, brew install node/git/gh, gh auth login, npm install, npm run dev, verify checklist, common issues table, "give Claude this context on fresh Mac" snippet.
+- OneDrive sync recomendado excluir `**/node_modules` pra evitar thrash.
+
+### Pendente — Bárbara precisa
+1. **Vault setup (uma vez)** pra cron platforms-meta-sync funcionar autônomo:
+   ```sql
+   INSERT INTO vault.secrets (name, secret)
+   VALUES ('service_role_key', '<paste service_role_key>');
+   ```
+   Sem isso, cron domingo falha mas botão "Run sync now" na UI funciona (usa JWT do admin).
+2. **MacBook setup** — seguir `SETUP_MACBOOK.md` no novo Mac.
+3. **Snapgainuk Vercel** ainda pausado (de §7.12 — não resolvido).
+4. **Verificações manuais** das 5 plataformas que regex bloqueado: Avios eStore, Revolut, EverUp, Airtime per-brand, JD per-brand. Quando ela logar em cada, me passa os valores ou print.
+
+### Arquivos novos/alterados (não commitados ainda)
+- `src/pages/AdminPlatformChangesPage.jsx` (NOVO, ~290 linhas)
+- `src/components/auth/ProtectedRoute.jsx` (admin bypass)
+- `src/App.jsx` (route + import) + `MAINTENANCE_MODE = false` local (NÃO commitar)
+- `SETUP_MACBOOK.md` (NOVO, raiz de src-1/)
+- Supabase: 5 migrations aplicadas (platforms_explained_verification_2026_05_23, create_platforms_meta_changes_queue_v2, schedule_platforms_meta_sync_weekly, platforms_meta_sync_daily, sync_user_role_metadata_to_profile) + 1 edge function deploy (platforms-meta-sync v2)
+
+---
+
 ## 7.12. Session 3.9 (2026-05-21 madrugada) — Ship + marketing infra
 
 Bárbara liberou modo autônomo: "vamos colocar pra rodar". Tudo deployado, marketing folder completa, lead capture vivo.
