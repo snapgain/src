@@ -4,9 +4,13 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 /**
- * OAuthButtons — Google and Apple sign-in buttons that delegate to
- * Supabase's OAuth flow. The providers must be enabled in Supabase
- * Dashboard → Authentication → Providers (see SETUP_OAUTH.md).
+ * OAuthButtons — Google sign-in button that delegates to Supabase's
+ * OAuth flow. Google must be enabled in Supabase Dashboard →
+ * Authentication → Providers (see SETUP_OAUTH.md).
+ *
+ * Apple sign-in was removed (2026-06-01) — Apple Developer Program
+ * membership costs $99/yr and we're not paying yet. Re-add the button
+ * + provider in Supabase when we decide to enroll.
  */
 function GoogleIcon({ className = 'w-5 h-5' }) {
   return (
@@ -19,17 +23,9 @@ function GoogleIcon({ className = 'w-5 h-5' }) {
   );
 }
 
-function AppleIcon({ className = 'w-5 h-5' }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
-      <path d="M16.365 1.43c0 1.14-.41 2.18-1.23 3.13-1.01 1.16-2.23 1.83-3.55 1.72-.04-1.13.4-2.21 1.21-3.18.85-1.04 2.21-1.79 3.31-1.81.04.04.06.05.07.07.13.04.18.04.19.07zM20.4 17.4c-.55 1.27-.81 1.84-1.52 2.96-1 1.55-2.42 3.49-4.17 3.51-1.55.02-1.95-1.01-4.06-.99-2.11.01-2.55 1.01-4.1.99-1.75-.02-3.09-1.78-4.09-3.34-2.79-4.34-3.09-9.43-1.36-12.13.95-1.49 2.45-2.36 3.86-2.36 1.43 0 2.34.79 3.53.79 1.16 0 1.86-.79 3.52-.79 1.25 0 2.59.68 3.55 1.86-3.12 1.71-2.62 6.17.84 7.5z"/>
-    </svg>
-  );
-}
-
 export function OAuthButtons({ disabled = false }) {
   const { signInWithProvider } = useAuth();
-  const [busy, setBusy] = useState(null); // 'google' | 'apple' | null
+  const [busy, setBusy] = useState(null); // 'google' | null
 
   const handleClick = async (provider) => {
     if (busy) return;
@@ -58,20 +54,6 @@ export function OAuthButtons({ disabled = false }) {
           <GoogleIcon className="w-5 h-5 mr-2" />
         )}
         Continue with Google
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full bg-black text-white hover:bg-gray-900 border-black"
-        onClick={() => handleClick('apple')}
-        disabled={disabled || !!busy}
-      >
-        {busy === 'apple' ? (
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        ) : (
-          <AppleIcon className="w-5 h-5 mr-2" />
-        )}
-        Continue with Apple
       </Button>
     </div>
   );
