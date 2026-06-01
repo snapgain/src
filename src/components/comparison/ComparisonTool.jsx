@@ -125,37 +125,23 @@ export function ComparisonTool() {
         return { ...reward, affiliateLink: getAffiliateLink(reward, selectedStore) };
       });
 
-  // Simula autenticação OAuth/API Key para banco
+  // Bank / card connection — kept stubbed for now. Real integration
+  // (OpenBanking, Plaid, card providers) is out of scope pre-launch.
+  // The previous code hit hardcoded mock URLs (api.mockbank.com,
+  // api.mockcard.com) that don't exist, so the UI always showed an
+  // error toast on click. Now we show a friendly "coming soon".
   async function handleConnectBank() {
-    setIsLoading(true);
-    try {
-      // Em produção, use OpenBanking ou Plaid
-      // const token = await startOAuthFlow();
-      // const offers = await fetchApi(`https://api.openbanking.com/user/offers?token=${token}`);
-      const offers = await fetchApi('https://api.mockbank.com/user/offers');
-      setBankOffers(normalizeRewards(offers?.offers || []));
-      setIsBankConnected(true);
-      toast({ title: 'Banco conectado!', description: 'Ofertas personalizadas carregadas.' });
-    } catch (err) {
-      toast({ title: 'Erro ao conectar banco', description: err.message, variant: 'destructive' });
-    }
-    setIsLoading(false);
+    toast({
+      title: 'Coming soon',
+      description: 'Bank linking will be available after launch.',
+    });
   }
 
-  // Simula autenticação OAuth/API Key para cartão
   async function handleConnectCard() {
-    setIsLoading(true);
-    try {
-      // const token = await startCardOAuthFlow();
-      // const offers = await fetchApi(`https://api.cardprovider.com/user/offers?token=${token}`);
-      const offers = await fetchApi('https://api.mockcard.com/user/offers');
-      setCardOffers(normalizeRewards(offers?.offers || []));
-      setIsCardConnected(true);
-      toast({ title: 'Cartão conectado!', description: 'Ofertas personalizadas carregadas.' });
-    } catch (err) {
-      toast({ title: 'Erro ao conectar cartão', description: err.message, variant: 'destructive' });
-    }
-    setIsLoading(false);
+    toast({
+      title: 'Coming soon',
+      description: 'Card linking will be available after launch.',
+    });
   }
 
   return (
