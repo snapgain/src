@@ -1,9 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+// Legacy import path kept for backwards compatibility. 25+ files
+// import from here; rather than touch them all, this file re-exports
+// the canonical singleton from `./supabase`. Both paths now resolve
+// to the SAME Supabase client instance, so getSession() works
+// consistently regardless of which file is doing the auth dance.
+//
+// Prefer `import { supabase } from '@/lib/supabase'` in new code.
 
-const supabaseUrl = 'https://ffowgyjdbgkphsflxybk.supabase.co';
-// New "Publishable" key (sb_publishable_*) — replaces the old anon
-// JWT format. Safe to expose in the browser bundle; RLS still
-// controls what each user can read/write.
-const supabaseAnonKey = 'sb_publishable_fG0AhiV3dznAp7DcHm5jPA_jepTG5-W';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export { supabase, default } from './supabase';
