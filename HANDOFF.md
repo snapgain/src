@@ -4,7 +4,7 @@
 > Não releia arquivos do repo a menos que precise editá-los — isso enche o contexto.
 > Use Grep/Glob pra localizar. Read só quando for editar.
 
-Última atualização: **2026-05-19 (session 3.5)** — ComparePage polish + all-in-Avios + dedup #2 + /learn/platforms fix. Veja seção 7.7 + 7.8.
+Última atualização: **2026-06-02 (session 6.1)** — Avios categories + 96.6% catalogue coverage + silent-failure guards. Veja seção 7.16 (e 7.15 pra Session 6.0).
 
 ---
 
@@ -475,14 +475,64 @@ Sessão grande focada em (1) consertar o TopCashback que quebrou no login, (2) a
 | Scrapers que passam category | 3 de 8 (TC, Quidco, TC-giftcards) | **7 de 8** (+ JD, EverUp, Cheddar, Picodi, Rakuten) |
 | Daily cron coverage | 6 plataformas | 8 plataformas |
 
-### Pendências pra próxima sessão
+### Pendências pra próxima sessão (superseded — veja seção 7.16)
 
-- **Avios — scraper-side category fix** (precisa Playwright pra navegar SPA; ~1h+)
-- **608 stores ainda em `other`** — pure brand names sem hint; precisaria curadoria manual via UI ou LLM mais robusto. Vai diminuir naturalmente conforme TC/Quidco/Picodi/Rakuten descobrem essas lojas com categorias no próximo scrape.
+## 7.16. Session 6.1 (2026-06-02 tarde) — Avios categories + 96.6% coverage + silent-failure guards
+
+Continuação da Session 6.0. Sequência: Avios scraper-side category → cleanup 608 residuais → silent-failure guards.
+
+### Avios scraper-side category (PR Denysmelo2/#9)
+
+API não tem filtro de categoria (testado 3 nomes de param). Solução: visitar 15 páginas `/retailers/?c=<slug>#browse-all` em Playwright, harvest dos slugs visíveis, montar `Map<slug, categories[]>`. Mapping derivado do RSC stream da landing:
+- `clothes-and-fashion` → fashion
+- `health-and-beauty` → health + beauty (Avios junta)
+- `home-and-garden` → home + garden
+- `food-and-drink` → food-and-drink
+- `sport-and-fitness` → sports
+- `travel` → travel-and-leisure
+- `entertainment-and-leisure` → entertainment
+- `gifts-and-flowers` → gifts
+- `children-and-family` → baby
+- `toys-and-games` → toys
+- `department-stores` → department-stores
+- `luxury` → luxury
+- `office-and-business` → office
+- `electricals` → electronics
+- `banking-and-insurance` → finance
+
+Failure isolation: se `harvestCategoryMap` quebrar, scrape segue sem categoria (rates preservadas). +1-2min no daily run. **Resultado: 8 de 8 scrapers agora passam category.**
+
+### Cleanup 608 residuais → 345 (cobertura 94.3% → 96.6%)
+
+3 passes em ordem:
+1. **Migration `backfill_categories_keyword_pass3_2026_06_02`** — tightened keyword regex aplicado a 'other'-only **E** empty-category buckets (passes anteriores só pegavam 'other'-only, deixando 287 stores empty intocados — eram brands Avios sem o fix #9). Classificou +78.
+2. **Workflow LLM-classify residual** — 9 agentes paralelos, 817 stores, 100s, 279k tokens. 456 com categoria real, 361 permaneceram 'other' (genuinamente sem sinal).
+3. **3 migrations `llm_classify_residual_chunk_{1,2,3}_2026_06_02`** — aplicaram chunks de 152 rows cada.
+
+**Estado final do catálogo (fim Session 6.1):**
+
+| Métrica | Fim Session 6.0 | Fim Session 6.1 |
+|---|---|---|
+| Categorizadas (não-other) | 9.839 (94.3%) | **10.373 (96.6%)** |
+| Em `other` | 608 | **345** |
+| Empty category | 287 | **16** |
+| Scrapers que passam category | 7 de 8 | **8 de 8** ✓ |
+
+### Silent-failure guards (PR Denysmelo2/#10)
+
+Dois defenses independentes pro padrão "scrape silenciosamente quebra mas reporta verde":
+
+1. **`lib/upsert.js` sweep sanity guard** — antes de marcar offers como stale, pre-counta quantos seriam desativados vs total ativo da plataforma. Aborta (throws) se ratio > `SWEEP_MAX_STALE_RATIO` (default 0.5). Plataformas pequenas (<20 active) bypassam o check (ratios noisy). Override: `SWEEP_MAX_STALE_RATIO=0.8` ou `SWEEP_FORCE=1`.
+2. **`.github/workflows/scrape-daily.yml` exit code** — `|| echo "failed"` substituído por pattern que coleta failures e exits non-zero no fim. Outros scrapers continuam rodando (não cascade-block), mas CI badge fica vermelho corretamente.
+
+Origin: session 7.15 TC regression. Com esses guards, se TC quebra de novo silenciosamente, (1) sweep não vai apagar o catálogo, (2) CI fica vermelho.
+
+### Pendências pra próxima sessão (atualizadas)
+
 - **Stripe end-to-end test** com transação real (Bárbara faz quando estiver pronta)
 - **`MAINTENANCE_MODE` flip** quando estiver tudo verificado pra ir live
 - **`hot_deals` curadoria** — Bárbara pode adicionar entries via `/admin/hot-deals` pra destacar deals especiais
-- **TopCashback session cache** — primeiro run de cada dia tem que logar do zero (sem cache). Login passa agora mas é frágil — se TC mexer de novo no HTML, quebra silenciosamente
+- **345 stores em `other`** — residual irredutível (brand names sem hint nem domain). LLM passou e categorizou só onde tinha sinal. Vai diminuir naturalmente conforme os scrapers redescobrem com categoria.
 
 ## 7.14. Session 5.0 (2026-06-01) — Mac migration debug + pre-launch hardening
 
