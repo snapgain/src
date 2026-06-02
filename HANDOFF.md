@@ -475,12 +475,7 @@ Sessão grande focada em (1) consertar o TopCashback que quebrou no login, (2) a
 | Scrapers que passam category | 3 de 8 (TC, Quidco, TC-giftcards) | **7 de 8** (+ JD, EverUp, Cheddar, Picodi, Rakuten) |
 | Daily cron coverage | 6 plataformas | 8 plataformas |
 
-### Pendências pra próxima sessão
-
-- **Stripe end-to-end test** com transação real (Bárbara faz quando estiver pronta)
-- **`MAINTENANCE_MODE` flip** quando estiver tudo verificado pra ir live
-- **`hot_deals` curadoria** — Bárbara pode adicionar entries via `/admin/hot-deals` pra destacar deals especiais
-- **345 stores em `other`** — residual irredutível (brand names sem hint nem domain). LLM passou e categorizou só onde tinha sinal. Vai diminuir naturalmente conforme os scrapers redescobrem com categoria.
+### Pendências pra próxima sessão (superseded — veja seção 7.16)
 
 ## 7.16. Session 6.1 (2026-06-02 tarde) — Avios categories + 96.6% coverage + silent-failure guards
 
@@ -531,6 +526,13 @@ Dois defenses independentes pro padrão "scrape silenciosamente quebra mas repor
 2. **`.github/workflows/scrape-daily.yml` exit code** — `|| echo "failed"` substituído por pattern que coleta failures e exits non-zero no fim. Outros scrapers continuam rodando (não cascade-block), mas CI badge fica vermelho corretamente.
 
 Origin: session 7.15 TC regression. Com esses guards, se TC quebra de novo silenciosamente, (1) sweep não vai apagar o catálogo, (2) CI fica vermelho.
+
+### Pendências pra próxima sessão (atualizadas)
+
+- **Stripe end-to-end test** com transação real (Bárbara faz quando estiver pronta)
+- **`MAINTENANCE_MODE` flip** quando estiver tudo verificado pra ir live
+- **`hot_deals` curadoria** — Bárbara pode adicionar entries via `/admin/hot-deals` pra destacar deals especiais
+- **345 stores em `other`** — residual irredutível (brand names sem hint nem domain). LLM passou e categorizou só onde tinha sinal. Vai diminuir naturalmente conforme os scrapers redescobrem com categoria.
 
 ## 7.14. Session 5.0 (2026-06-01) — Mac migration debug + pre-launch hardening
 
