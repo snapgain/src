@@ -414,6 +414,76 @@ Cross-check ebook + sites oficiais (verificados 2026-05-19):
 
 ## 8. Pendências (em ordem de prioridade)
 
+## 7.15. Session 6.0 (2026-06-02) — TopCashback fix + massive category coverage
+
+Sessão grande focada em (1) consertar o TopCashback que quebrou no login, (2) atacar a lista de 8 pendências da Session 5, (3) levar categorização de 67% pra 94%+ via LLM-classify + scraper-side fixes.
+
+### Sequência 1-8 (lista da Bárbara, manhã 02/06)
+
+1. **TopCashback** — TC tinha redesenhado a página de login; selectors antigos (`#LoginEmail`, `#LoginPassword`) deixaram de existir. Novos: `#txtEmail`, `#loginPasswordInput`, `#ctl00_GeckoOneColPrimary_Login_CaptchaSubmit`. **PR #5 mergeado**. Test confirmou: 1.405 merchants escrapeados em 20 min.
+2. **Backfill `other`** — keyword heuristics (5329 → 3262) + LLM-classify de 17 agentes paralelos (3262 → 608). **94.3% das lojas agora categorizadas**.
+3. **`MAINTENANCE_MODE`** — Bárbara decidiu manter `true` em main até tudo estar 100%. Sem flip.
+4. **Pump up / Tops do dia** — investigado. Pump funciona perfeitamente (559 boost events 7d, 221 cashback + 2 giftcard boosted). `hot_deals` admin-curado tá vazio mas não é blocker (página exibe os boosters automáticos).
+5. **Stripe webhook** — infra OK (responde 400 correto sem signature), integration end-to-end pendia teste real. Bárbara confirmou Stripe Dashboard + Supabase Secrets feitos.
+6. **Consolidar Supabase clients** — `lib/supabase.js` agora é fonte única; `lib/customSupabaseClient.js` re-exporta. Mesma session storage, bug do JWT não pode mais ocorrer. **PR snapgain/src merged**.
+7. **DEPLOY-PRODUCAO.md** — **AVG era o culpado** (não OneDrive!). AVG flagged como `MD:HttpRequest-inf [Susp]` por ter muitas URLs HTTP no markdown. Falso positivo. Conteúdo preservado em git (`git show 955785b:DEPLOY-PRODUCAO.md`). Bárbara adicionou exceção do AVG pra pasta inteira do projeto.
+8. **Avios + Quidco** — reativados em `platforms_explained`. Revolut continua off (Bárbara: "banco não muda taxa toda hora").
+
+### Bônus achados
+
+- **Daily cron fallback estava desalinhado**: o step "Determine scrapers" tinha fallback hardcoded com 6 plataformas (sem cheddar/everup) — quando cron rodava sem inputs, esses 2 eram silenciosamente pulados. **PR Denysmelo2/#6** alinhou os dois caminhos pra 8 plataformas.
+
+### Scraper-side category fix (3 fases)
+
+**Fase 1** — Gift card scrapers (PR Denysmelo2/#7):
+- JamDoughnut: tagga `'gift-card'` + mapeia `_groups` (Food, Fashion, Beauty...) → nosso enum
+- EverUp: tagga `'gift-card'`
+- Cheddar: tagga `'gift-card'`
+
+**Fase 2 (mesma sessão)** — Picodi + Rakuten (PR Denysmelo2/#8):
+- **Picodi**: novo `harvestCategoryMap()` que itera `/uk/categories` → `/uk/category/<slug>` × ~30 pages, extrai `/uk/<store>` links. Substring normalizer mapeia slugs Picodi (cosmetics, eyewear, beverages, airline, ecommerce-platform, etc.) → nosso enum.
+- **Rakuten**: itera 5 top-level paths (`/fashion`, `/health-beauty`, `/home-garden`, `/electricals`, `/department-stores`), extrai `/shop/<slug>` links, tagga union.
+
+**Avios — deferido**: API não filtra por categoria (testado `?category=Fashion` → mesmos 241 resultados; param ignorado). Site é Next.js SPA. Precisaria Playwright + research mais profundo. Próxima sessão.
+
+### Banco — operações da Session 6.0
+
+- **Migration `dedupe_stores_pass2_2026_06_01`** + várias passadas de cleanup (650 dupes iniciais + 3 residuais surgindo do scraper)
+- **Migration `normalize_store_categories_2026_06_01`** — consolidou variantes (food→food-and-drink, crafts→craft, supermarket→groceries, etc.) e marcou 5316 stores sem cat como `['other']`
+- **Migration `backfill_categories_keyword_pass_2026_06_01`** — keyword regex sobre name+domain (1912 stores classificados)
+- **Migration `backfill_categories_pass2_2026_06_02`** — segunda passada com keywords adicionais
+- **7 migrations `llm_classify_chunk_*_2026_06_02`** — aplicaram resultados do workflow LLM (2654 stores classificados via 17 agentes paralelos, 534k tokens, 100% sucesso)
+- **`platforms_explained.is_active`** — avios + quidco reativados; airtime/everup/monzo/nx_rewards/revolut/ribbon permanecem off no `platforms-meta-sync`
+
+### Code fixes do React app (PRs snapgain/src)
+
+- **#71** — Resolveu merge conflict residual em `ComparisonTool.jsx` (impedia o build de parsear!)
+- **#72** — Removeu PII de console.log do AuthContext (email, payload, etc.)
+- **#73** — Async fix em `EdgeFunctionsService.getRequestConfig` — `getSession()` Promise era usado sem await, Authorization header NUNCA anexava
+- **chore/disable-bank-card-mocks** — stub dos handlers de "Conectar banco/cartão" (URLs mock que não existiam) → mensagem "Coming soon"
+- **fix/sanitize-signup-console** — scrub PII do SignupPage
+- **refactor/consolidate-supabase-client** — bug-fix tech debt (#6 acima)
+- **chore/commit-deploy-doc-deletion** — DEPLOY-PRODUCAO.md (#7 acima)
+
+### Estado final do catálogo (fim Session 6.0)
+
+| Métrica | Início Session 6 | Fim Session 6 |
+|---|---|---|
+| Lojas ativas | 10.325 | **10.734** |
+| Categorizadas (não-other) | 7.095 (67%) | **9.839 (94.3%)** |
+| Em `other` | 3.262 | **608** |
+| Scrapers que passam category | 3 de 8 (TC, Quidco, TC-giftcards) | **7 de 8** (+ JD, EverUp, Cheddar, Picodi, Rakuten) |
+| Daily cron coverage | 6 plataformas | 8 plataformas |
+
+### Pendências pra próxima sessão
+
+- **Avios — scraper-side category fix** (precisa Playwright pra navegar SPA; ~1h+)
+- **608 stores ainda em `other`** — pure brand names sem hint; precisaria curadoria manual via UI ou LLM mais robusto. Vai diminuir naturalmente conforme TC/Quidco/Picodi/Rakuten descobrem essas lojas com categorias no próximo scrape.
+- **Stripe end-to-end test** com transação real (Bárbara faz quando estiver pronta)
+- **`MAINTENANCE_MODE` flip** quando estiver tudo verificado pra ir live
+- **`hot_deals` curadoria** — Bárbara pode adicionar entries via `/admin/hot-deals` pra destacar deals especiais
+- **TopCashback session cache** — primeiro run de cada dia tem que logar do zero (sem cache). Login passa agora mas é frágil — se TC mexer de novo no HTML, quebra silenciosamente
+
 ## 7.14. Session 5.0 (2026-06-01) — Mac migration debug + pre-launch hardening
 
 Continuação dos consertos pós-migração + sessão grande de pre-launch autônomo enquanto Bárbara estava no trabalho.
