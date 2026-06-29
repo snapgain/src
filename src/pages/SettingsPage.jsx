@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/lib/customSupabaseClient';
 import { motion } from 'framer-motion';
 import {
   Bell,
@@ -84,6 +85,11 @@ function SettingsPage() {
 
   const [prefs, setPrefs] = useState(null);
   const [saving, setSaving] = useState(false);
+  // DB-backed boost-email toggle. Separate from `prefs` (which is
+  // localStorage-ish display settings) because this drives the
+  // daily-boost-digest edge function and must persist server-side.
+  const [boostEmailEnabled, setBoostEmailEnabled] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Load saved preferences
   useEffect(() => {
@@ -92,10 +98,66 @@ function SettingsPage() {
     loadUserPrefs(user.id).then((p) => {
       if (alive) setPrefs(p);
     });
+    // DB-backed notification prefs. Default true if row absent (matches
+    // table default; see migration notification_prefs_and_boost_digest_log).
+    supabase
+      .from('user_notification_prefs')
+      .select('boost_email_enabled')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!alive) return;
+        if (data && data.boost_email_enabled === false) {
+          setBoostEmailEnabled(false);
+        }
+      });
     return () => {
       alive = false;
     };
   }, [user]);
+
+  // Handle ?notifications=off from email unsubscribe links — one-click
+  // disable, then clear the query param so refresh doesn't re-apply.
+  useEffect(() => {
+    if (!user) return;
+    if (searchParams.get('notifications') !== 'off') return;
+    setBoostEmailEnabled(false);
+    supabase
+      .from('user_notification_prefs')
+      .upsert(
+        { user_id: user.id, boost_email_enabled: false },
+        { onConflict: 'user_id' }
+      )
+      .then(() => {
+        toast({ title: 'Boost emails turned off.' });
+        const next = new URLSearchParams(searchParams);
+        next.delete('notifications');
+        setSearchParams(next, { replace: true });
+      });
+    // toast + setSearchParams identities are stable enough here that
+    // we don't need them in deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, searchParams]);
+
+  const setBoostEmail = async (value) => {
+    if (!user) return;
+    setBoostEmailEnabled(value);
+    const { error } = await supabase
+      .from('user_notification_prefs')
+      .upsert(
+        { user_id: user.id, boost_email_enabled: value },
+        { onConflict: 'user_id' }
+      );
+    if (error) {
+      // Rollback UI on failure.
+      setBoostEmailEnabled(!value);
+      toast({
+        title: "Couldn't save preference",
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Apply display settings live as the user toggles them
   useEffect(() => {
@@ -274,7 +336,26 @@ function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* ─── Notifications ────────────────────────────────────── */}
+        {/* ─── Boost digest email (DB-backed, drives the daily-boost-digest fn) ─ */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Bell className="w-5 h-5 text-primary" />
+              Boost email digest
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ToggleRow
+              id="boost-email"
+              label="Daily boost email"
+              description="One email per day when a store you've favourited gets a cashback boost or rate increase. Sent around 9am UK."
+              checked={boostEmailEnabled}
+              onChange={setBoostEmail}
+            />
+          </CardContent>
+        </Card>
+
+        {/* ─── Notifications (local-only display prefs) ────────────────── */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
