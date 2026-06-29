@@ -7,7 +7,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet';
 
 function CookiePolicyPage() {
-  const lastUpdated = '12 May 2026';
+  const lastUpdated = '29 June 2026';
 
   return (
     <>
@@ -74,7 +74,78 @@ function CookiePolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold mt-8 mb-3">3. Managing cookies</h2>
+            <h2 className="text-2xl font-bold mt-8 mb-3">3. Specific cookies we set</h2>
+            <p className="text-muted-foreground mb-3">
+              The exact set of cookies on your device depends on whether you're
+              signed in and whether you accepted analytics cookies. The table
+              below covers everything SnapGain itself may set; third-party
+              cookies from partner sites are listed in their own policies.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 pr-3 font-semibold">Cookie</th>
+                    <th className="text-left py-2 pr-3 font-semibold">Purpose</th>
+                    <th className="text-left py-2 pr-3 font-semibold">Duration</th>
+                    <th className="text-left py-2 font-semibold">Category</th>
+                  </tr>
+                </thead>
+                <tbody className="text-muted-foreground">
+                  <tr className="border-b border-border/40">
+                    <td className="py-2 pr-3"><code>sb-ffowgyjdbgkphsflxybk-auth-token</code></td>
+                    <td className="py-2 pr-3">Supabase auth session (keeps you signed in)</td>
+                    <td className="py-2 pr-3">1 year</td>
+                    <td className="py-2">Strictly necessary</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="py-2 pr-3"><code>snapgain.cookieConsent</code></td>
+                    <td className="py-2 pr-3">Remembers your cookie banner choice</td>
+                    <td className="py-2 pr-3">Persistent</td>
+                    <td className="py-2">Strictly necessary</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="py-2 pr-3"><code>snapgain.utmAttribution</code></td>
+                    <td className="py-2 pr-3">First-visit UTM snapshot for attribution</td>
+                    <td className="py-2 pr-3">90 days</td>
+                    <td className="py-2">Strictly necessary</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="py-2 pr-3"><code>_ga</code>, <code>_ga_*</code></td>
+                    <td className="py-2 pr-3">Google Analytics 4 — distinguishes users (IP anonymised)</td>
+                    <td className="py-2 pr-3">2 years</td>
+                    <td className="py-2">Analytics (consent required)</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="py-2 pr-3"><code>hcaptcha</code>, <code>hmt_id</code></td>
+                    <td className="py-2 pr-3">hCaptcha bot-protection on signup</td>
+                    <td className="py-2 pr-3">6 months</td>
+                    <td className="py-2">Strictly necessary</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 pr-3"><em>partner cookies</em></td>
+                    <td className="py-2 pr-3">Set by TopCashback / Quidco / Avios etc. when you click through. We don't read these.</td>
+                    <td className="py-2 pr-3">Varies</td>
+                    <td className="py-2">Affiliate</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold mt-8 mb-3">4. Changing your mind</h2>
+            <p className="text-muted-foreground">
+              You can change your analytics cookie choice at any time:
+            </p>
+            <ul className="list-disc pl-6 mt-2 space-y-1 text-muted-foreground">
+              <li>Open browser DevTools → Application → Local Storage → delete <code>snapgain.cookieConsent</code>. The banner reappears on next visit.</li>
+              <li>Or contact us at <a href="mailto:support@snapgain.uk" className="text-primary hover:underline">support@snapgain.uk</a> and we'll reset it server-side.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold mt-8 mb-3">5. Managing cookies</h2>
             <p className="text-muted-foreground">
               You can control cookies in your browser settings:
             </p>
@@ -89,7 +160,7 @@ function CookiePolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold mt-8 mb-3">4. Changes to this policy</h2>
+            <h2 className="text-2xl font-bold mt-8 mb-3">6. Changes to this policy</h2>
             <p className="text-muted-foreground">
               If we add a new cookie category or change how an existing one
               works, we will update this page and the "Last updated" date above.
@@ -99,7 +170,7 @@ function CookiePolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold mt-8 mb-3">5. Contact</h2>
+            <h2 className="text-2xl font-bold mt-8 mb-3">7. Contact</h2>
             <p className="text-muted-foreground">
               Questions about cookies or privacy? Email{' '}
               <a
