@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Block authenticated/private + ephemeral paths from crawl
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /onboarding/
+Disallow: /settings
+Disallow: /profile
+Disallow: /subscription/
+
+Sitemap: https://snapgain.uk/sitemap.xml

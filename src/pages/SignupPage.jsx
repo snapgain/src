@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Eye, EyeOff, User, Mail, Lock, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import ResendConfirmationEmail from "@/components/auth/ResendConfirmationEmail"; // ← default import
@@ -33,7 +33,8 @@ function SignupPage() {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    acceptTerms: false,
   });
   
   const [showPassword, setShowPassword] = useState(false);
@@ -61,13 +62,15 @@ function SignupPage() {
     else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
     if (!formData.confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
     else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!formData.acceptTerms) newErrors.acceptTerms = 'You must accept the Terms and Privacy Policy to continue';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+    setFormData(prev => ({ ...prev, [name]: newValue }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
@@ -144,19 +147,9 @@ function SignupPage() {
             return;
           }
 
-          console.log('🔍 Checking response data...');
-
           if (data?.user) {
-            console.log('✅ User created successfully!');
-            console.log('👤 User details:', {
-              id: data.user.id,
-              email: data.user.email,
-              confirmed: data.user.email_confirmed_at ? 'Yes' : 'No',
-              createdAt: data.user.created_at
-            });
-
-            if (data.session) {
-              console.log('🔐 Session created:', !!data.session);
+            if (import.meta.env.DEV) {
+              console.log('✅ User created — confirmed?', !!data.user.email_confirmed_at, 'session?', !!data.session);
             }
 
             toast({
@@ -342,6 +335,31 @@ function SignupPage() {
                       </button>
                     </div>
                     {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
+                  </div>
+
+                  {/* Terms & Privacy acceptance */}
+                  <div className="space-y-1">
+                    <label className="flex items-start gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="acceptTerms"
+                        checked={formData.acceptTerms}
+                        onChange={handleInputChange}
+                        className="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                      />
+                      <span className="text-muted-foreground">
+                        I agree to the{' '}
+                        <Link to="/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                          Terms of Service
+                        </Link>{' '}
+                        and{' '}
+                        <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                          Privacy Policy
+                        </Link>
+                        .
+                      </span>
+                    </label>
+                    {errors.acceptTerms && <p className="text-sm text-red-500">{errors.acceptTerms}</p>}
                   </div>
 
                   {/* Submit Button */}

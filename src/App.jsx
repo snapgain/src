@@ -18,6 +18,7 @@ import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import TermsOfServicePage from '@/pages/TermsOfServicePage';
 import CookiePolicyPage from '@/pages/CookiePolicyPage';
 import RefundPolicyPage from '@/pages/RefundPolicyPage';
+import NotFoundPage from '@/pages/NotFoundPage';
 import HomePage from '@/pages/HomePage';
 import SearchPage from '@/pages/SearchPage';
 import StoreDetailPage from '@/pages/StoreDetailPage';
@@ -210,6 +211,7 @@ function AppContent() {
             <SettingsPage />
           </ProtectedRoute>
         } />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   );
