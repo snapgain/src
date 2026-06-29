@@ -10,7 +10,6 @@
   ],
   "env": {
     "VITE_SUPABASE_URL": "https://ffowgyjdbgkphsflxybk.supabase.co",
-    "_comment_anon_key": "2026-05-20: rotated to new publishable key (legacy anon was disabled — see Supabase dashboard).",
     "VITE_SUPABASE_ANON_KEY": "sb_publishable_fG0AhiV3dznAp7DcHm5jPA_jepTG5-W",
     "VITE_EDGE_FUNCTIONS_URL": "https://ffowgyjdbgkphsflxybk.supabase.co/functions/v1",
     "VITE_APP_ENV": "production",
