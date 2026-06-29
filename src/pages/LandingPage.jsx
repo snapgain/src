@@ -63,10 +63,13 @@ function Hero({ onPrimary, onSecondary }) {
           Trusted by 100+ UK families
         </div>
 
-        {/* Headline — Option B: outcome promise (grounded range) */}
+        {/* Headline — Option B: outcome promise (grounded range).
+            pb-2 on the gradient span: -webkit-background-clip:text combined
+            with leading-[1.05] clips descenders (g, y) — the padding gives
+            them room without loosening the overall headline. */}
         <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tighter leading-[1.05] mb-6">
           2 to 4 free flights a year.
-          <span className="block gradient-text">From spending you'd do anyway.</span>
+          <span className="block gradient-text pb-2">From spending you'd do anyway.</span>
         </h1>
 
         {/* Subheadline — concrete proof using real beta data.
