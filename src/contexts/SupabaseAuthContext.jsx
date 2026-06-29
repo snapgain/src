@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import * as Sentry from '@sentry/react';
 
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
@@ -16,6 +17,13 @@ export const AuthProvider = ({ children }) => {
     setSession(session);
     setUser(session?.user ?? null);
     setLoading(false);
+    // Attach user id (no email/PII) to Sentry so crash reports include
+    // which account hit them. Cleared on sign-out.
+    if (session?.user?.id) {
+      Sentry.setUser({ id: session.user.id });
+    } else {
+      Sentry.setUser(null);
+    }
   }, []);
 
   useEffect(() => {

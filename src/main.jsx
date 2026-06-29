@@ -8,7 +8,11 @@ import './index.css';
 // persists 90d in localStorage so a slow funnel (TikTok view Tue →
 // signup Sat) still attributes correctly. See `lib/utmTracking.js`.
 import { captureUtms } from '@/lib/utmTracking';
+// 2026-06-29: boot observability (Sentry always; GA4 only when consented).
+// Both no-op cleanly if the corresponding env var is missing.
+import { initObservability } from '@/lib/observability';
 
+initObservability();
 captureUtms();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
