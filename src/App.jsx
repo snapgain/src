@@ -19,6 +19,7 @@ import TermsOfServicePage from '@/pages/TermsOfServicePage';
 import CookiePolicyPage from '@/pages/CookiePolicyPage';
 import RefundPolicyPage from '@/pages/RefundPolicyPage';
 import NotFoundPage from '@/pages/NotFoundPage';
+import CookieConsentBanner from '@/components/CookieConsentBanner';
 import HomePage from '@/pages/HomePage';
 import SearchPage from '@/pages/SearchPage';
 import StoreDetailPage from '@/pages/StoreDetailPage';
@@ -242,6 +243,7 @@ function App() {
         </Helmet>
         <Toaster />
         <AppContent />
+        <CookieConsentBanner />
       </I18nProvider>
     </AuthProvider>
   );
