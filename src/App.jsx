@@ -226,7 +226,10 @@ function AppContent() {
 // │  Maintenance page. Auth providers + routing are skipped entirely │
 // │  so no analytics fire and no Supabase calls happen for visitors. │
 // └──────────────────────────────────────────────────────────────────┘
-const MAINTENANCE_MODE = true; // ⚠️ LOCAL DEV ONLY — não commitar como false
+// 🚀 LIVE — 2026-06-29. Site is public. Flip back to true ONLY for
+// emergency maintenance (data corruption, prod migration in progress,
+// etc.). Always do that via PR so the chain of custody is auditable.
+const MAINTENANCE_MODE = false;
 
 function App() {
   if (MAINTENANCE_MODE) {
