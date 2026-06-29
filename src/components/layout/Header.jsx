@@ -68,11 +68,20 @@ export function Header() {
 
   const handleMarketingNav = (hash) => {
     if (window.location.pathname === '/') {
-      // already on landing — smooth-scroll
-      document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+      // Already on landing — update URL (so back button + bookmarks work)
+      // then smooth-scroll to the section. pushState avoids triggering a
+      // React Router navigation, which would re-fire ScrollToTopOnNav.
+      const el = document.getElementById(hash);
+      if (el) {
+        window.history.pushState(null, '', `/#${hash}`);
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
     } else {
-      // navigate to landing with hash; browser handles the jump
-      window.location.href = `/#${hash}`;
+      // Different page — route through React Router so ScrollToTopOnNav
+      // picks up the hash on landing-mount and scrolls properly. Using
+      // window.location.href here doesn't always work because the SPA
+      // mounts the new route before the hash anchor is in the DOM.
+      navigate(`/#${hash}`);
     }
   };
 

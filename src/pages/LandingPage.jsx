@@ -261,7 +261,7 @@ function HowItWorks({ onPrimary }) {
     },
   ];
   return (
-    <section id="how-it-works" className="container mx-auto px-4 py-20 md:py-28">
+    <section id="how-it-works" className="container mx-auto px-4 py-20 md:py-28 scroll-mt-20">
       <div className="text-center mb-14 max-w-2xl mx-auto">
         <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">
           How SnapGain works
@@ -327,7 +327,7 @@ function TravelAngle() {
     },
   ];
   return (
-    <section id="travel" className="bg-muted/30 py-20 md:py-28 border-y border-border">
+    <section id="travel" className="bg-muted/30 py-20 md:py-28 border-y border-border scroll-mt-20">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center mb-12">
           <Plane className="w-12 h-12 text-primary mx-auto mb-4" />
@@ -885,7 +885,7 @@ function FAQ() {
     },
   ];
   return (
-    <section id="faq" className="container mx-auto px-4 py-20 md:py-28 max-w-3xl">
+    <section id="faq" className="container mx-auto px-4 py-20 md:py-28 max-w-3xl scroll-mt-20">
       <div className="text-center mb-10">
         <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-3">
           Honest questions, straight answers
@@ -916,7 +916,7 @@ function PricingCTA({ onSubscribe }) {
     'Cancel anytime',
   ];
   return (
-    <section id="pricing" className="bg-gradient-to-br from-primary/10 via-background to-primary/5 py-20 md:py-28">
+    <section id="pricing" className="bg-gradient-to-br from-primary/10 via-background to-primary/5 py-20 md:py-28 scroll-mt-20">
       <div className="container mx-auto px-4 max-w-3xl text-center">
         <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-3">
           Stop guessing. Start flying.
