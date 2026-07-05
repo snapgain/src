@@ -36,9 +36,13 @@ const AUTHED_NAV = [
 // Marketing nav (visitors only) — anchors to landing-page sections.
 // When user is on /, clicking scrolls smoothly; when on any other page,
 // it navigates to / with the hash so the browser handles the scroll.
+// 2026-07-05: 'Travel' entry removed — <TravelAngle /> section was
+// taken out of the LandingPage on 2026-05-14 per internal review, so
+// its #travel anchor no longer exists in the DOM. Leaving the button
+// in the nav made every click a silent no-op. If TravelAngle is ever
+// re-enabled in src/pages/LandingPage.jsx, add the entry back here.
 const MARKETING_NAV = [
   { hash: 'how-it-works', label: 'How it works' },
-  { hash: 'travel', label: 'Travel' },
   { hash: 'faq', label: 'FAQ' },
   { hash: 'pricing', label: 'Pricing' },
 ];
