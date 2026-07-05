@@ -195,11 +195,14 @@ function DealRow({ row, idx }) {
           <div className="font-semibold truncate text-base">{store.name}</div>
           <div className="text-xs text-muted-foreground">
             via {offer.platform}
-            {offer.conditions ? ` · ${offer.conditions}` : ''}
+            {offer.conditions && offer.conditions !== 'Up to'
+              ? ` · ${offer.conditions}`
+              : ''}
           </div>
         </div>
         <div className="text-right shrink-0 flex flex-col items-end gap-0.5">
           <div className="text-2xl md:text-3xl font-bold gradient-text leading-none">
+            {offer.conditions === 'Up to' ? 'Up to ' : ''}
             {offer.rate}%
           </div>
           {external && (
