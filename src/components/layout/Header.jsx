@@ -134,17 +134,18 @@ export function Header() {
                     className={({ isActive }) =>
                       cn(
                         'transition-colors',
-                        // Mobile: stacked icon+label, small text. From md:
-                        // horizontal pill with label.
-                        'flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium',
-                        'md:flex-row md:gap-2 md:px-4 md:py-2 md:text-sm md:rounded-full',
+                        // Mobile: stacked icon+label. From md: horizontal
+                        // pill with label. Text bumped 2026-07-05 for
+                        // legibility (10→11 mobile, sm→base desktop).
+                        'flex flex-col items-center gap-0.5 px-2 py-1 text-[11px] font-medium',
+                        'md:flex-row md:gap-2 md:px-4 md:py-2 md:text-base md:rounded-full',
                         isActive
                           ? 'text-primary md:bg-primary md:text-primary-foreground md:shadow-sm'
                           : 'text-foreground/70 hover:text-primary md:hover:bg-primary/5'
                       )
                     }
                   >
-                    <Icon className="w-5 h-5 md:w-4 md:h-4" />
+                    <Icon className="w-5 h-5 md:w-5 md:h-5" />
                     <span>{t(key)}</span>
                   </NavLink>
                 ))
@@ -153,7 +154,7 @@ export function Header() {
                     key={hash}
                     type="button"
                     onClick={() => handleMarketingNav(hash)}
-                    className="px-1.5 md:px-4 py-2 rounded-full text-xs md:text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 transition-colors whitespace-nowrap"
+                    className="px-1 md:px-4 py-2 rounded-full text-[13px] md:text-base font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 transition-colors whitespace-nowrap"
                   >
                     {label}
                   </button>
