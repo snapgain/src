@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Flame,
   ShoppingCart,
@@ -125,13 +127,24 @@ function HomePage() {
   const wallet = useUserWallet();
   const sub = useSubscription();
 
-  // Search from the Start to compare hero → jump straight into the
-  // Compare flow. Trim + fall through if empty so the input feels
-  // consistent with the /search page.
-  const goCompare = (query) => {
+  // "Start to compare" state — the purchase amount lives here so both
+  // a picked-store click on the dropdown AND a free-text submit can
+  // carry it through to the next page.
+  const [heroAmount, setHeroAmount] = useState('');
+
+  // Search from the Start to compare hero → jump into the Search page
+  // (which handles free-text queries + shows matching stores). If the
+  // user picked a store from the autocomplete dropdown, SearchAutocomplete
+  // has already navigated straight to /compare — this only runs when
+  // there was no exact match.
+  const goSearch = (query, amount) => {
+    const params = new URLSearchParams();
     const q = String(query || '').trim();
-    if (q) navigate(`/compare?q=${encodeURIComponent(q)}`);
-    else navigate('/compare');
+    if (q) params.set('q', q);
+    const a = String(amount || '').trim();
+    if (a) params.set('amount', a);
+    const qs = params.toString();
+    navigate(qs ? `/search?${qs}` : '/search');
   };
 
   const firstName =
@@ -247,13 +260,40 @@ function HomePage() {
             </p>
           </div>
 
-          {/* Search input: same component as /search, submits to /compare.
-              Autocomplete drops down as the user types so a store can
-              be picked in 1-2 taps. */}
-          <SearchAutocomplete
-            onSubmit={goCompare}
-            placeholder="Type a store name…"
-          />
+          {/* Search + amount row.
+              Store dropdown: SearchAutocomplete now reads the amount
+              prop, so a pick jumps straight to /compare?store=…&amount=…
+              in one tap.
+              Free-text: goSearch() routes to /search?q=…&amount=…, which
+              shows matching stores when there's no exact match. */}
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_10rem] gap-3 items-end">
+            <div className="min-w-0">
+              <Label htmlFor="hero-search" className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                Store
+              </Label>
+              <SearchAutocomplete
+                onSubmit={goSearch}
+                placeholder="Type a store name…"
+                amount={heroAmount}
+              />
+            </div>
+            <div>
+              <Label htmlFor="hero-amount" className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                Purchase amount (£)
+              </Label>
+              <Input
+                id="hero-amount"
+                type="number"
+                inputMode="decimal"
+                min="1"
+                step="0.01"
+                placeholder="100"
+                value={heroAmount}
+                onChange={(e) => setHeroAmount(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+          </div>
 
           {/* Shortcuts under the search input. Kept the previous
               quick-action grid geometry so the layout stays familiar

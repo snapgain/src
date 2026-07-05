@@ -19,10 +19,16 @@ import { cn } from '@/lib/utils';
  *
  * @param {object} props
  * @param {string} [props.initialValue]  prefill text in the input
- * @param {(query: string) => void} [props.onSubmit]  free-form submit handler
+ * @param {(query: string, amount?: string) => void} [props.onSubmit]
+ *   free-form submit handler; receives the current amount too when
+ *   the parent passed one via the `amount` prop
  * @param {string} [props.placeholder]
  * @param {boolean} [props.autoFocus]
  * @param {string} [props.size]   'lg' renders larger inputs (home hero)
+ * @param {string} [props.amount] optional purchase amount. When set,
+ *   picking a store from the dropdown goes straight into the compare
+ *   flow with `?store=<slug>&amount=<amount>` instead of the plain
+ *   /store page — one tap from dashboard to a real comparison.
  */
 export function SearchAutocomplete({
   initialValue = '',
@@ -30,6 +36,7 @@ export function SearchAutocomplete({
   placeholder = 'Search a store…',
   autoFocus = false,
   size = 'lg',
+  amount,
 }) {
   const navigate = useNavigate();
   const { stores } = useStores();
@@ -72,14 +79,25 @@ export function SearchAutocomplete({
 
   const showDropdown = open && matches.length > 0;
 
+  // Build the target for a picked store. When the parent passed an
+  // `amount`, we jump directly into the compare flow with the value
+  // pre-filled — that's one tap from dashboard search to a real
+  // comparison, which is what Bárbara asked for (2026-07-05).
+  const storeHref = (slug) => {
+    if (amount && String(amount).trim()) {
+      return `/compare?store=${encodeURIComponent(slug)}&amount=${encodeURIComponent(String(amount).trim())}`;
+    }
+    return `/store/${slug}`;
+  };
+
   const submit = (e) => {
     e?.preventDefault?.();
     if (highlighted >= 0 && matches[highlighted]) {
-      navigate(`/store/${matches[highlighted].slug}`);
+      navigate(storeHref(matches[highlighted].slug));
       setOpen(false);
       return;
     }
-    if (onSubmit) onSubmit(value.trim());
+    if (onSubmit) onSubmit(value.trim(), amount);
   };
 
   const handleKey = (e) => {
@@ -136,7 +154,7 @@ export function SearchAutocomplete({
             {matches.map((store, i) => (
               <li key={store.id} role="option" aria-selected={i === highlighted}>
                 <Link
-                  to={`/store/${store.slug}`}
+                  to={storeHref(store.slug)}
                   onMouseEnter={() => setHighlighted(i)}
                   onClick={() => setOpen(false)}
                   className={cn(
