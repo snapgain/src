@@ -111,6 +111,7 @@ function AlertsPage() {
               const href = resolveOpenUrl({
                 rowUrl: deal.cta_url,
                 platform: deal.platform,
+                storeDomain: deal.store?.domain,
                 fallback: deal.store?.slug ? `/store/${deal.store.slug}` : null,
               });
               const inner = (

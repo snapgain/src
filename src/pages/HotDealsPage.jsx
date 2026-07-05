@@ -488,6 +488,7 @@ function HotDealCard({ deal }) {
   const href = resolveOpenUrl({
     rowUrl: deal.cta_url,
     platform: deal.platform,
+    storeDomain: deal.store?.domain,
     fallback: deal.store?.slug ? `/store/${deal.store.slug}` : null,
   });
   const external = isExternal(href);
@@ -655,6 +656,7 @@ function OrganicTopDealCard({ offer, rank }) {
   const href = resolveOpenUrl({
     rowUrl: offer.affiliate_link,
     platform: offer.platform,
+    storeDomain: store.domain,
     fallback: store.slug ? `/store/${store.slug}` : null,
   });
   const external = isExternal(href);

@@ -359,6 +359,7 @@ export function buildStrategySteps(strategy, store) {
     resolveOpenUrl({
       rowUrl: layer?.affiliateLink || null,
       platform: layer?.platform,
+      storeDomain: store?.domain,
       fallback: store?.slug ? `/store/${store.slug}` : null,
     });
 

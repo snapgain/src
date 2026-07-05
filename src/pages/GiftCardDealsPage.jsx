@@ -158,6 +158,8 @@ function DealRow({ offer, idx }) {
   const href = resolveOpenUrl({
     rowUrl: offer.affiliate_link,
     platform: offer.platform,
+    storeDomain: store?.domain,
+    fallback: store?.slug ? `/store/${store.slug}` : null,
   });
   const external = isExternal(href);
   const isBest = idx === 0;
