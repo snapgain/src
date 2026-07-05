@@ -2,10 +2,15 @@ import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { RouteErrorBoundary } from '@/components/ErrorBoundary';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { ScrollToTopOnNav } from '@/components/ScrollToTopOnNav';
+
+// 2026-07-05 (Bárbara): removed <BottomTabBar />. Mobile nav now lives
+// in the sticky header alongside the logo and account chip, so the
+// fixed bottom bar is redundant. Kept the BottomTabBar file in place
+// (not imported) in case we want to bring it back for a native-app
+// wrapper down the line.
 
 export function Layout() {
   const location = useLocation();
@@ -21,7 +26,6 @@ export function Layout() {
       </main>
       <Footer />
       <ScrollToTop />
-      <BottomTabBar />
     </div>
   );
 }
