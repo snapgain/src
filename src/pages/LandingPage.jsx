@@ -27,7 +27,7 @@
 
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -958,15 +958,15 @@ function LandingPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  // 2026-07-05 (Bárbara): if the visitor is already signed in, don't
-  // show the visitor-focused landing (with "Start 7-day trial" CTAs) —
-  // send them straight to /home. Users can still land here mid-signout
-  // or before Auth has resolved, so we guard on authLoading. replace:
-  // true so back button doesn't loop them into the landing again.
-  React.useEffect(() => {
-    if (authLoading) return;
-    if (user) navigate('/home', { replace: true });
-  }, [authLoading, user, navigate]);
+  // 2026-07-05 (Bárbara): signed-in users clicking the footer/header
+  // logo were briefly seeing the visitor landing before the effect
+  // redirected them. Switching to <Navigate> as the first return
+  // means the landing content is never mounted for authed users
+  // (no flash, no risk of them starting a duplicate signup).
+  // Wait for auth to resolve so we don't bounce out mid-signout.
+  if (!authLoading && user) {
+    return <Navigate to="/home" replace />;
+  }
 
   // All "Start your 7-day trial" CTAs go straight to /pricing.
   const goPricing = () => navigate('/pricing');
