@@ -1,14 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 export function Footer() {
+  const { user } = useAuth();
+  // Signed-in users clicking the footer logo should land on their
+  // dashboard, not the visitor marketing page.
+  const homeHref = user ? '/home' : '/';
   return (
     <footer className="bg-background border-t">
       <div className="container mx-auto px-4 py-10">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Brand block */}
           <div className="md:col-span-1">
-            <Link to="/" aria-label="SnapGain home" className="inline-block mb-4">
+            <Link to={homeHref} aria-label="SnapGain home" className="inline-block mb-4">
               <img
                 src="/snapgain-bigger.png"
                 alt="SnapGain"
