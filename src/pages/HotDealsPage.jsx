@@ -684,7 +684,12 @@ function OrganicTopDealCard({ offer, rank }) {
               </div>
               <div className="text-xs text-muted-foreground">
                 via {offer.platform}
-                {offer.conditions ? ` · ${offer.conditions}` : ''}
+                {/* 2026-07-05: 'Up to' moved to the big rate number
+                    itself so users can't miss it. Only render other
+                    conditions here (e.g. minimum spend, category limits). */}
+                {offer.conditions && offer.conditions !== 'Up to'
+                  ? ` · ${offer.conditions}`
+                  : ''}
               </div>
             </div>
           </div>
@@ -697,6 +702,13 @@ function OrganicTopDealCard({ offer, rank }) {
         <div className="flex items-baseline justify-between gap-2">
           <div className="flex items-baseline gap-2">
             <div className="text-2xl font-bold gradient-text leading-none">
+              {/* When the source platform lists this as "Up to X%" (i.e.
+                  only some purchase sub-categories hit X% — see
+                  rate_breakdown below), we must prefix the headline so
+                  it matches what the platform actually shows. Without
+                  this, users saw "80% cashback" for Angel VPN when TC's
+                  own page says "Up to 80%" and the base tier is 50%. */}
+              {offer.conditions === 'Up to' ? 'Up to ' : ''}
               {offer.rateValue}%
             </div>
             {/* Label by kind so users know whether it's % cashback or
