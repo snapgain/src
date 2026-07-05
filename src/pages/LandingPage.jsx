@@ -955,8 +955,18 @@ function PricingCTA({ onSubscribe }) {
 // Page composition
 // ────────────────────────────────────────────────────────────────────
 function LandingPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // 2026-07-05 (Bárbara): if the visitor is already signed in, don't
+  // show the visitor-focused landing (with "Start 7-day trial" CTAs) —
+  // send them straight to /home. Users can still land here mid-signout
+  // or before Auth has resolved, so we guard on authLoading. replace:
+  // true so back button doesn't loop them into the landing again.
+  React.useEffect(() => {
+    if (authLoading) return;
+    if (user) navigate('/home', { replace: true });
+  }, [authLoading, user, navigate]);
 
   // All "Start your 7-day trial" CTAs go straight to /pricing.
   const goPricing = () => navigate('/pricing');
