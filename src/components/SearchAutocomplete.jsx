@@ -29,6 +29,9 @@ import { cn } from '@/lib/utils';
  *   picking a store from the dropdown goes straight into the compare
  *   flow with `?store=<slug>&amount=<amount>` instead of the plain
  *   /store page — one tap from dashboard to a real comparison.
+ * @param {(next: string) => void} [props.onAmountChange] if provided,
+ *   an inline £ amount input renders between the search field and
+ *   the submit button. The parent owns the state.
  */
 export function SearchAutocomplete({
   initialValue = '',
@@ -37,6 +40,7 @@ export function SearchAutocomplete({
   autoFocus = false,
   size = 'lg',
   amount,
+  onAmountChange,
 }) {
   const navigate = useNavigate();
   const { stores } = useStores();
@@ -122,10 +126,10 @@ export function SearchAutocomplete({
     <form
       ref={containerRef}
       onSubmit={submit}
-      className="relative flex flex-col sm:flex-row gap-3 max-w-2xl"
+      className="relative flex flex-row gap-2 md:gap-3 max-w-3xl items-center"
       role="search"
     >
-      <div className="relative flex-1">
+      <div className="relative flex-1 min-w-0">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
         <Input
           ref={inputRef}
@@ -178,8 +182,38 @@ export function SearchAutocomplete({
           </ul>
         )}
       </div>
-      <Button type="submit" size={size === 'lg' ? 'lg' : 'default'} className={size === 'lg' ? 'h-12 px-6' : ''}>
-        Search
+      {/* Inline £ amount input — rendered only when the parent wired
+          up onAmountChange. Sits between the store field and the
+          submit button so the user reads left → right: store → value →
+          go. Compact width (w-24) keeps the row fitting a 375px phone. */}
+      {onAmountChange && (
+        <div className="relative shrink-0 w-24 md:w-32">
+          <span
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base pointer-events-none"
+            aria-hidden="true"
+          >
+            £
+          </span>
+          <Input
+            type="number"
+            inputMode="decimal"
+            min="1"
+            step="0.01"
+            placeholder="100"
+            value={amount ?? ''}
+            onChange={(e) => onAmountChange(e.target.value)}
+            aria-label="Purchase amount in pounds"
+            className={cn('pl-7 text-base', inputHeight)}
+          />
+        </div>
+      )}
+      <Button
+        type="submit"
+        size={size === 'lg' ? 'lg' : 'default'}
+        className={cn('shrink-0', size === 'lg' ? 'h-12 px-4 md:px-6' : '')}
+      >
+        <Search className="w-4 h-4 md:hidden" />
+        <span className="hidden md:inline">Search</span>
       </Button>
     </form>
   );
