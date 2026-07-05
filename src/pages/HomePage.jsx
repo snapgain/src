@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import {
   Flame,
   ShoppingCart,
@@ -116,12 +117,22 @@ const COMPARE_LINKS = [
 
 function HomePage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { searches } = useRecentSearches();
   const { strategies } = useSavedStrategies();
   const { favourites } = useUserFavourites();
   const wallet = useUserWallet();
   const sub = useSubscription();
+
+  // Search from the Start to compare hero → jump straight into the
+  // Compare flow. Trim + fall through if empty so the input feels
+  // consistent with the /search page.
+  const goCompare = (query) => {
+    const q = String(query || '').trim();
+    if (q) navigate(`/compare?q=${encodeURIComponent(q)}`);
+    else navigate('/compare');
+  };
 
   const firstName =
     user?.user_metadata?.name?.split(' ')[0] ||
@@ -214,30 +225,65 @@ function HomePage() {
           </p>
         </motion.section>
 
-        {/* ─── Quick Actions ──────────────────────────────────────── */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-bold">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            {QUICK_ACTIONS.map(({ label, sub, to, Icon, gradient }) => (
-              <Link key={label} to={to}>
-                <Card className="card-hover h-full">
-                  <CardContent className="p-4 md:p-5 space-y-2.5">
-                    <div
-                      className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} text-white flex items-center justify-center shadow-sm`}
-                    >
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div className="font-semibold leading-tight">{label}</div>
-                    <p className="text-xs text-muted-foreground leading-snug">
-                      {sub}
-                    </p>
-                    <div className="flex items-center text-xs font-medium text-primary pt-1">
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+        {/* ─── Start to compare ────────────────────────────────────
+            2026-07-05 (Bárbara): the primary job of the dashboard is
+            to launch the user into a comparison in one tap. Wrapping
+            the search + the quick actions in a highlighted "Start to
+            compare" card makes the intent visually obvious the
+            moment the page loads. */}
+        <section
+          className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4 md:p-6 space-y-5"
+          aria-labelledby="start-to-compare-heading"
+        >
+          <div className="space-y-1">
+            <h2
+              id="start-to-compare-heading"
+              className="text-xl md:text-2xl font-bold"
+            >
+              Start to compare
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Type a store name to see the best deal instantly — or jump straight into a shortcut.
+            </p>
+          </div>
+
+          {/* Search input: same component as /search, submits to /compare.
+              Autocomplete drops down as the user types so a store can
+              be picked in 1-2 taps. */}
+          <SearchAutocomplete
+            onSubmit={goCompare}
+            placeholder="Type a store name…"
+          />
+
+          {/* Shortcuts under the search input. Kept the previous
+              quick-action grid geometry so the layout stays familiar
+              on mobile and desktop. */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Or jump into…
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              {QUICK_ACTIONS.map(({ label, sub, to, Icon, gradient }) => (
+                <Link key={label} to={to}>
+                  <Card className="card-hover h-full">
+                    <CardContent className="p-4 md:p-5 space-y-2.5">
+                      <div
+                        className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} text-white flex items-center justify-center shadow-sm`}
+                      >
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="font-semibold leading-tight">{label}</div>
+                      <p className="text-xs text-muted-foreground leading-snug">
+                        {sub}
+                      </p>
+                      <div className="flex items-center text-xs font-medium text-primary pt-1">
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
 
