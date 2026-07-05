@@ -32,6 +32,14 @@ import { cn } from '@/lib/utils';
  * @param {(next: string) => void} [props.onAmountChange] if provided,
  *   an inline £ amount input renders between the search field and
  *   the submit button. The parent owns the state.
+ * @param {(store: object | null) => void} [props.onPick] fires when the
+ *   user picks a store from the dropdown OR clears it by editing the
+ *   text. `store` is the full store record on pick, `null` on clear.
+ *   When provided, the parent owns the "selected store" state — the
+ *   component stops tracking it internally and lets the parent decide
+ *   what submit does (e.g. compare page validates + fires its own
+ *   handleCompare instead of navigating). Dashboard-style callers can
+ *   ignore this and keep the default navigate-on-submit behaviour.
  */
 export function SearchAutocomplete({
   initialValue = '',
@@ -41,6 +49,7 @@ export function SearchAutocomplete({
   size = 'lg',
   amount,
   onAmountChange,
+  onPick,
 }) {
   const navigate = useNavigate();
   const { stores } = useStores();
@@ -116,11 +125,16 @@ export function SearchAutocomplete({
     if (!store) return;
     if (pickMode) {
       setValue(store.name);
-      setPickedSlug(store.slug);
       setOpen(false);
       setHighlighted(-1);
+      // Ownership split:
+      //   - onPick present: the parent tracks selection. We just
+      //     hand it the row and stay silent internally.
+      //   - onPick absent: we track pickedSlug ourselves so the
+      //     next submit knows where to navigate (dashboard default).
+      if (typeof onPick === 'function') onPick(store);
+      else setPickedSlug(store.slug);
       // Move focus to the amount field so the user can type right away.
-      // Fallback: refocus the search input if the amount input isn't there.
       requestAnimationFrame(() => {
         const amountEl = containerRef.current?.querySelector('input[type="number"]');
         (amountEl || inputRef.current)?.focus();
@@ -134,9 +148,24 @@ export function SearchAutocomplete({
   const submit = (e) => {
     e?.preventDefault?.();
     if (pickMode) {
-      // Prefer explicit pick from the dropdown. If not, try to match
-      // the typed text to a store exactly (case-insensitive) so a user
-      // who typed the full name still lands on /compare.
+      // Parent-owned selection (Compare page): notify onPick if the
+      // typed text is an exact store name AND nothing was picked yet
+      // (covers the "user typed the whole name and hit Enter" flow),
+      // then hand off to onSubmit and let the parent do whatever it
+      // needs (usually its own validated compare submit).
+      if (typeof onPick === 'function') {
+        const q = value.trim().toLowerCase();
+        if (q) {
+          const exact = stores.find((s) => s.name.toLowerCase() === q);
+          if (exact) onPick(exact);
+        }
+        if (onSubmit) onSubmit(value.trim(), amount);
+        setOpen(false);
+        return;
+      }
+      // Dashboard-style: we own selection via pickedSlug and navigate
+      // ourselves. Fall through if there's no slug and no exact match
+      // → hand off to onSubmit for free-text search.
       let slug = pickedSlug;
       if (!slug) {
         const q = value.trim().toLowerCase();
@@ -148,7 +177,6 @@ export function SearchAutocomplete({
         setOpen(false);
         return;
       }
-      // No exact store → hand off to the parent (free-text search).
       if (onSubmit) onSubmit(value.trim(), amount);
       return;
     }
@@ -204,8 +232,12 @@ export function SearchAutocomplete({
             setValue(e.target.value);
             setOpen(true);
             setHighlighted(-1);
-            // User edited after picking → picked slug is no longer trustworthy.
+            // User edited after picking → any previous selection is
+            // now stale. Clear both the internal slug (dashboard-style
+            // callers) AND notify onPick(null) so parents like Compare
+            // that own the selection can drop it.
             if (pickedSlug) setPickedSlug('');
+            if (typeof onPick === 'function') onPick(null);
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKey}

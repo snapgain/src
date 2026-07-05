@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import {
   useStoreSearch,
   useStoreBySlug,
@@ -1125,73 +1126,53 @@ function ComparePage() {
           </div>
 
           {/* Form card — elevated with shadow + border-2 + visible pink
-              tint to anchor it as the page's primary action surface. */}
+              tint to anchor it as the page's primary action surface.
+              2026-07-05 (Bárbara): use the same inline SearchAutocomplete
+              as the dashboard so the search-then-fill-amount-then-Search
+              flow is identical wherever it appears. */}
           <Card className="border-2 border-primary/40 shadow-lg bg-light-pink/30">
-            <CardContent className="py-6 space-y-5">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="store-search" className="text-sm font-semibold">
-                    Store name
-                  </Label>
-                  <button
-                    type="button"
-                    onClick={() => setBrowseOpen(true)}
-                    className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    <ChevronDown className="w-3 h-3" />
-                    Browse all
-                  </button>
-                </div>
-                <StoreAutocomplete
-                  value={query}
-                  onChange={setQuery}
-                  selected={selected}
-                  onSelect={setSelected}
-                  onClear={handleNewSearch}
-                />
-                {selected && (
-                  <p className="text-xs text-emerald-700 font-medium">
-                    ✓ Selected: {selected.name}
-                  </p>
-                )}
+            <CardContent className="py-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Store &amp; amount</Label>
+                <button
+                  type="button"
+                  onClick={() => setBrowseOpen(true)}
+                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  <ChevronDown className="w-3 h-3" />
+                  Browse all
+                </button>
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="amount" className="text-sm font-semibold">
-                  Purchase amount (£)
-                </Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  inputMode="decimal"
-                  min="1"
-                  step="0.01"
-                  placeholder="100.00"
-                  value={amountInput}
-                  onChange={(e) => setAmountInput(e.target.value)}
-                  onBlur={(e) => {
-                    // Snap to 2 decimals on blur for visual cleanliness
-                    const n = Number(e.target.value);
-                    if (Number.isFinite(n) && n >= 1) {
-                      setAmountInput(n.toFixed(2));
-                    }
-                  }}
-                />
-                {amountInput && !amountParsed.ok && (
-                  <p className="text-xs text-rose-600">
-                    Enter a value of £1.00 or more.
-                  </p>
-                )}
-              </div>
+              <SearchAutocomplete
+                initialValue={query}
+                placeholder="e.g. Sainsbury's"
+                amount={amountInput}
+                onAmountChange={setAmountInput}
+                onPick={(store) => {
+                  setSelected(store);
+                  // Keep query in sync when the pick fires so the
+                  // parent has both string + object aligned.
+                  if (store) setQuery(store.name);
+                }}
+                onSubmit={() => handleCompare()}
+              />
 
-              <Button
-                onClick={handleCompare}
-                disabled={!canCompare}
-                size="lg"
-                className="w-full"
-              >
-                Compare
-              </Button>
+              {selected && (
+                <p className="text-xs text-emerald-700 font-medium">
+                  ✓ Selected: {selected.name}
+                </p>
+              )}
+              {amountInput && !amountParsed.ok && (
+                <p className="text-xs text-rose-600">
+                  Enter a value of £1.00 or more.
+                </p>
+              )}
+              {!canCompare && selected && amountInput && (
+                <p className="text-xs text-muted-foreground">
+                  Fill both fields, then press Search to compare.
+                </p>
+              )}
             </CardContent>
           </Card>
 
