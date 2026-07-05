@@ -4,7 +4,7 @@
 > Não releia arquivos do repo a menos que precise editá-los — isso enche o contexto.
 > Use Grep/Glob pra localizar. Read só quando for editar.
 
-Última atualização: **2026-06-02 (session 6.1)** — Avios categories + 96.6% catalogue coverage + silent-failure guards. Veja seção 7.16 (e 7.15 pra Session 6.0).
+Última atualização: **2026-07-05 (session 7.0)** — SITE LIVE em snapgain.uk. GDPR compliance, mobile refactor, dashboard + compare unificados. Veja seção 7.17 (e 7.14–7.16 pras anteriores).
 
 ---
 
@@ -476,6 +476,78 @@ Sessão grande focada em (1) consertar o TopCashback que quebrou no login, (2) a
 | Daily cron coverage | 6 plataformas | 8 plataformas |
 
 ### Pendências pra próxima sessão (superseded — veja seção 7.16)
+
+## 7.17. Session 7.0 (2026-06-29 → 2026-07-05) — LIVE launch + GDPR + mobile refactor
+
+Sessão MUITO grande. Site foi ao ar em snapgain.uk. Depois do launch, várias iterações de UX no mobile, unificação do fluxo de busca no dashboard + compare, e um audit legal completo. **26 PRs merged** (snapgain/src #81 até #104 e Denysmelo2/snapgain-scraper #10 e #11).
+
+### Launch (2026-06-29)
+
+Pre-launch punch list executado + site live:
+- **PR #81** — Hardening pass 1: robots.txt, sitemap.xml, OG/Twitter tags, NotFoundPage, TOS/Privacy checkbox no signup, scrub PII do console.log, remoção do StripePayment.jsx orphan (tinha `pk_test_*` hardcoded)
+- **PR #82** — Observability: Sentry + GA4 gated em CookieConsentBanner. Env vars `VITE_SENTRY_DSN`, `VITE_GA4_MEASUREMENT_ID`, `VITE_APP_ENV` (documentados no `.env.example`). Vercel dashboard tem os values.
+- **PR #83** — Boost digest email pipeline: tabela `user_notification_prefs` (opt-out default true) + `boost_digest_log` + edge function `daily-boost-digest` (via Resend, dry-run mode disponível) + pg_cron schedule desativado até Bárbara configurar Resend (ver `docs/SETUP_RESEND.md`) + toggle no Settings
+- **PR #84** — MAINTENANCE_MODE flipped false (site foi live)
+- **PR #85** — Legal rewrite: Privacy Policy + Terms of Service reescritos completos pra UK/EU GDPR compliance (data controller = Voce Lindx Ltd, Companies House **14321565**, endereço NW10 6FH). Cookie Policy ganhou tabela por cookie + revocation flow. Refund Policy mantido (já era compliant).
+
+### Bugs críticos descobertos + fixados no launch
+
+- **Vercel GitHub App desinstalada** da org `snapgain` — 6 semanas sem auto-deploy. Reinstalação manual (Bárbara) + push vazio pra re-triggar webhook (PR "chore: trigger Vercel webhook"). Depois: `vercel.json` tinha `_comment_anon_key` que Vercel valida como env var inválida → removido.
+- **Legacy Supabase anon JWT** disabled em produção — o valor no Vercel dashboard sobrescrevia o publishable key do `vercel.json`. Bárbara trocou pra `sb_publishable_fG0AhiV3dznAp7DcHm5jPA_jepTG5-W` no dashboard.
+
+### Scraper: Session 6.2 in-flight work
+
+- **Denysmelo2/snapgain-scraper#11** — Fix AVIOS_CATEGORY_PATHS scope bug no `page.$$eval` callback (browser context não tinha acesso a const Node scope, resultava em 0 categorias taggeadas em ~2 semanas de runs). Também: Picodi sweep threshold bumped 0.5 → 0.65 (Picodi legitimamente skipa ~50% de merchants com rates flat-£, defaultguard estava marcando run como falha 7 dias seguidos)
+
+### Mobile UX refactor (2026-07-05)
+
+Bárbara testou o site logada no celular e mandou uma sequência de fixes:
+
+- **PR #86** — Hot Deals refactor: boosters agrupados por plataforma (era grid único misturado + round-robin por categoria). Cada plataforma tem sua seção. Countdown chip (`formatExpiryCountdown`) preparado — hidden até `valid_to` estar populado.
+- **PR #87** — Hot Deals mostra `rate_breakdown` (Peacocks 6.4%/3.2%, GAME 8%/0.8%/3.2%, Hostinger 70%/20%/40%) — 115 boosters se beneficiam
+- **PR #88, #89** — Landing page redirect: logged-in visita `/` → `<Navigate to="/home" replace />` (não useEffect). Footer logo aponta `/home` quando `useAuth().user` presente.
+- **PR #90** — Mobile nav sai do `<BottomTabBar>` e vira sticky header. Grid `[auto_1fr_auto]` mobile / `grid-cols-3` desktop. BottomTabBar removido do Layout (arquivo permanece pra reuso futuro).
+- **PR #91** — Labels sempre visíveis no header mobile (icon + label vertical). Sign in/up viram icon-only no mobile pra caber o menu marketing.
+- **PR #92, #94** — Fix da nav de anchors (Travel/FAQ/etc). Handler simplificado + retry no ScrollToTopOnNav (sem fallback pra top). `scroll-mt-20` nas 4 sections.
+- **PR #93, #95, #96** — Footer mobile refactor: brand block esquerda (logo h-12 + tagline em 3 linhas), 3 colunas de links à direita com `grid-cols-[auto_1fr_1fr_1fr]`. Labels legais encurtados (Privacy Policy → Privacy).
+- **PR #97, #98** — Marketing nav: `Travel` removido (orphan — `<TravelAngle />` foi removido da LandingPage em 2026-05-14, mas o item do menu ficou apontando pra `#travel` que não existia mais). `Calculate` adicionado apontando pra `#calculator` (secção existente que ganhou `scroll-mt-20`).
+- **PR #99** — Header text bump: mobile 10→11px (stacked tabs), 12→13px (marketing), desktop text-sm → text-base (16px).
+
+### Dashboard unificado (2026-07-05)
+
+- **PR #100** — HomePage ganhou seção "Start to compare" (card destacado com bg-gradient `primary/5 → secondary/5`, border-primary/20) contendo o SearchAutocomplete + 4 quick actions embaixo ("Or jump into…"). Ordem do funil: search primeiro, shortcuts depois.
+- **PR #101, #102** — Amount input inline dentro do SearchAutocomplete (novo prop `onAmountChange`). Layout `flex-row` em todos os sizes: `[Store][£ Amount][Search]`. Botão Search vira icon-only no mobile.
+- **PR #103** — Novo "pick mode" no SearchAutocomplete: gated em `onAmountChange` presente. Click no dropdown NÃO navega — só preenche input + move foco pro £. Submit navega. Non-pick-mode callers (SearchPage) unchanged.
+- **PR #104** — `/compare` migrado pra usar SearchAutocomplete inline (mesmo componente do dashboard). Nova prop `onPick(store | null)` transfere ownership da seleção pra parent. Botão "Browse all" preservado. Vinculado a `handleCompare` da própria ComparePage.
+
+### Estado de banco / dados atualizado
+
+- **215 stale is_boosted flags resetados** via migration `reset_stale_boosts_2026_07_05` — BloomingBargs hub do TC expirou; scrapers redistribuem organicamente no próximo run.
+- Fresh scrape run disparado via `gh workflow run scrape-daily.yml` (TC + Quidco). Task #4 "Trigger fresh scrape" ainda in_progress.
+
+### Pendências reais (pra próxima sessão)
+
+- **Task #3** — Scraper: detect TC hubs ativas + aplicar `valid_to` global (countdown chip ativa automaticamente)
+- **Task #4** — Verificar próximo run do TC/Quidco populou `is_boosted` de volta
+- **Resend setup** — Bárbara configurar (`docs/SETUP_RESEND.md`) + ativar pg_cron pro boost digest
+- **Stripe end-to-end test** com transação real
+- **Postgres upgrade + HaveIBeenPwned** — Bárbara confirmou feitos no Supabase dashboard mas re-verificar advisors
+- **`Login "Legacy API keys disabled"`** — resolvido no launch mas monitorar
+
+### Regras que continuam valendo
+
+- **8.5** — Nunca seedar rates em `platforms_explained` sem source + URL + data + aprovação Bárbara
+- **9** — Não tocar `stores.in_nx_network`
+
+### Detalhes do launch
+
+- Domain: **snapgain.uk** (Vercel project `snapgainuk`, prj_yxwqvcJcze3oFH7mVB9G66TcTvK2)
+- Legal entity: **Voce Lindx Ltd** (Companies House 14321565)
+- Suporte / privacy contact: `support@snapgain.uk`
+- Env vars em produção: `VITE_SUPABASE_ANON_KEY=sb_publishable_fG0AhiV3dznAp7DcHm5jPA_jepTG5-W`, `VITE_APP_URL=https://snapgain.uk`, `VITE_APP_ENV=production`, `VITE_SENTRY_DSN`, `VITE_GA4_MEASUREMENT_ID`
+- Sentry: `snapgain` project (Bárbara owns account)
+- GA4: `G-…` id em Vercel env
+- Supabase: HaveIBeenPwned password check ligado; Postgres upgraded (task #29 done)
 
 ## 7.16. Session 6.1 (2026-06-02 tarde) — Avios categories + 96.6% coverage + silent-failure guards
 
