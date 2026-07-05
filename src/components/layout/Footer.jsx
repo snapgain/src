@@ -27,9 +27,22 @@ export function Footer() {
               />
             </Link>
             <p className="text-muted-foreground text-[10px] md:text-sm leading-snug">
-              Helping you save and earn more
-              <br />
-              through smart strategy.
+              {/* Mobile: break in 3 so the brand column is narrower,
+                  which gives the three link columns (and the support
+                  email) more horizontal room. Desktop: keep the 2-line
+                  wrap it had before. */}
+              <span className="md:hidden">
+                Helping you save
+                <br />
+                and earn more
+                <br />
+                through smart strategy.
+              </span>
+              <span className="hidden md:inline">
+                Helping you save and earn more
+                <br />
+                through smart strategy.
+              </span>
             </p>
           </div>
 
