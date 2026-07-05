@@ -47,8 +47,22 @@ export function SearchAutocomplete({
   const [value, setValue] = useState(initialValue);
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(-1);
+  // Slug of the store the user picked from the dropdown. Held here
+  // (not navigated to immediately) so the parent-owned amount input
+  // gets a chance to be filled in before Search is pressed.
+  // Cleared as soon as the user edits the input text after picking,
+  // so we don't end up submitting a stale slug.
+  // (Bárbara 2026-07-05.)
+  const [pickedSlug, setPickedSlug] = useState('');
   const containerRef = useRef(null);
   const inputRef = useRef(null);
+  // "Pick-then-submit" mode: dropdown selection only fills the input
+  // and remembers the slug; navigation waits for form submit. We
+  // enable it when the parent hands us an amount handler — that
+  // signals a hero-style form where the user is meant to fill the £
+  // amount before continuing. Other callers (e.g. SearchPage) keep
+  // the older click-to-navigate behaviour.
+  const pickMode = typeof onAmountChange === 'function';
 
   // Sync controlled value with prop changes
   useEffect(() => {
@@ -94,8 +108,52 @@ export function SearchAutocomplete({
     return `/store/${slug}`;
   };
 
+  // Picking a store from the dropdown. In pickMode, we ONLY fill the
+  // input and remember the slug — no navigation. The user then fills
+  // in the amount and presses Search to actually go. In default mode
+  // we behave like before and navigate immediately.
+  const pickStore = (store) => {
+    if (!store) return;
+    if (pickMode) {
+      setValue(store.name);
+      setPickedSlug(store.slug);
+      setOpen(false);
+      setHighlighted(-1);
+      // Move focus to the amount field so the user can type right away.
+      // Fallback: refocus the search input if the amount input isn't there.
+      requestAnimationFrame(() => {
+        const amountEl = containerRef.current?.querySelector('input[type="number"]');
+        (amountEl || inputRef.current)?.focus();
+      });
+      return;
+    }
+    navigate(storeHref(store.slug));
+    setOpen(false);
+  };
+
   const submit = (e) => {
     e?.preventDefault?.();
+    if (pickMode) {
+      // Prefer explicit pick from the dropdown. If not, try to match
+      // the typed text to a store exactly (case-insensitive) so a user
+      // who typed the full name still lands on /compare.
+      let slug = pickedSlug;
+      if (!slug) {
+        const q = value.trim().toLowerCase();
+        const exact = stores.find((s) => s.name.toLowerCase() === q);
+        if (exact) slug = exact.slug;
+      }
+      if (slug) {
+        navigate(storeHref(slug));
+        setOpen(false);
+        return;
+      }
+      // No exact store → hand off to the parent (free-text search).
+      if (onSubmit) onSubmit(value.trim(), amount);
+      return;
+    }
+    // Legacy behaviour for callers that didn't opt into pick mode:
+    // arrow-key highlight = immediate navigate.
     if (highlighted >= 0 && matches[highlighted]) {
       navigate(storeHref(matches[highlighted].slug));
       setOpen(false);
@@ -116,7 +174,15 @@ export function SearchAutocomplete({
       setOpen(false);
       setHighlighted(-1);
     } else if (e.key === 'Enter') {
-      // submit handled by form
+      // In pickMode, if the user has a dropdown row highlighted,
+      // pressing Enter should PICK it (fill the input) rather than
+      // submit the form. That matches the "type → pick → fill amount
+      // → Search" flow Bárbara asked for. Without a highlight, the
+      // event falls through and the form submit runs normally.
+      if (pickMode && highlighted >= 0 && matches[highlighted]) {
+        e.preventDefault();
+        pickStore(matches[highlighted]);
+      }
     }
   };
 
@@ -138,6 +204,8 @@ export function SearchAutocomplete({
             setValue(e.target.value);
             setOpen(true);
             setHighlighted(-1);
+            // User edited after picking → picked slug is no longer trustworthy.
+            if (pickedSlug) setPickedSlug('');
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKey}
@@ -155,17 +223,13 @@ export function SearchAutocomplete({
             role="listbox"
             className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-xl shadow-lg z-50 max-h-80 overflow-auto py-1"
           >
-            {matches.map((store, i) => (
-              <li key={store.id} role="option" aria-selected={i === highlighted}>
-                <Link
-                  to={storeHref(store.slug)}
-                  onMouseEnter={() => setHighlighted(i)}
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 transition-colors',
-                    i === highlighted ? 'bg-muted' : 'hover:bg-muted/60'
-                  )}
-                >
+            {matches.map((store, i) => {
+              const rowClasses = cn(
+                'flex items-center gap-3 px-3 py-2.5 transition-colors w-full text-left',
+                i === highlighted ? 'bg-muted' : 'hover:bg-muted/60'
+              );
+              const rowInner = (
+                <>
                   <StoreLogo store={store} size="sm" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{store.name}</div>
@@ -176,9 +240,38 @@ export function SearchAutocomplete({
                     )}
                   </div>
                   <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                </Link>
-              </li>
-            ))}
+                </>
+              );
+              return (
+                <li key={store.id} role="option" aria-selected={i === highlighted}>
+                  {pickMode ? (
+                    <button
+                      type="button"
+                      onMouseEnter={() => setHighlighted(i)}
+                      onMouseDown={(e) => {
+                        // Prevent the input from losing focus before we
+                        // process the pick, which would close the dropdown
+                        // before onClick fires reliably on mobile Safari.
+                        e.preventDefault();
+                      }}
+                      onClick={() => pickStore(store)}
+                      className={rowClasses}
+                    >
+                      {rowInner}
+                    </button>
+                  ) : (
+                    <Link
+                      to={storeHref(store.slug)}
+                      onMouseEnter={() => setHighlighted(i)}
+                      onClick={() => setOpen(false)}
+                      className={rowClasses}
+                    >
+                      {rowInner}
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
