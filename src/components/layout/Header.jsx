@@ -67,22 +67,17 @@ export function Header() {
   };
 
   const handleMarketingNav = (hash) => {
-    if (window.location.pathname === '/') {
-      // Already on landing — update URL (so back button + bookmarks work)
-      // then smooth-scroll to the section. pushState avoids triggering a
-      // React Router navigation, which would re-fire ScrollToTopOnNav.
-      const el = document.getElementById(hash);
-      if (el) {
-        window.history.pushState(null, '', `/#${hash}`);
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
-    } else {
-      // Different page — route through React Router so ScrollToTopOnNav
-      // picks up the hash on landing-mount and scrolls properly. Using
-      // window.location.href here doesn't always work because the SPA
-      // mounts the new route before the hash anchor is in the DOM.
-      navigate(`/#${hash}`);
-    }
+    // Always route through React Router — ScrollToTopOnNav listens to
+    // hash changes and defers the scroll via rAF until the target is
+    // mounted, so this works whether we're already on / (just changing
+    // the hash) or navigating from another page.
+    //
+    // Earlier version tried to be clever with pushState + local
+    // scrollIntoView when already on /, but the `if (el)` guard failed
+    // silently when the section hadn't mounted yet or the anchor was
+    // off-screen at click time — clicking 'Travel' did nothing on
+    // mobile (2026-07-05 Bárbara).
+    navigate(`/#${hash}`);
   };
 
   return (
@@ -138,7 +133,7 @@ export function Header() {
                     key={hash}
                     type="button"
                     onClick={() => handleMarketingNav(hash)}
-                    className="px-2 md:px-4 py-2 rounded-full text-[11px] md:text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 transition-colors whitespace-nowrap"
+                    className="px-1.5 md:px-4 py-2 rounded-full text-xs md:text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 transition-colors whitespace-nowrap"
                   >
                     {label}
                   </button>
