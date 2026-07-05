@@ -106,7 +106,9 @@ export function Header() {
             />
           </Link>
 
-          {/* Center nav — icon-only on mobile, icon+label from md+ */}
+          {/* Center nav — icon over label on mobile (tab-bar style),
+              icon+label pill from md+ (2026-07-05 Bárbara: label
+              always visible so users know what each icon means). */}
           <nav className="flex items-center justify-center gap-0.5 md:gap-1">
             {user
               ? AUTHED_NAV.map(({ to, key, icon: Icon }) => (
@@ -116,18 +118,19 @@ export function Header() {
                     aria-label={t(key)}
                     className={({ isActive }) =>
                       cn(
-                        'inline-flex items-center gap-2 rounded-full text-sm font-medium transition-colors',
-                        // Compact icon-only tap target on mobile,
-                        // pill with label from md upward.
-                        'p-2 md:px-4 md:py-2',
+                        'transition-colors',
+                        // Mobile: stacked icon+label, small text. From md:
+                        // horizontal pill with label.
+                        'flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium',
+                        'md:flex-row md:gap-2 md:px-4 md:py-2 md:text-sm md:rounded-full',
                         isActive
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'text-foreground/80 hover:text-primary hover:bg-primary/5'
+                          ? 'text-primary md:bg-primary md:text-primary-foreground md:shadow-sm'
+                          : 'text-foreground/70 hover:text-primary md:hover:bg-primary/5'
                       )
                     }
                   >
                     <Icon className="w-5 h-5 md:w-4 md:h-4" />
-                    <span className="hidden md:inline">{t(key)}</span>
+                    <span>{t(key)}</span>
                   </NavLink>
                 ))
               : MARKETING_NAV.map(({ hash, label }) => (
@@ -135,7 +138,7 @@ export function Header() {
                     key={hash}
                     type="button"
                     onClick={() => handleMarketingNav(hash)}
-                    className="px-2 md:px-4 py-2 rounded-full text-xs md:text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 transition-colors"
+                    className="px-2 md:px-4 py-2 rounded-full text-[11px] md:text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 transition-colors whitespace-nowrap"
                   >
                     {label}
                   </button>
@@ -201,16 +204,26 @@ export function Header() {
               </>
             ) : (
               <>
-                <Button variant="ghost" onClick={() => navigate('/auth/login')}>
-                  <LogIn className="mr-2 h-4 w-4" />
-                  {t('nav.signIn')}
+                {/* Sign in — icon-only on mobile (label reappears at md+)
+                    so the marketing nav has room to breathe. */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/auth/login')}
+                  aria-label={t('nav.signIn')}
+                  className="px-2 md:px-3"
+                >
+                  <LogIn className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">{t('nav.signIn')}</span>
                 </Button>
                 <Button
+                  size="sm"
                   onClick={() => navigate('/auth/signup')}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  aria-label={t('nav.signUp')}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-2 md:px-3"
                 >
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  {t('nav.signUp')}
+                  <UserPlus className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">{t('nav.signUp')}</span>
                 </Button>
               </>
             )}
