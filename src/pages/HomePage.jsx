@@ -3,8 +3,6 @@ import { Helmet } from 'react-helmet';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Flame,
   ShoppingCart,
@@ -260,40 +258,16 @@ function HomePage() {
             </p>
           </div>
 
-          {/* Search + amount row.
-              Store dropdown: SearchAutocomplete now reads the amount
-              prop, so a pick jumps straight to /compare?store=…&amount=…
-              in one tap.
-              Free-text: goSearch() routes to /search?q=…&amount=…, which
-              shows matching stores when there's no exact match. */}
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_10rem] gap-3 items-end">
-            <div className="min-w-0">
-              <Label htmlFor="hero-search" className="text-xs font-semibold text-muted-foreground mb-1.5 block">
-                Store
-              </Label>
-              <SearchAutocomplete
-                onSubmit={goSearch}
-                placeholder="Type a store name…"
-                amount={heroAmount}
-              />
-            </div>
-            <div>
-              <Label htmlFor="hero-amount" className="text-xs font-semibold text-muted-foreground mb-1.5 block">
-                Purchase amount (£)
-              </Label>
-              <Input
-                id="hero-amount"
-                type="number"
-                inputMode="decimal"
-                min="1"
-                step="0.01"
-                placeholder="100"
-                value={heroAmount}
-                onChange={(e) => setHeroAmount(e.target.value)}
-                className="h-12 text-base"
-              />
-            </div>
-          </div>
+          {/* Store · £ Amount · Search — all inline in one row on both
+              mobile and desktop (Bárbara 2026-07-05). SearchAutocomplete
+              hosts the amount input internally so the alignment stays
+              consistent and the whole form submits as one. */}
+          <SearchAutocomplete
+            onSubmit={goSearch}
+            placeholder="Type a store name…"
+            amount={heroAmount}
+            onAmountChange={setHeroAmount}
+          />
 
           {/* Shortcuts under the search input. Kept the previous
               quick-action grid geometry so the layout stays familiar
