@@ -67,16 +67,25 @@ export function Header() {
   };
 
   const handleMarketingNav = (hash) => {
-    // Always route through React Router — ScrollToTopOnNav listens to
-    // hash changes and defers the scroll via rAF until the target is
-    // mounted, so this works whether we're already on / (just changing
-    // the hash) or navigating from another page.
-    //
-    // Earlier version tried to be clever with pushState + local
-    // scrollIntoView when already on /, but the `if (el)` guard failed
-    // silently when the section hadn't mounted yet or the anchor was
-    // off-screen at click time — clicking 'Travel' did nothing on
-    // mobile (2026-07-05 Bárbara).
+    const el =
+      typeof document !== 'undefined' ? document.getElementById(hash) : null;
+    const onLanding = window.location.pathname === '/';
+
+    if (onLanding && el) {
+      // Same-page scroll. Skip navigate() because navigating to a hash
+      // that already matches window.location.hash is a no-op and the
+      // useEffect in ScrollToTopOnNav won't re-fire — clicking Travel
+      // twice, or clicking it while the URL still has #travel from
+      // earlier, would silently do nothing. Push the URL directly and
+      // trigger scrollIntoView ourselves so every click always scrolls.
+      window.history.pushState(null, '', `/#${hash}`);
+      el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    // Not on landing OR anchor not yet in the DOM. Route through React
+    // Router so ScrollToTopOnNav picks up the hash on mount and does
+    // the deferred scroll.
     navigate(`/#${hash}`);
   };
 
