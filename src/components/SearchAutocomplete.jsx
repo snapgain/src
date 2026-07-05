@@ -286,11 +286,22 @@ export function SearchAutocomplete({
                   <StoreLogo store={store} size="sm" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{store.name}</div>
-                    {store.category?.[0] && (
-                      <div className="text-xs text-muted-foreground capitalize truncate">
-                        {store.category[0]}
-                      </div>
-                    )}
+                    {(() => {
+                      // Sainsbury's has category=[gift-card, groceries] so the
+                      // dropdown was rendering "Gift-Card", which makes users
+                      // think the store is gift-cards-only. "gift-card" is a
+                      // product-type marker, not a real category — prefer any
+                      // real category (Groceries, Fashion, etc.) and fall back
+                      // to gift-card only when there's genuinely nothing else.
+                      const cats = Array.isArray(store.category) ? store.category : [];
+                      const primary = cats.find((c) => c !== 'gift-card') || cats[0];
+                      if (!primary) return null;
+                      return (
+                        <div className="text-xs text-muted-foreground capitalize truncate">
+                          {String(primary).replace(/-/g, ' ')}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
                 </>
