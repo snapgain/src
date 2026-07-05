@@ -41,8 +41,15 @@ const AUTHED_NAV = [
 // its #travel anchor no longer exists in the DOM. Leaving the button
 // in the nav made every click a silent no-op. If TravelAngle is ever
 // re-enabled in src/pages/LandingPage.jsx, add the entry back here.
+//
+// 'Calculate' added same day — the #calculator section is the highest
+// conversion asset on the landing (interactive, shows real £/Avios
+// numbers for the visitor's own spend). Putting it between the
+// "learn" step (How it works) and the "buy" step (Pricing) matches
+// the natural funnel order.
 const MARKETING_NAV = [
   { hash: 'how-it-works', label: 'How it works' },
+  { hash: 'calculator', label: 'Calculate' },
   { hash: 'faq', label: 'FAQ' },
   { hash: 'pricing', label: 'Pricing' },
 ];

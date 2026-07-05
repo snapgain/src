@@ -684,7 +684,7 @@ function Calculator({ onPrimary }) {
   return (
     <section
       id="calculator"
-      className="bg-gradient-to-br from-primary/10 via-background to-primary/5 py-20 md:py-28"
+      className="bg-gradient-to-br from-primary/10 via-background to-primary/5 py-20 md:py-28 scroll-mt-20"
     >
       <div className="container mx-auto px-4">
         <div className="text-center mb-12 max-w-2xl mx-auto">
