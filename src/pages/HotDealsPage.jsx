@@ -105,7 +105,7 @@ function HotDealsPage() {
         await Promise.all([
           supabase
             .from('cashback_offers')
-            .select(`id, platform, rate, affiliate_link, conditions, valid_to, ${STORE_SEL}`)
+            .select(`id, platform, rate, rate_breakdown, affiliate_link, conditions, valid_to, ${STORE_SEL}`)
             .eq('is_active', true)
             .eq('is_boosted', true)
             .order('rate', { ascending: false })
@@ -663,6 +663,14 @@ function OrganicTopDealCard({ offer, rank }) {
   // Pulse urgency once we're under 24h. Stays subtle — small chip, no
   // banner animation that would feel like a fire sale.
   const urgent = countdown && /Ends in \d+(m|h)$/.test(countdown);
+  // 2026-07-05 (Bárbara): many merchants have different rates per
+  // sub-category (Peacocks: New Customer 6.4% vs Existing 3.2%;
+  // Hostinger: Horizons 70% / Domain 20% / Hosting 40%). rate_breakdown
+  // is a jsonb array like [{name, rate, tag}]. Show up to the first 3
+  // sub-rows so the user sees the real picture, not just the headline
+  // "up to X%" that hides where the value actually is.
+  const breakdown = Array.isArray(offer.rate_breakdown) ? offer.rate_breakdown : [];
+  const showBreakdown = breakdown.length > 1;
 
   const inner = (
     <Card className={cn('card-hover h-full', isBest && 'border-primary/40')}>
@@ -711,6 +719,35 @@ function OrganicTopDealCard({ offer, rank }) {
           >
             <Clock className="w-3 h-3" />
             {countdown}
+          </div>
+        )}
+        {showBreakdown && (
+          <div className="pt-1 border-t border-border/40">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+              Rate by category
+            </div>
+            <ul className="space-y-0.5">
+              {breakdown.slice(0, 3).map((row, i) => (
+                <li key={i} className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className="text-muted-foreground truncate flex-1">
+                    {row.name || '—'}
+                    {row.tag && (
+                      <span className="ml-1 inline-block text-[9px] font-semibold uppercase tracking-wider text-secondary">
+                        {row.tag}
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-semibold shrink-0">
+                    {row.rate != null ? `${row.rate}%` : '—'}
+                  </span>
+                </li>
+              ))}
+              {breakdown.length > 3 && (
+                <li className="text-[10px] text-muted-foreground">
+                  + {breakdown.length - 3} more
+                </li>
+              )}
+            </ul>
           </div>
         )}
       </CardContent>
