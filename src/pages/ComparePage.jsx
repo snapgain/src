@@ -57,6 +57,7 @@ import { StoreLogo } from '@/components/StoreLogo';
 import { CuratedStrategyCard } from '@/components/CuratedStrategyCard';
 import { buildWalletFilter } from '@/lib/walletFilter';
 import { resolveOpenUrl } from '@/lib/affiliateLinks';
+import { RateBreakdown } from '@/components/RateBreakdown';
 import { labelForStrategy } from '@/components/AutoStrategyCard';
 import { compareCashbackVsAvios, gbpToAviosBooster } from '@/lib/aviosMath';
 import { cn } from '@/lib/utils';
@@ -719,6 +720,16 @@ function AutoRouteDetail({ strategy, storeSlug, amount }) {
                 {layer.gbpDisplay && (
                   <div className="text-xs text-muted-foreground">
                     {layer.gbpDisplay}
+                  </div>
+                )}
+                {/* 2026-07-05 (Bárbara): breakdown was already threaded
+                    from strategies.js but the render was missing here.
+                    Show tiers when the layer has variance so users see
+                    the actual rate for their purchase category, not
+                    just an "Up to X%" ceiling. */}
+                {Array.isArray(layer.rateBreakdown) && layer.rateBreakdown.length > 1 && (
+                  <div className="mt-2">
+                    <RateBreakdown breakdown={layer.rateBreakdown} compact />
                   </div>
                 )}
               </div>

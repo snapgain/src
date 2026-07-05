@@ -23,6 +23,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/lib/customSupabaseClient';
 import { StoreLogo } from '@/components/StoreLogo';
 import { resolveOpenUrl } from '@/lib/affiliateLinks';
+import { RateBreakdown } from '@/components/RateBreakdown';
 import { cn } from '@/lib/utils';
 
 const isExternal = (url) => /^https?:\/\//i.test(url || '');
@@ -56,7 +57,7 @@ function SupermarketDealsPage() {
       const ids = stores.map((s) => s.id);
       const { data: offers, error: oErr } = await supabase
         .from('cashback_offers')
-        .select('id, store_id, platform, rate, affiliate_link, conditions')
+        .select('id, store_id, platform, rate, affiliate_link, conditions, rate_breakdown')
         .eq('is_active', true)
         .in('store_id', ids);
       if (oErr) console.warn('[SupermarketDealsPage] offers error:', oErr.message);
@@ -183,32 +184,41 @@ function DealRow({ row, idx }) {
         isBest && 'border-primary/40 bg-gradient-to-br from-light-pink/30 to-card'
       )}
     >
-      <CardContent className="py-4 flex items-center gap-3">
-        <StoreLogo store={store} size="md" />
-        <div className="flex-1 min-w-0">
-          {isBest && (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary uppercase tracking-wide">
-              <Trophy className="w-3 h-3" />
-              Best today
-            </span>
-          )}
-          <div className="font-semibold truncate text-base">{store.name}</div>
-          <div className="text-xs text-muted-foreground">
-            via {offer.platform}
-            {offer.conditions && offer.conditions !== 'Up to'
-              ? ` · ${offer.conditions}`
-              : ''}
+      <CardContent className="py-4 space-y-2">
+        <div className="flex items-center gap-3">
+          <StoreLogo store={store} size="md" />
+          <div className="flex-1 min-w-0">
+            {isBest && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary uppercase tracking-wide">
+                <Trophy className="w-3 h-3" />
+                Best today
+              </span>
+            )}
+            <div className="font-semibold truncate text-base">{store.name}</div>
+            <div className="text-xs text-muted-foreground">
+              via {offer.platform}
+              {offer.conditions && offer.conditions !== 'Up to'
+                ? ` · ${offer.conditions}`
+                : ''}
+            </div>
+          </div>
+          <div className="text-right shrink-0 flex flex-col items-end gap-0.5">
+            <div className="text-2xl md:text-3xl font-bold gradient-text leading-none">
+              {offer.conditions === 'Up to' ? 'Up to ' : ''}
+              {offer.rate}%
+            </div>
+            {external && (
+              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+            )}
           </div>
         </div>
-        <div className="text-right shrink-0 flex flex-col items-end gap-0.5">
-          <div className="text-2xl md:text-3xl font-bold gradient-text leading-none">
-            {offer.conditions === 'Up to' ? 'Up to ' : ''}
-            {offer.rate}%
-          </div>
-          {external && (
-            <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-          )}
-        </div>
+        {/* 2026-07-05 (Bárbara): show the per-category breakdown when it
+            exists so "Up to 60%" doesn't hide the fact that most tiers
+            are 37.5%. Same treatment as the Hot Deals and Store Detail
+            cards — no expanding click, tiers visible at a glance. */}
+        {Array.isArray(offer.rate_breakdown) && offer.rate_breakdown.length > 1 && (
+          <RateBreakdown breakdown={offer.rate_breakdown} compact />
+        )}
       </CardContent>
     </Card>
   );
