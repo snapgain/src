@@ -88,37 +88,46 @@ export function Header() {
   return (
     <header className="bg-background/80 backdrop-blur-sm border-b sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3">
-        {/* Symmetric 3-column grid: each column is equal width (1fr),
-            so the nav (middle) sits at the absolute visual center of
-            the page regardless of logo or button widths. */}
-        <div className="grid grid-cols-3 items-center gap-4">
+        {/* Grid layout.
+            - Mobile: [logo | nav | right] with nav taking the flexible
+              middle so all 4 tab icons fit at 375px. Nav is icon-only
+              on phones (labels reappear from md:), which lets the
+              header replace the BottomTabBar entirely (Bárbara
+              2026-07-05).
+            - Desktop (md+): symmetric grid-cols-3 as before, so the
+              text nav sits at the true visual centre. */}
+        <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-3 items-center gap-2 md:gap-4">
           {/* Logo (left column, content aligned start) */}
           <Link to={user ? '/home' : '/'} className="justify-self-start">
             <img
               src="/snapgain-logo.png"
               alt="SnapGain"
-              className="h-10 md:h-12 w-auto object-contain"
+              className="h-8 md:h-12 w-auto object-contain"
             />
           </Link>
 
-          {/* Center nav */}
-          <nav className="hidden md:flex items-center justify-center gap-1">
+          {/* Center nav — icon-only on mobile, icon+label from md+ */}
+          <nav className="flex items-center justify-center gap-0.5 md:gap-1">
             {user
               ? AUTHED_NAV.map(({ to, key, icon: Icon }) => (
                   <NavLink
                     key={to}
                     to={to}
+                    aria-label={t(key)}
                     className={({ isActive }) =>
                       cn(
-                        'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                        'inline-flex items-center gap-2 rounded-full text-sm font-medium transition-colors',
+                        // Compact icon-only tap target on mobile,
+                        // pill with label from md upward.
+                        'p-2 md:px-4 md:py-2',
                         isActive
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'text-foreground/80 hover:text-primary hover:bg-primary/5'
                       )
                     }
                   >
-                    <Icon className="w-4 h-4" />
-                    {t(key)}
+                    <Icon className="w-5 h-5 md:w-4 md:h-4" />
+                    <span className="hidden md:inline">{t(key)}</span>
                   </NavLink>
                 ))
               : MARKETING_NAV.map(({ hash, label }) => (
@@ -126,7 +135,7 @@ export function Header() {
                     key={hash}
                     type="button"
                     onClick={() => handleMarketingNav(hash)}
-                    className="px-4 py-2 rounded-full text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 transition-colors"
+                    className="px-2 md:px-4 py-2 rounded-full text-xs md:text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 transition-colors"
                   >
                     {label}
                   </button>
