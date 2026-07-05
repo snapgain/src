@@ -156,13 +156,22 @@ export function getServiceAffiliateLink(name) {
 /**
  * Resolve the URL we should send the user to when they click "Open"
  * on an offer/deal. Priority:
- *   1. Explicit URL on the row (DB beats config)
- *   2. Affiliate link from this file, looked up by platform
- *   3. Fallback URL (e.g. internal `/store/:slug`)
+ *   1. Explicit URL on the row (DB beats config — e.g. TC's affiliate
+ *      link stored directly on the offer)
+ *   2. Platform-level affiliate link from this file (TC/Quidco ref)
+ *   3. Store's homepage from stores.domain (2026-07-05 Bárbara:
+ *      "just use the site's home page" — NX Rewards has no per-store
+ *      affiliate link, so instead of 404ing we send the user to the
+ *      merchant's real site)
+ *   4. Fallback URL (internal `/store/:slug`)
  */
-export function resolveOpenUrl({ rowUrl, platform, fallback } = {}) {
+export function resolveOpenUrl({ rowUrl, platform, storeDomain, fallback } = {}) {
   if (rowUrl) return rowUrl;
   const aff = getAffiliateLink(platform);
   if (aff) return aff;
+  if (storeDomain) {
+    const clean = String(storeDomain).replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return `https://${clean}/`;
+  }
   return fallback || '';
 }
