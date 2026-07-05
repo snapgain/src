@@ -90,7 +90,28 @@ export function SearchAutocomplete({
       else if (name.startsWith(q)) prefix.push(s);
       else if (name.includes(q)) contains.push(s);
     }
-    return [...exact, ...prefix, ...contains].slice(0, 8);
+    // 2026-07-05 (Bárbara): the stores catalogue has ~640 near-duplicate
+    // rows from scraper slug drift ("adidas" vs "adidas-shop", "Sainsbury's
+    // Groceries" vs "Sainsbury's Grocery", etc.). DB cleanup is in flight,
+    // but until it lands users see 3-5 near-identical rows per merchant in
+    // the dropdown, which reads as sloppy. Normalise names (strip apostrophes,
+    // "the ", trailing "s", collapse whitespace) and keep the first match
+    // per normalised key — prefer rows with more offers when we can tell.
+    const seen = new Set();
+    const dedup = [];
+    for (const s of [...exact, ...prefix, ...contains]) {
+      const key = s.name
+        .toLowerCase()
+        .replace(/['’‘`"]/g, '')
+        .replace(/^the\s+/, '')
+        .replace(/\s+/g, ' ')
+        .replace(/s$/, '')
+        .trim();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      dedup.push(s);
+    }
+    return dedup.slice(0, 8);
   }, [value, stores]);
 
   // Close on outside click
