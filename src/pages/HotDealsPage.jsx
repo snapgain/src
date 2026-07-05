@@ -10,7 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, ArrowLeft, Filter, ExternalLink, Wallet, Sparkles, TrendingUp, TrendingDown } from 'lucide-react';
+import { Zap, ArrowLeft, Filter, ExternalLink, Wallet, Sparkles, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -84,14 +84,17 @@ function HotDealsPage() {
     return () => { alive = false; };
   }, []);
 
-  // ── Booster Top 12 ────────────────────────────────────────────────
+  // ── Boosters grouped by platform ──────────────────────────────────
   // Pull offers flagged is_boosted=true across BOTH cashback_offers
-  // (TC/Quidco) AND gift_card_offers (JamDoughnut "Pumped Up"). The
-  // platforms mark these when the rate/discount is a temporary boost
-  // above the merchant's normal evergreen rate.
-  // Merged client-side and ranked by rate (or discount_pct) descending,
-  // deduped per-store so the same merchant doesn't appear twice.
-  const [boosters, setBoosters] = useState([]);
+  // (TC/Quidco) AND gift_card_offers (JamDoughnut "Pumped Up").
+  // 2026-06-29 (Bárbara): instead of dedup+round-robin into one mixed
+  // grid, group by platform so each platform gets its own section.
+  // A store boosted on both TC AND Quidco appears in both sections —
+  // user wants to see the comparison, not have us pick one for them.
+  // valid_to is fetched even though it's null today; the scraper
+  // update in PR 2 will populate it and the countdown chip will turn
+  // on automatically.
+  const [boostersByPlatform, setBoostersByPlatform] = useState({});
   const [boostersLoading, setBoostersLoading] = useState(true);
   useEffect(() => {
     let alive = true;
@@ -102,27 +105,23 @@ function HotDealsPage() {
         await Promise.all([
           supabase
             .from('cashback_offers')
-            .select(`id, platform, rate, affiliate_link, conditions, ${STORE_SEL}`)
+            .select(`id, platform, rate, affiliate_link, conditions, valid_to, ${STORE_SEL}`)
             .eq('is_active', true)
             .eq('is_boosted', true)
             .order('rate', { ascending: false })
-            .limit(40),
+            .limit(200),
           supabase
             .from('gift_card_offers')
-            .select(`id, platform, discount_pct, affiliate_link, conditions, ${STORE_SEL}`)
+            .select(`id, platform, discount_pct, affiliate_link, conditions, valid_to, ${STORE_SEL}`)
             .eq('is_active', true)
             .eq('is_boosted', true)
             .order('discount_pct', { ascending: false })
-            .limit(40),
+            .limit(200),
         ]);
       if (!alive) return;
       if (cbErr) console.warn('[HotDealsPage boosters cb] error:', cbErr.message);
       if (gcErr) console.warn('[HotDealsPage boosters gc] error:', gcErr.message);
 
-      // Normalize both into a common shape so the renderer doesn't
-      // need to branch. `rate` carries the headline number for both
-      // (% cashback OR % discount) — the `kind` field signals which
-      // unit so the UI can label it correctly if needed.
       const cb = (cbRows || []).map((o) => ({
         ...o,
         kind: 'cashback',
@@ -134,70 +133,27 @@ function HotDealsPage() {
         rateValue: Number(o.discount_pct) || 0,
       }));
 
-      // Dedup by store — keep the highest rate across both tables.
-      const bestByStore = new Map();
+      // Group by platform. Within each platform, dedup by store (same
+      // merchant could have two boosted offers on the same platform —
+      // keep the better one).
+      const byPlatform = {};
       for (const o of [...cb, ...gc]) {
         if (!o.store || o.store.is_active === false) continue;
-        const cur = bestByStore.get(o.store.id);
-        if (!cur || o.rateValue > cur.rateValue) bestByStore.set(o.store.id, o);
+        const platform = String(o.platform || 'other');
+        if (!byPlatform[platform]) byPlatform[platform] = new Map();
+        const bucket = byPlatform[platform];
+        const cur = bucket.get(o.store.id);
+        if (!cur || o.rateValue > cur.rateValue) bucket.set(o.store.id, o);
       }
 
-      // 2026-05-19: CATEGORY-BALANCED SELECTION (Bárbara's feedback).
-      // A naive "top 12 by rate" surfaces only the highest-rate niche
-      // brands (NordVPN 98%, Toner Giant 40%, etc.) — useful but
-      // doesn't help the user discover deals across the categories
-      // they actually shop in. Round-robin instead: pick the top
-      // booster from each category in turn (Fashion #1, Travel #1,
-      // Tech #1…) until we hit 12. This guarantees variety in the
-      // grid while still ranking by rate within each slot.
-      const byCategory = new Map();
-      for (const o of bestByStore.values()) {
-        const cat =
-          (Array.isArray(o.store?.category) && o.store.category[0]) || 'other';
-        if (!byCategory.has(cat)) byCategory.set(cat, []);
-        byCategory.get(cat).push(o);
+      // Materialise each bucket as a sorted array (rate desc).
+      const result = {};
+      for (const [platform, bucket] of Object.entries(byPlatform)) {
+        result[platform] = Array.from(bucket.values()).sort(
+          (a, b) => b.rateValue - a.rateValue
+        );
       }
-      // Sort each bucket by rate so [0] = best for that category.
-      for (const arr of byCategory.values()) {
-        arr.sort((a, b) => b.rateValue - a.rateValue);
-      }
-      // Order the categories themselves by their TOP rate so the user-
-      // facing first slots still feel "hot" — but every category gets
-      // a turn before any one of them gets a second pick.
-      // Push "other" (null/unknown category) to the very end so the
-      // grid leads with proper retail categories instead of misc tech.
-      const catKeys = Array.from(byCategory.keys()).sort((a, b) => {
-        if (a === 'other' && b !== 'other') return 1;
-        if (b === 'other' && a !== 'other') return -1;
-        return (byCategory.get(b)[0]?.rateValue || 0) -
-               (byCategory.get(a)[0]?.rateValue || 0);
-      });
-      const result = [];
-      const seen = new Set();
-      const TARGET = 12;
-      for (let round = 0; result.length < TARGET && round < 20; round += 1) {
-        let progressed = false;
-        for (const cat of catKeys) {
-          if (result.length >= TARGET) break;
-          const offer = byCategory.get(cat)[round];
-          if (offer && !seen.has(offer.id)) {
-            result.push(offer);
-            seen.add(offer.id);
-            progressed = true;
-          }
-        }
-        if (!progressed) break; // exhausted everything
-      }
-      // 2026-05-19 (Bárbara): keep ROUND-ROBIN ORDER for display, do
-      // NOT re-sort by rate. Reason: a rate-desc sort puts the 2-3
-      // highest-rate categories back at the top (typically VPN/tech
-      // brands at 80-100% cashback), defeating the variety the
-      // round-robin gave us. Round-robin order naturally interleaves
-      // one item per category, so position 1..10 = 10 different
-      // categories, position 11-12 = second pick from the strongest
-      // categories. The user sees Fashion → Travel → Pets → Food …
-      // instead of VPN → VPN → VPN.
-      setBoosters(result);
+      setBoostersByPlatform(result);
       setBoostersLoading(false);
     })();
     return () => { alive = false; };
@@ -206,18 +162,36 @@ function HotDealsPage() {
   // Wallet filter is applied at RENDER time (not in the fetch) so the
   // toggle is instant — no refetch when the user flips the switch.
   // Null walletFilter = show all (default OR empty wallet).
-  const visibleBoosters = useMemo(() => {
-    if (!walletFilter?.cashbackPlatformNames) return boosters;
-    return boosters.filter((o) => {
-      // Cashback offers match by platform name; gift_card offers also
-      // use the same platform string (jamdoughnut, everup, etc.).
-      const platform = String(o.platform || '').toLowerCase();
-      for (const wp of walletFilter.cashbackPlatformNames) {
-        if (String(wp).toLowerCase() === platform) return true;
+  // Per-platform variant: filter out entire platform sections the user
+  // doesn't have in their wallet (more useful than hiding individual
+  // offers from a mixed grid).
+  const visibleBoostersByPlatform = useMemo(() => {
+    if (!walletFilter?.cashbackPlatformNames) return boostersByPlatform;
+    const allowed = new Set(
+      walletFilter.cashbackPlatformNames.map((p) => String(p).toLowerCase())
+    );
+    const filtered = {};
+    for (const [platform, offers] of Object.entries(boostersByPlatform)) {
+      if (allowed.has(String(platform).toLowerCase())) {
+        filtered[platform] = offers;
       }
-      return false;
-    });
-  }, [boosters, walletFilter]);
+    }
+    return filtered;
+  }, [boostersByPlatform, walletFilter]);
+
+  const totalVisibleBoosters = useMemo(
+    () => Object.values(visibleBoostersByPlatform).reduce((sum, arr) => sum + arr.length, 0),
+    [visibleBoostersByPlatform]
+  );
+
+  // Platforms ordered by booster count (most active platform first).
+  const orderedPlatforms = useMemo(
+    () =>
+      Object.entries(visibleBoostersByPlatform)
+        .sort(([, a], [, b]) => b.length - a.length)
+        .map(([p]) => p),
+    [visibleBoostersByPlatform]
+  );
 
   const visibleRecentBoosts = useMemo(() => {
     if (!walletFilter?.cashbackPlatformNames) return recentBoosts;
@@ -354,7 +328,7 @@ function HotDealsPage() {
               Loading deals…
             </CardContent>
           </Card>
-        ) : filtered.length === 0 && visibleBoosters.length === 0 && visibleRecentBoosts.length === 0 ? (
+        ) : filtered.length === 0 && totalVisibleBoosters === 0 && visibleRecentBoosts.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground space-y-2">
               <p>No hot deals featured right now.</p>
@@ -414,16 +388,21 @@ function HotDealsPage() {
               </div>
             )}
 
-            {/* Block B: TOP 12 platform-flagged boosters across
-                cashback_offers (TC/Quidco "Boosted/Increased") AND
-                gift_card_offers (JamDoughnut "Pumped Up"). Merged
-                & deduped by store, ranked by rate descending. */}
-            {visibleBoosters.length > 0 && (
-              <div className="pt-2 space-y-3">
+            {/* Block B: platform-flagged boosters, GROUPED PER PLATFORM
+                (2026-06-29 Bárbara — was single mixed grid before).
+                Each platform gets its own section so the user can
+                compare a store across TC vs Quidco directly. Section
+                ordering: most boosters first. Within a section: top
+                N by rate desc. valid_to → countdown chip when the
+                scraper starts populating it (currently null). */}
+            {totalVisibleBoosters > 0 && (
+              <div className="pt-2 space-y-8">
                 <div className="pb-2 border-b">
                   <h2 className="text-xl font-bold tracking-tight">
-                    Top {visibleBoosters.length} platform booster
-                    {visibleBoosters.length === 1 ? '' : 's'}
+                    {totalVisibleBoosters} active booster
+                    {totalVisibleBoosters === 1 ? '' : 's'} across{' '}
+                    {orderedPlatforms.length} platform
+                    {orderedPlatforms.length === 1 ? '' : 's'}
                     {walletOnly && (
                       <span className="text-xs font-normal text-muted-foreground ml-2">
                         (filtered to your wallet)
@@ -431,19 +410,45 @@ function HotDealsPage() {
                     )}
                   </h2>
                   <p className="text-xs text-muted-foreground">
-                    Rates temporarily elevated by the platforms themselves —
-                    Boosted (TopCashback/Quidco) and Pumped Up (JamDoughnut).
-                    Limited-time only.
+                    Rates temporarily elevated by the platforms themselves.
+                    Limited-time — when a countdown is shown, that's when
+                    the boost expires on the platform's site.
                   </p>
                 </div>
-                {/* 3-col grid (Bárbara 2026-05-19) — denser layout
-                    so the 12 diverse boosters fit cleanly. Stacks to
-                    2 cols on tablets, 1 col on phones. */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {visibleBoosters.map((offer, i) => (
-                    <OrganicTopDealCard key={offer.id} offer={offer} rank={i + 1} />
-                  ))}
-                </div>
+
+                {orderedPlatforms.map((platform) => {
+                  const offers = visibleBoostersByPlatform[platform];
+                  const LIMIT = 12;
+                  const shown = offers.slice(0, LIMIT);
+                  const more = offers.length - shown.length;
+                  return (
+                    <section key={platform} className="space-y-3">
+                      <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                        <h3 className="text-lg font-bold tracking-tight capitalize flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-secondary" />
+                          {platform.replace(/-/g, ' ')}
+                          <span className="text-xs font-normal text-muted-foreground">
+                            ({offers.length} boosted)
+                          </span>
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {shown.map((offer, i) => (
+                          <OrganicTopDealCard
+                            key={offer.id}
+                            offer={offer}
+                            rank={i + 1}
+                          />
+                        ))}
+                      </div>
+                      {more > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          + {more} more {platform} booster{more === 1 ? '' : 's'} not shown.
+                        </p>
+                      )}
+                    </section>
+                  );
+                })}
               </div>
             )}
           </>
@@ -625,6 +630,26 @@ function RecentBoostCard({ event }) {
   );
 }
 
+// Render a human countdown to a future timestamp. Returns one of:
+//   "Ends in 3d 4h"   (>= 1 day)
+//   "Ends in 12h"     (1 hour to 1 day)
+//   "Ends in 45m"     (< 1 hour)
+//   "Just expired"    (already past)
+// Returns null if no validTo passed (so caller can hide the chip).
+function formatExpiryCountdown(validTo) {
+  if (!validTo) return null;
+  const ms = new Date(validTo).getTime() - Date.now();
+  if (Number.isNaN(ms)) return null;
+  if (ms <= 0) return 'Just expired';
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 60) return `Ends in ${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Ends in ${hours}h`;
+  const days = Math.floor(hours / 24);
+  const remH = hours - days * 24;
+  return remH > 0 ? `Ends in ${days}d ${remH}h` : `Ends in ${days}d`;
+}
+
 function OrganicTopDealCard({ offer, rank }) {
   const store = offer.store || {};
   const href = resolveOpenUrl({
@@ -634,6 +659,10 @@ function OrganicTopDealCard({ offer, rank }) {
   });
   const external = isExternal(href);
   const isBest = rank === 1;
+  const countdown = formatExpiryCountdown(offer.valid_to);
+  // Pulse urgency once we're under 24h. Stays subtle — small chip, no
+  // banner animation that would feel like a fire sale.
+  const urgent = countdown && /Ends in \d+(m|h)$/.test(countdown);
 
   const inner = (
     <Card className={cn('card-hover h-full', isBest && 'border-primary/40')}>
@@ -656,18 +685,34 @@ function OrganicTopDealCard({ offer, rank }) {
           </span>
         </div>
       </CardHeader>
-      <CardContent className="pt-0 flex items-baseline justify-between gap-2">
-        <div className="flex items-baseline gap-2">
-          <div className="text-2xl font-bold gradient-text leading-none">
-            {offer.rateValue}%
+      <CardContent className="pt-0 space-y-2">
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="flex items-baseline gap-2">
+            <div className="text-2xl font-bold gradient-text leading-none">
+              {offer.rateValue}%
+            </div>
+            {/* Label by kind so users know whether it's % cashback or
+                % off a gift card. */}
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {offer.kind === 'gift_card' ? 'off gift card' : 'cashback'}
+            </div>
           </div>
-          {/* Label by kind so users know whether it's % cashback or
-              % off a gift card. */}
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {offer.kind === 'gift_card' ? 'off gift card' : 'cashback'}
-          </div>
+          {external && <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />}
         </div>
-        {external && <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />}
+        {countdown && (
+          <div
+            className={cn(
+              'inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full',
+              urgent
+                ? 'bg-red-100 text-red-700'
+                : 'bg-amber-100 text-amber-800'
+            )}
+            title={`Expires ${new Date(offer.valid_to).toLocaleString('en-GB')}`}
+          >
+            <Clock className="w-3 h-3" />
+            {countdown}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
