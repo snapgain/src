@@ -27,6 +27,7 @@ import { RevolutVsAviosCalculator } from '@/components/calculators/RevolutVsAvio
 import { AviosRedemptionCalculator } from '@/components/calculators/AviosRedemptionCalculator';
 import { AviosBoosterCalculator } from '@/components/calculators/AviosBoosterCalculator';
 import { PartPayWithAviosCalculator } from '@/components/calculators/PartPayWithAviosCalculator';
+import { RentCashbackCalculator } from '@/components/calculators/RentCashbackCalculator';
 
 function CalculatorPage() {
   return (
@@ -62,6 +63,16 @@ function CalculatorPage() {
             <NectarToAviosConverter />
             <RevolutVsAviosCalculator />
           </div>
+        </div>
+
+        {/* Rent — the biggest recurring payment most people make, and the
+            one where the two earning routes are shaped least alike. Full
+            width: it compares two strategies side by side. */}
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Rent — make your biggest bill earn
+          </h2>
+          <RentCashbackCalculator />
         </div>
 
         {/* Spending side — are these Avios worth spending here? */}
