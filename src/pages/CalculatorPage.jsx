@@ -8,6 +8,11 @@
 //
 // The old spend-estimator stays in git history (commit before
 // 2026-05-20) in case we want to bring it back.
+//
+// 2026-09-14: Split into two halves. The original four answer "which
+// way should I EARN on this purchase?". The three new ones answer the
+// other half — "what are these points actually WORTH, and what did
+// they cost me?" — which is where the real money is won or lost.
 
 import React from 'react';
 import { Helmet } from 'react-helmet';
@@ -19,6 +24,9 @@ import { CashbackVsAviosCalculator } from '@/components/calculators/CashbackVsAv
 import { NectarVsAviosCalculator } from '@/components/calculators/NectarVsAviosCalculator';
 import { NectarToAviosConverter } from '@/components/calculators/NectarToAviosConverter';
 import { RevolutVsAviosCalculator } from '@/components/calculators/RevolutVsAviosCalculator';
+import { AviosRedemptionCalculator } from '@/components/calculators/AviosRedemptionCalculator';
+import { AviosBoosterCalculator } from '@/components/calculators/AviosBoosterCalculator';
+import { PartPayWithAviosCalculator } from '@/components/calculators/PartPayWithAviosCalculator';
 
 function CalculatorPage() {
   return (
@@ -43,12 +51,29 @@ function CalculatorPage() {
           </p>
         </div>
 
-        {/* 4 micro-tools, 2×2 grid on desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CashbackVsAviosCalculator />
-          <NectarVsAviosCalculator />
-          <NectarToAviosConverter />
-          <RevolutVsAviosCalculator />
+        {/* Earning side — which route earns more on this purchase? */}
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Earning — which route wins on this purchase?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CashbackVsAviosCalculator />
+            <NectarVsAviosCalculator />
+            <NectarToAviosConverter />
+            <RevolutVsAviosCalculator />
+          </div>
+        </div>
+
+        {/* Spending side — are these Avios worth spending here? */}
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Spending — are your Avios worth it here?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <AviosRedemptionCalculator />
+            <PartPayWithAviosCalculator />
+            <AviosBoosterCalculator />
+          </div>
         </div>
 
         {/* CTA to strategies for context */}

@@ -134,3 +134,88 @@ export function compareCashbackVsAvios({ cashbackGbp = 0, directAvios = 0, boost
     note: `Avios eStore wins: ${av.toLocaleString('en-GB')} Avios direct vs ${cashbackAvios.toLocaleString('en-GB')} via cashback Booster.`,
   };
 }
+
+/**
+ * What an Avios is actually WORTH on a given booking, in pence.
+ *
+ * This is the redemption side of the ledger, and the one number that
+ * settles "is this a good use of my Avios?". It covers both shapes of
+ * the question with the same arithmetic:
+ *
+ *   Full Avios redemption — cashPrice is the cash fare you avoid,
+ *     cashPaid is the taxes/fees/carrier charges you still pay.
+ *   Avios + cash (Part Pay with Avios) — cashPrice is the full cash
+ *     fare, cashPaid is the reduced cash you pay alongside the Avios.
+ *
+ * In both cases: the cash you no longer hand over, divided by the
+ * Avios it took to avoid it.
+ *
+ * @returns {number} pence per Avios (0 when the inputs can't produce one)
+ */
+export function pencePerAvios({ cashPrice = 0, aviosUsed = 0, cashPaid = 0 }) {
+  const price = Number(cashPrice);
+  const used = Number(aviosUsed);
+  const paid = Number(cashPaid);
+  if (!Number.isFinite(price) || !Number.isFinite(used) || used <= 0) return 0;
+  const cashAvoided = price - (Number.isFinite(paid) && paid > 0 ? paid : 0);
+  if (cashAvoided <= 0) return 0;
+  return (cashAvoided / used) * 100;
+}
+
+/**
+ * Should you spend Avios on this, or just pay cash?
+ *
+ * Compares what the Avios release (pence each) against what they cost
+ * you to acquire (your blended cost per 1,000 — the figure the miles
+ * ledger tracks). Defaults to the ebook's £9.20/1,000 benchmark when
+ * you haven't worked out your own.
+ *
+ * @param {object} args
+ * @param {number} args.cashPrice — the full cash fare (£)
+ * @param {number} args.aviosUsed — Avios the redemption costs
+ * @param {number} [args.cashPaid] — cash still payable: taxes/fees, or the
+ *   cash half of an Avios + cash booking (£)
+ * @param {number} [args.costPerThousand] — YOUR cost per 1,000 Avios (£)
+ * @returns {{
+ *   pencePerAvios: number,
+ *   yourCostPence: number,
+ *   aviosRouteCost: number,   // £ the Avios route really costs you
+ *   savingGbp: number,        // £ saved vs paying cash (negative = worse)
+ *   verdict: 'worth-it' | 'not-worth-it' | 'tie' | 'incomplete',
+ * }}
+ */
+export function redemptionOutcome({
+  cashPrice = 0,
+  aviosUsed = 0,
+  cashPaid = 0,
+  costPerThousand = GBP_PER_AVIOS * 1000,
+}) {
+  const price = Number(cashPrice) || 0;
+  const used = Number(aviosUsed) || 0;
+  const paid = Number(cashPaid) || 0;
+  const cpt = Number(costPerThousand);
+  const perThousand = Number.isFinite(cpt) && cpt >= 0 ? cpt : GBP_PER_AVIOS * 1000;
+
+  if (price <= 0 || used <= 0) {
+    return {
+      pencePerAvios: 0,
+      yourCostPence: perThousand / 10,
+      aviosRouteCost: 0,
+      savingGbp: 0,
+      verdict: 'incomplete',
+    };
+  }
+
+  const value = pencePerAvios({ cashPrice: price, aviosUsed: used, cashPaid: paid });
+  const yourCostPence = perThousand / 10; // £ per 1,000 → pence per Avios
+  const aviosRouteCost = (used / 1000) * perThousand + paid;
+  const savingGbp = price - aviosRouteCost;
+
+  let verdict;
+  if (value === 0) verdict = 'not-worth-it'; // fees swallow the whole fare
+  else if (value > yourCostPence) verdict = 'worth-it';
+  else if (value < yourCostPence) verdict = 'not-worth-it';
+  else verdict = 'tie';
+
+  return { pencePerAvios: value, yourCostPence, aviosRouteCost, savingGbp, verdict };
+}
