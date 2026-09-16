@@ -172,6 +172,50 @@ update public.curated_strategies set
   updated_at = now()
 where slug = 'uber-easy-combo' and description like 'No One4all juggling%';
 
+-- ── 9c. Card step: name the 1-point-per-£1 cards, not just "1% cashback"
+-- Revolut Metal (RevPoints → Avios 1:1), Barclaycard Avios and Amex all
+-- earn a point per £1; a 1% cashback card is the alternative, not the
+-- only option. Applied to every credit_card step in every strategy.
+update public.curated_strategies s set
+  steps = (
+    select jsonb_agg(
+      case
+        when st->>'platform_slug' = 'credit_card' then
+          st
+          || jsonb_build_object('title',
+               case
+                 when st->>'title' ilike '%not a gift card%' then 'Pay with a card that earns points or cashback — not a gift card'
+                 when st->>'title' ilike 'in-store:%' then 'In-store: pay with a registered card that earns points or cashback'
+                 else 'Pay with a card that earns points or cashback'
+               end)
+          || jsonb_build_object('detail',
+               case
+                 when st->>'title' ilike '%not a gift card%' then
+                   '1 point per £1 — Revolut Metal (RevPoints → Avios 1:1), Barclaycard Avios or Amex — or any 1% cashback card: 100 points or £1 on a £100 shop. A gift-card payment voids the NX cashback here, so keep the two Sainsbury''s routes separate.'
+                 when st->>'title' ilike 'in-store:%' then
+                   'Any registered card that earns 1 point per £1 (Revolut Metal, Barclaycard Avios, Amex) or 1% cashback. Airtime adds up to 4% to your mobile bill automatically a few days later.'
+                 when s.slug = 'amazon-optimiser' then
+                   '1 point per £1 — Revolut Metal, Barclaycard Avios or Amex Membership Rewards — or a 1% cashback card such as Uphold Mastercard. Stacks on top of Rakuten.'
+                 else
+                   '1 point per £1 — Revolut Metal (RevPoints → Avios 1:1), Barclaycard Avios or Amex — or any 1% cashback card. On £100 that is 100 points or £1, on top of everything else in the stack.'
+               end)
+        else st
+      end
+      order by (st->>'step')::int
+    )
+    from jsonb_array_elements(s.steps) st
+  ),
+  updated_at = now()
+where s.steps::text like '%"credit_card"%';
+
+-- The double-cashback step 3 was "Place your order" — keep that framing
+-- and its receipts advice.
+update public.curated_strategies set
+  steps = jsonb_set(jsonb_set(steps, '{2,title}', '"Place your order, paying with a card that earns points or cashback"'::jsonb),
+                    '{2,detail}', '"1 point per £1 — Revolut Metal, Barclaycard Avios or Amex — or any 1% cashback card. Keep all receipts until both portals confirm."'::jsonb),
+  updated_at = now()
+where slug = 'double-cashback-trick' and steps->2->>'platform_slug' = 'credit_card';
+
 -- ── 10. NX Rewards URL: nxrewards.com, not the coach company ─────────
 update public.curated_strategies s set
   steps = (

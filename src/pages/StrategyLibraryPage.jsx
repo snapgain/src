@@ -62,7 +62,7 @@ const STRATEGIES = [
     steps: [
       'Install EverUp, Cheddar and JamDoughnut (all free).',
       'Search the retailer in all three. Rates move weekly, so buy from whichever is highest today: Currys 6.5 percent on Cheddar, Treatwell 7.8 percent on EverUp, Sainsbury\'s 3.9 percent on EverUp.',
-      'Pay for the gift card with an Avios-earning card (Amex BA or Barclays Avios) for another 1 point per £1.',
+      'Pay for the gift card with a card that earns 1 point per £1 (Revolut Metal, Barclaycard Avios, Amex) or 1 percent cashback. The gift card purchase itself earns.',
       'Spend it in-store (barcode at the till) or online (paste the code at checkout). Buy the exact amount of your basket so nothing sits unused.',
     ],
     bestFor: 'Currys, Argos, Boots, Tesco, Sainsbury\'s, Deliveroo, Just Eat, Treatwell and every other retailer the three apps list.',
@@ -78,10 +78,10 @@ const STRATEGIES = [
     teaser: 'Register every points card you own in Airtime, then route each shop through NX online or pay in-store. Airtime pays on the card, never on a gift card.',
     timeToSetup: '10 min',
     steps: [
-      'Register all your points and cashback cards (credit and debit) in the Airtime Rewards app.',
+      'Register all your points and cashback cards (credit and debit) in the Airtime Rewards app: Revolut Metal, Barclaycard Avios, Amex, and any 1 percent cashback card.',
       'Check the partner in the Airtime app first: some are in-store only. Boots and Argos work in-store.',
-      'Online at an NX-network partner (Boots): click through NX Rewards and pay with the registered card. 10 percent minimum plus the card\'s 1 percent.',
-      'In-store (Boots, Argos): pay with the registered card. Card earns 1 percent, Airtime credits up to 4 percent to your mobile bill.',
+      'Online at an NX-network partner (Boots): click through NX Rewards and pay with the registered card. 10 percent minimum plus the card\'s 1 point per £1 or 1 percent.',
+      'In-store (Boots, Argos): pay with the registered card. Card earns its point per £1 or 1 percent, Airtime credits up to 4 percent to your mobile bill.',
       'Skip the gift card here: a gift-card payment is invisible to Airtime, so use the Beginner stack instead when the partner is not tracking.',
     ],
     bestFor: 'Boots, Argos and any other Airtime partner that also sits in the NX network.',
@@ -97,8 +97,8 @@ const STRATEGIES = [
     teaser: 'Two routes that must never be mixed: gift card plus the Avios eStore, or NX plus a points card. NX no longer pays when a Sainsbury\'s order is settled with a gift card.',
     timeToSetup: '15 min',
     steps: [
-      'Route A (max, online): click through NX Rewards to Sainsbury\'s (10 percent), pay with a points card (Amex: 1 point per £1), scan Nectar. Card only, no gift card.',
-      'Route B (easy, online or in-store): buy a Sainsbury\'s gift card at up to 3.9 percent off (EverUp; check Cheddar and JamDoughnut), pay for it with a points card.',
+      'Route A (max, online): click through NX Rewards to Sainsbury\'s (10 percent), pay with a card that earns 1 point per £1 (Revolut Metal, Barclaycard Avios, Amex) or 1 percent cashback, scan Nectar. Card only, no gift card.',
+      'Route B (easy, online or in-store): buy a Sainsbury\'s gift card at up to 3.9 percent off (EverUp; check Cheddar and JamDoughnut), pay for it with the same kind of points or cashback card.',
       'Route B, continued: open Sainsbury\'s from the Avios eStore (1 Avios per £1), pay with the gift card and scan Nectar. Gift-card payment does not affect the eStore Avios.',
       'Either route: 100 Nectar per £100 converts at 400 Nectar = 250 Avios, so £100 of groceries is 62 Avios on top.',
       'Example, £100 shop: Route A = £10 NX + 100 Amex points + 100 Nectar. Route B = £4 gift card + 100 card points + 100 Avios + 100 Nectar.',
@@ -117,7 +117,7 @@ const STRATEGIES = [
     timeToSetup: '10 min',
     steps: [
       'Simple route: Uphold Mastercard (1 percent) plus JamDoughnut Tesco gift card (4 percent), pay for Amazon gift card at Tesco. Total: 5 percent.',
-      'Better: Cheddar or EverUp Tesco gift card (4.5 percent) plus a points card (1 percent) plus Clubcard points, then buy the Amazon gift card in Tesco. Total: about 5.5 percent plus Clubcard.',
+      'Better: Cheddar or EverUp Tesco gift card (4.5 percent) plus a points card (1 point per £1 on Revolut Metal, Barclaycard Avios or Amex, or 1 percent cashback) plus Clubcard points, then buy the Amazon gift card in Tesco. Total: about 5.5 percent plus Clubcard.',
       'Either way, top up Amazon balance with the discounted gift card.',
       'Pay all Amazon purchases from your topped-up balance.',
     ],
