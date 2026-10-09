@@ -27,6 +27,16 @@
 --
 -- `data_freshness` has neither limit — it reads the offer tables
 -- directly and is the one to alert on.
+--
+-- Its thresholds are calibrated to the cadence the pipeline actually
+-- has, which is NOT daily: bulk runs land roughly every six days
+-- (2026-10-01/02 and 2026-10-08, ~4,200 rows each), with a trickle of
+-- 5–15 rows on the days between. An 'ok' window of 48 hours would have
+-- marked healthy sources as late five days out of six, and a monitor
+-- that cries wolf is the one nobody reads. Hence 8 days.
+--
+-- These are provisional. How stale a rate may be before it should stop
+-- being shown to a user is a product decision, not a technical one.
 
 begin;
 
@@ -62,8 +72,8 @@ select
   now() - ultima_verificacao as idade,
   case
     when ultima_verificacao is null                          then 'nunca'
-    when ultima_verificacao > now() - interval '48 hours'    then 'ok'
-    when ultima_verificacao > now() - interval '7 days'      then 'atrasado'
+    when ultima_verificacao > now() - interval '8 days'      then 'ok'
+    when ultima_verificacao > now() - interval '30 days'     then 'atrasado'
     else 'parado'
   end as estado
 from fontes
@@ -71,7 +81,8 @@ order by ultima_verificacao asc nulls first;
 
 comment on view ops.data_freshness is
   'Idade dos dados por fonte. Alertar quando estado <> ''ok''. '
-  'Em 2026-10-02: 5 de 11 fontes em ''parado'', entre 88 e 137 dias.';
+  'Limiares calibrados pela cadência observada — ver o cabeçalho. '
+  'Em 2026-10-09: 5 de 11 fontes em ''parado'', entre 95 e 143 dias.';
 
 -- ── Cron jobs, judged by the HTTP answer and not by pg_cron ──────────
 create or replace view ops.sync_job_status as

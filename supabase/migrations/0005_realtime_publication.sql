@@ -25,9 +25,14 @@
 -- match, and the delete is dropped. FULL is also what lets Realtime
 -- evaluate the RLS policy against the old row. These five tables all
 -- have a primary key and the largest is 5 MB, so the extra WAL volume
--- is small — but it IS extra WAL on every UPDATE, and the daily
--- ingestion rewrites a few thousand rows of cashback_offers, so it is
--- worth watching after this lands.
+-- is small — but it IS extra WAL on every UPDATE.
+--
+-- Corrected 2026-10-09: this header first said the ingestion rewrites
+-- a few thousand rows DAILY. It does not. Bulk runs land roughly every
+-- six days (2026-10-01/02 and 2026-10-08, ~4,200 rows each), with 5–15
+-- rows on the days between, so the extra WAL is a few thousand full
+-- rows a WEEK, not a day — smaller than first stated. Still worth a
+-- look after this lands, but not a concern.
 --
 -- Order matters: set the replica identity BEFORE adding the table to
 -- the publication, never the other way round.
