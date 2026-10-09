@@ -70,7 +70,11 @@ export function Header() {
 
   const displayName =
     user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
-  const isAdmin = user?.user_metadata?.role === 'admin';
+  // Admin comes from `user_profiles.role`, surfaced by useSubscription.
+  // It used to read `user.user_metadata.role` — the bag
+  // `supabase.auth.updateUser({ data })` writes, so any user could set
+  // `role: 'admin'` on themselves. See migration 0007.
+  const { isAdmin } = useSubscription();
 
   const handleLogout = async () => {
     await signOut();

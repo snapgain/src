@@ -48,7 +48,11 @@ function MenuRow({ to, icon: Icon, label, sublabel, onClick, danger = false }) {
 function MenuPage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = user?.user_metadata?.role === 'admin';
+  // Admin comes from `user_profiles.role`, surfaced by useSubscription.
+  // It used to read `user.user_metadata.role` — the bag
+  // `supabase.auth.updateUser({ data })` writes, so any user could set
+  // `role: 'admin'` on themselves. See migration 0007.
+  const { isAdmin } = useSubscription();
 
   const displayName =
     user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';

@@ -84,7 +84,13 @@ export function useSubscription() {
   const isActive = status === 'active' || status === 'trialing';
   const inTrial = !isActive && trialEndMs > now;
   const isPremium = isActive || inTrial;
-  const isAdmin = (profile?.role || user?.user_metadata?.role) === 'admin';
+  // `profile.role` only. The old `|| user?.user_metadata?.role` fallback
+  // read the bag that `supabase.auth.updateUser({ data })` writes, so a
+  // user could set `role: 'admin'` on themselves in one call and land
+  // here — and `isAdmin` bypasses the premium gates. See migration 0007;
+  // granting admin is now a deliberate server-side update of
+  // `user_profiles.role`.
+  const isAdmin = profile?.role === 'admin';
 
   // Days remaining (rounded UP so the day of signup counts — matches
   // what users expect from "Trial: 7 days" right after sign-up).
