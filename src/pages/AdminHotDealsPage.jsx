@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useAdminHotDeals, useStores } from '@/hooks/useCatalog';
 
 const SELECT_CLS =

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 
 function MenuRow({ to, icon: Icon, label, sublabel, onClick, danger = false }) {
   const Inner = (

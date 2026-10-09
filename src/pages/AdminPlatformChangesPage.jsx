@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/lib/customSupabaseClient';
 
 // AdminPlatformChangesPage

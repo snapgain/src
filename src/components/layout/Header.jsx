@@ -14,6 +14,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import {
   DropdownMenu,
   DropdownMenuContent,
