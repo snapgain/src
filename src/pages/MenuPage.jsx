@@ -11,6 +11,7 @@ import {
   HelpCircle,
   LogOut,
   Zap,
+  PencilLine,
   Calculator,
   Search,
   ChevronRight,
@@ -98,6 +99,7 @@ function MenuPage() {
           <Card>
             <CardContent className="p-0 divide-y">
               <MenuRow to="/admin/hot-deals" icon={Zap}         label="Manage hot deals" sublabel="Admin · live updates" />
+              <MenuRow to="/admin/rates"     icon={PencilLine} label="Rate entry"       sublabel="Admin · the four sources with no feed" />
             </CardContent>
           </Card>
         )}
