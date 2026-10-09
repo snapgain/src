@@ -56,9 +56,15 @@ serve(async (req) => {
     });
 
   let target: URL;
+  let textFrom = 0;
+  let textLen = 1200;
+  let rawAround = '';
   try {
-    const { url } = await req.json();
-    target = new URL(String(url));
+    const payload = await req.json();
+    target = new URL(String(payload.url));
+    if (Number.isFinite(payload.textFrom)) textFrom = Math.max(0, Number(payload.textFrom));
+    if (Number.isFinite(payload.textLen)) textLen = Math.min(30000, Math.max(100, Number(payload.textLen)));
+    if (typeof payload.rawAround === 'string') rawAround = payload.rawAround.slice(0, 120);
   } catch {
     return json({ ok: false, error: 'body must be {"url": "https://..."}' }, 400);
   }
@@ -147,6 +153,22 @@ serve(async (req) => {
     counts,
     percentSamples,
     linkSamples,
-    visibleTextSnippet: visibleText.slice(0, 1200),
+    textWindow: { from: textFrom, len: textLen },
+    visibleTextSnippet: visibleText.slice(textFrom, textFrom + textLen),
+    rawAround: rawAround
+      ? (() => {
+          const i = html.indexOf(rawAround);
+          return i < 0
+            ? { needle: rawAround, found: false }
+            : { needle: rawAround, found: true, at: i,
+                markup: html.slice(Math.max(0, i - 500), i + 700) };
+        })()
+      : null,
+    listItemSamples: sample(
+      [...(html.matchAll(/<li\b[^>]*>([\s\S]{0,160}?)<\/li>/gi))]
+        .map(x => x[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
+        .filter(t => t.length >= 2 && t.length <= 120),
+      25
+    ),
   });
 });
