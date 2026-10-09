@@ -3,15 +3,21 @@
 //
 // WHY A FUNCTION AND NOT RLS. The obvious way to build the admin screen
 // was a write policy on gift_card_offers mirroring the ones on
-// cashback_offers. Those are keyed on `is_admin()`, and `is_admin()`
-// reads `auth.users.raw_user_meta_data->>'role'` — the field
-// `auth.updateUser({ data })` writes, so a user can still make it true
-// for themselves (migration 0007 closed the other two routes but
-// deliberately left this one, because fixing it risks locking the
-// operator out and needs his say-so). Adding a policy keyed on that
-// check would have widened a live hole from one table to two. So there
-// is no new policy: this function holds the service key, and decides for
-// itself using `user_profiles.role`, which 0007 made trustworthy by
+// cashback_offers. Those were keyed on `is_admin()`, which at the time
+// read `auth.users.raw_user_meta_data->>'role'` — the field
+// `auth.updateUser({ data })` writes — so any user could make it true
+// for themselves. Adding a policy keyed on that check would have widened
+// a live hole from one table to two. Migration 0009 has since repointed
+// `is_admin()` at `user_profiles.role`, so that specific objection is
+// now historical.
+//
+// This still routes through a function rather than a new policy, for
+// reasons that outlive the hole: `gift_card_offers` has no admin write
+// policy at all, and a single server-side path is where the four-source
+// allowlist, the 0–100 range check and the validate-everything-before-
+// writing-anything rule actually live. An RLS policy can authorise a
+// write; it cannot refuse a typo. The admin check reads
+// `user_profiles.role`, which migration 0007 made trustworthy by
 // revoking the column grants that let a user write it.
 //
 // WHY THE FOUR SOURCES ARE HARDCODED. EverUp, Airtime and the
@@ -140,7 +146,11 @@ serve(async (req) => {
   }
 
   // ── Is that user an admin? ─────────────────────────────────────────
-  // user_profiles.role, NOT is_admin(). See the header.
+  // Reads user_profiles.role directly rather than calling is_admin().
+  // Same source of truth since migration 0009 repointed that function at
+  // this column, but reading it here keeps this endpoint's authorization
+  // legible in one place and independent of a shared helper that two
+  // other tables' policies also depend on.
   const { data: profile, error: profErr } = await admin
     .from('user_profiles')
     .select('role')

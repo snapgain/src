@@ -50,6 +50,12 @@
 -- nothing NEW is keyed on `is_admin()`: the rate-entry path checks
 -- `user_profiles.role`, which this migration makes trustworthy.
 --
+-- UPDATE, same day: that migration is 0009, and it has landed. The
+-- lockout risk cleared once every admin account carried
+-- `user_profiles.role = 'admin'`, which is exactly what THIS migration
+-- made meaningful. Read 0007 and 0009 together; neither is complete
+-- alone.
+--
 -- Columns the client legitimately writes on its own row, from reading
 -- every writer in src/ (useAlerts, userPrefs, LoginPage,
 -- OnboardingPage; useSubscription only reads):
