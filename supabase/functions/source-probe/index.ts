@@ -38,6 +38,15 @@ const ALLOWED = new Set([
   'giftcards.quidco.com',
   'www.nxrewards.com',
   'nxrewards.com',
+  // 2026-10-10: a public UK cashback comparison site that refreshes
+  // ~7,000 retailers across 8 apps daily. Probed to learn how a working
+  // daily pipeline gets its rates, not to copy its data.
+  'scrimpr.co.uk',
+  'www.scrimpr.co.uk',
+  // The public (logged-out) retailer pages of the two biggest portals,
+  // to check whether the rate is printed without a session.
+  'www.topcashback.co.uk',
+  'www.quidco.com',
 ]);
 
 const MAX_BYTES = 3_000_000;
