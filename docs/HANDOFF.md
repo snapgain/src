@@ -10,7 +10,7 @@ This repo is public: nothing here is a secret, and no secret belongs here.
 |---|---|
 | Web app (this repo) | GitHub `snapgain/src` → moving to `Denysmelo2/src` |
 | Ebook shop | GitHub `snapgain/snapgain-shop` → moving to `Denysmelo2/snapgain-shop` |
-| Daily rate robot | GitHub `Denysmelo2/snapgain-scraper` (GitHub Actions) |
+| Daily rate robot | GitHub `Denysmelo2/snapgain-scraper` (GitHub Actions, private) |
 | Hosting | Vercel team `denys-projects-58b82b39`: project `snapgainuk` (snapgain.uk), project `snapgain-shop` (snapgain.shop) |
 | Database, auth, Edge Functions, cron | Supabase project `ffowgyjdbgkphsflxybk` |
 
@@ -22,15 +22,26 @@ This repo is public: nothing here is a secret, and no secret belongs here.
    production), `/admin/rates` + the `rate-entry` Edge Function, the
    white-screen fix (f2f4dcc) and the post-login `/pricing` redirect fix
    (febb11b). The PR body still lacks sections for f2f4dcc, febb11b, ca77500.
-2. **Daily robot (`snapgain-scraper`)**. It does write data every day
-   (~3,800 `cashback_offers` and ~280 `gift_card_offers` PATCHes, ~11:07–11:45
-   UTC), yet every recent `daily-scrape` run is marked failed. To do:
-   find out why from the run logs; move the schedule to **04:00 UTC** (the
-   owner's choice); add the sources it lacks (TopCashback and Quidco gift
-   cards, NX premium) to the same robot rather than a second one; make a
-   failed run visible. TopCashback's public retailer pages show the rate
-   without login; Quidco returns a Cloudflare 403 to datacenter IPs — do not
-   try to get around a challenge or a login.
+2. **Daily robot (`Denysmelo2/snapgain-scraper`, workflow `daily-scrape`)**.
+   Diagnosed 2026-10-10:
+   - Cron is already `0 4 * * *`, but GitHub starts it 5–7 h late
+     (runs begin 09:00–11:00 UTC). An exact 04:00 needs an external trigger
+     (e.g. pg_cron → `workflow_dispatch` with a token kept in the vault).
+   - Red every day since 2026-07-10 (last green: 2026-07-09). Failing every
+     run: `topcashback`, `tc-giftcards`, `quidco-giftcards` — all need a
+     logged-in session. Anonymously, the TC gift-card shop redirects to
+     login and the Quidco one returns a Cloudflare challenge. Do not build
+     anti-bot evasion.
+   - Fresh daily: quidco (3,624), picodi, jamdoughnut, cheddar, Avios.
+     TopCashback only ~330 of ~1,600 refresh. EverUp reports "ok" but has
+     written nothing since 2026-07-06 (markup changed, harvest is 0).
+     Rakuten has 0 active offers. TC and Quidco gift cards: last written
+     2026-05-18.
+   - Runs take ~90–110 min; on the Pro plan the private repo exhausts its
+     Actions minutes at month end (2026-09-29/30 runs never started).
+   - Job logs are not readable through this environment's GitHub proxy;
+     check-run annotations are, so per-scraper errors/timings should be
+     emitted as `::notice`/`::error` annotations.
 3. **EverUp and Airtime**: no public data. The owner is emailing both
    companies for a feed. Until then their rates are kept by hand in
    `/admin/rates`.
